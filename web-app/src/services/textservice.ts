@@ -23,7 +23,9 @@ export class TextService {
         )
         const querySnapshot = await getDocs(q);
         const textsList = querySnapshot.docs.map(doc => doc.data());
-        console.log(textsList);
+        // console.log(textsList);
+        textsList.forEach(text => {
+            console.log(text.title); });
         return textsList;
     }
 
