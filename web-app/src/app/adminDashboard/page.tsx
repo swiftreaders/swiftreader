@@ -1,38 +1,67 @@
 "use client";
 
 import { useState, useContext, createContext } from "react";
-import { TextService } from "@/services/textService";
-import { DocumentData } from "firebase/firestore/lite";
-
+import { useAdminDashboard, AdminDashboardProvider } from "@/contexts/adminDashboardContext";
 import { Category } from "@/types/text";
 
-const AdminDashboardContext = createContext<DocumentData[]>([]);
 
-const DisplayTexts = () => {
-  const texts = useContext(AdminDashboardContext);
+// const AdminDashboardContent = () => {
+//   const { texts, updateText, removeText } = useAdminDashboard();
+//   return (
+//       <div>
+//         <h1>Admin Dashboard</h1>
+//       </div>
+//   );
+// }
+
+const AdminDashboardContent = () => {
+  const { texts, updateText, removeText } = useAdminDashboard();
 
   return (
     <div>
-      {texts.map((text) => (
-        <div>
-          <h2>{text.title}</h2>
-          <p>{text.content}</p>
-        </div>
-      ))}
+      <h1>Admin Dashboard</h1>
+      <p>Manage the content displayed on your website here.</p>
+
+      <div>
+        {texts.map((text) => (
+          <div key={text.id} style={{ border: "1px solid #ccc", padding: "10px", marginBottom: "10px" }}>
+            <h2>{text.title}</h2>
+            <p>{text.content}</p>
+
+            <div style={{ marginTop: "10px" }}>
+              <button
+                onClick={() => {
+                  const newContent = prompt("Enter new content:", text.content);
+                  if (newContent) updateText(newContent, text.id);
+                }}
+                style={{ marginRight: "10px" }}
+              >
+                Update Text
+              </button>
+              <button
+                onClick={() => {
+                  if (window.confirm(`Are you sure you want to remove "${text.title}"?`)) {
+                    removeText(text.id);
+                  }
+                }}
+                style={{ color: "red" }}
+              >
+                Remove Text
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
 
-export default async function AdminDashboard() {
-  const textService = new TextService();
-  const texts = await textService.getTextsByCategory(Category.NATURE);
-
+const AdminDashboard = () => {
   return (
-    <AdminDashboardContext.Provider value={texts}>
-      <div>
-        <h1>Admin Dashboard</h1>
-        <DisplayTexts />
-      </div>
-    </AdminDashboardContext.Provider>
+    <AdminDashboardProvider>
+      <AdminDashboardContent />
+    </AdminDashboardProvider>
   );
 }
+
+export default AdminDashboard

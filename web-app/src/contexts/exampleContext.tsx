@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Text } from "@/types/text";
-import { testService } from "@/services/testService";
+import { testService } from "@/services/exampleService";
 
 interface TestDashboardContextType {
   texts: Text[];

@@ -4,7 +4,7 @@ import React from "react";
 import {
   TestDashboardProvider,
   useTestDashboard,
-} from "@/contexts/testContext";
+} from "@/contexts/exampleContext";
 
 const DashboardContent = () => {
   const { texts } = useTestDashboard();
