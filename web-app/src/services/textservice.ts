@@ -36,7 +36,8 @@ const addText = async (text: Text): Promise<boolean> => {
 
 const updateText = async (content: string, id: string): Promise<boolean> => {
   try {
-    await updateDoc(doc(db, "Texts", id), { content });
+    const wordCount = content.split(/\s+/).length;
+    await updateDoc(doc(db, "Texts", id), { content: content, wordCount: wordCount });
     return true;
   } catch (error) {
     console.error("Error updating text:", error);

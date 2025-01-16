@@ -4,16 +4,6 @@ import { useState, useContext, createContext } from "react";
 import { useAdminDashboard, AdminDashboardProvider } from "@/contexts/adminDashboardContext";
 import { Category } from "@/types/text";
 
-
-// const AdminDashboardContent = () => {
-//   const { texts, updateText, removeText } = useAdminDashboard();
-//   return (
-//       <div>
-//         <h1>Admin Dashboard</h1>
-//       </div>
-//   );
-// }
-
 const AdminDashboardContent = () => {
   const { texts, updateText, removeText } = useAdminDashboard();
 

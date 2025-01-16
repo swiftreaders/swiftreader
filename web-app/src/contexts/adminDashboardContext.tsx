@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { textService } from "@/services/textService"
+import { textService } from "@/services/textservice"
 // import backend functions to perform CRUD operations on the texts
 
 // import necessary types
