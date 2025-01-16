@@ -17,7 +17,10 @@ interface GazeData {
     showVideo(show: boolean): this;
     showPredictionPoints(show: boolean): this;
     params: {
+      useMouseData: boolean;
       predictionInterval: number;
+      videoViewerWidth?: number;
+      videoViewerHeight?: number;
       [key: string]: any;
     };
   }

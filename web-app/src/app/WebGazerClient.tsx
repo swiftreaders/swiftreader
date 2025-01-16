@@ -13,14 +13,17 @@ export default function WebGazerClient() {
         console.log("WebGazer initialized:", wg);
         wg.params.useMouseData = false;
         document.onmousemove = null; // Disable mouse-based fallback
+        // Here we tell WebGazer to match the full browser window
+        wg.params.videoViewerWidth = window.innerWidth;
+        wg.params.videoViewerHeight = window.innerHeight;
         wg
           .setGazeListener((data: any) => {
             console.log("Gaze data:", data); // Debug gaze data
             if (data) {
               const highlight = document.getElementById("highlight");
               if (highlight) {
-                highlight.style.left = `${data.x}px`;
-                highlight.style.top = `${data.y}px`;
+                highlight.style.left = data.x + "px";
+                highlight.style.top = data.y + "px";
               }
             }
           })

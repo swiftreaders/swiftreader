@@ -1,37 +1,55 @@
 "use client";
+
 import { useState } from "react";
+import { trainWebGazer } from "./TrainWebGazer"; // (Adjust import path)
 
 export default function Calibration() {
   const [calibrating, setCalibrating] = useState(false);
 
-  const startCalibration = () => {
+  const startCalibration = async () => {
+    // Make sure webgazer is loaded
+    if (typeof window === "undefined" || !(window as any).webgazer) {
+      alert("WebGazer not available. Make sure it's initialized first.");
+      return;
+    }
+
     setCalibrating(true);
     alert("Look at the red dots to calibrate your gaze.");
 
-    // Select the dots
+    const webgazer = (window as any).webgazer;
     const dots = document.querySelectorAll(".calibration-dot");
-    console.log("Found dots:", dots.length); // Debug
+    console.log("Found dots:", dots.length);
 
-    let index = 0;
-    const intervalId = setInterval(() => {
-      if (index < dots.length) {
-        // Show this dot
-        const dot = dots[index]; // capture at this moment
-        dot.classList.add("active");
+    // For each dot, show it, record data, hide it, then move on
+    for (let i = 0; i < dots.length; i++) {
+      const dot = dots[i] as HTMLElement;
+      dot.classList.add("active");
 
-        setTimeout(() => {
-            dot.classList.remove("active"); 
-            console.log("removed dot!");
-        }, 1000);
+      // Get the dot's center on screen
+      const rect = dot.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
 
+      // Repeatedly record this position for ~2 seconds
+      const recordInterval = setInterval(() => {
+        webgazer.recordScreenPosition(centerX, centerY);
+      }, 50);
 
-        index += 1;
-      } else {
-        clearInterval(intervalId);
-        setCalibrating(false);
-        alert("Calibration complete!");
-      }
-    }, 1500);
+      // Wait 2 seconds while user stares at this dot
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Stop recording and hide dot
+      clearInterval(recordInterval);
+      dot.classList.remove("active");
+
+      // Optional short pause before moving to the next dot
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+
+    // Now call our helper to train the regression
+    trainWebGazer();
+    alert("Calibration complete!");
+    setCalibrating(false);
   };
 
   return (
