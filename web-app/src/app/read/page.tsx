@@ -7,7 +7,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Category } from "@/types/text";
-import TextService from "@/services/textService";
+import TextService from "@/services/textservice";
 
 const Read = () => {
   const [text, setText] = useState("");

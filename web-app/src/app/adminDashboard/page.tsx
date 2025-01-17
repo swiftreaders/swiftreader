@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useContext, createContext } from "react";
-import { TextService } from "@/services/textService";
+import { TextService } from "@/services/textservice";
 import { DocumentData } from "firebase/firestore/lite";
 
 import { Category } from "@/types/text";
