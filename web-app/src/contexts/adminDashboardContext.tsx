@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { textService } from "@/services/textservice"
+
 // import backend functions to perform CRUD operations on the texts
+import { textService } from "@/services/textService";
 
 // import necessary types
 import { Text } from "@/types/text";
@@ -27,9 +28,9 @@ export const useAdminDashboard = () => {
   return context;
 };
 
-export const AdminDashboardProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const AdminDashboardProvider: React.FC<{
+  children: React.ReactNode;
+}> = ({ children }) => {
   const [texts, setTexts] = useState<Text[]>([]);
 
   useEffect(() => {
@@ -46,12 +47,9 @@ export const AdminDashboardProvider: React.FC<{ children: React.ReactNode }> = (
 
   return (
     <AdminDashboardContext.Provider
-      value={{ texts, addText, updateText, removeText, }}
+      value={{ texts, addText, updateText, removeText }}
     >
       {children}
     </AdminDashboardContext.Provider>
   );
 };
-
-
-
