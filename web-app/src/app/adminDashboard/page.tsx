@@ -14,7 +14,7 @@ const DisplayTexts = () => {
   return (
     <div>
       {texts.map((text) => (
-        <div>
+        <div key={text.id}>
           <h2>{text.title}</h2>
           <p>{text.content}</p>
         </div>
@@ -24,8 +24,7 @@ const DisplayTexts = () => {
 };
 
 export default async function AdminDashboard() {
-  const textService = new TextService();
-  const texts = await textService.getTextsByCategory(Category.NATURE);
+  const texts = await TextService.getTextsByCategory(Category.NATURE);
 
   return (
     <AdminDashboardContext.Provider value={texts}>
