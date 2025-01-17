@@ -24,7 +24,8 @@ const DisplayTexts = () => {
 };
 
 export default async function AdminDashboard() {
-  const texts = await TextService.getTextsByCategory(Category.NATURE);
+  const textService = new TextService();
+  const texts = await textService.getTextsByCategory(Category.NATURE);
 
   return (
     <AdminDashboardContext.Provider value={texts}>
