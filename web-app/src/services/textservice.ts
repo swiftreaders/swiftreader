@@ -75,4 +75,6 @@ export class TextService {
   async deleteText(textId: string) {}
 }
 
-export default new TextService();
+const textServiceInstance = new TextService();
+
+export default textServiceInstance;
