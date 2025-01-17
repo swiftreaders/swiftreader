@@ -4,8 +4,9 @@
 // `useRouter`, and DOM manipulations must be client-side components. 
 // Without this, Next.js treats components as server-side by default.
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Category } from "@/types/text";
 import TextService from "@/services/textService";
 
 const Read = () => {
@@ -25,11 +26,14 @@ const Read = () => {
 
     // Fetch random text by category (async because it uses the await keyword for fetching text)
     const fetchRandomText = async () => {
-      // Simulate fetching random text from Firebase
-      const randomText = await TextService.getTextsByCategory(category); 
+        // Cast the category string to an enum
+        const validCategory = category as Category;
 
-      // This sets the first text's content or a fallback message if the category has no texts.
-      setText(randomText[0]?.content || "No text found for this category.");
+        // Simulate fetching random text from Firebase
+        const randomText = await TextService.getTextsByCategory(validCategory); 
+
+        // This sets the first text's content or a fallback message if the category has no texts.
+        setText(randomText[0]?.content || "No text found for this category.");
     };
 
     fetchRandomText();
@@ -53,4 +57,11 @@ const Read = () => {
   );
 };
 
-export default Read;
+// Wrapper used as Suspense needs to wrap a compnent when using search parameters
+const ReadPageWrapper = () => (
+<Suspense fallback={<div>Loading...</div>}>
+    <Read />
+</Suspense>
+);
+
+export default ReadPageWrapper;
