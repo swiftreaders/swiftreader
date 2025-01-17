@@ -7,10 +7,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getFirestore, collection, getDocs } from "firebase/firestore/lite";
 import { app } from "@/firebaseConfig";
+import { Session } from "@/types/sessions";
 
 const Dashboard = () => {
   const router = useRouter();
-  const [recentSessions, setRecentSessions] = useState<any[]>([]);
+  const [recentSessions, setRecentSessions] = useState<Session[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("");
 
