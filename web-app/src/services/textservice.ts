@@ -6,6 +6,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  Timestamp
 } from "firebase/firestore";
 import { app } from "@/firebaseConfig";
 import { Text } from "@/types/text";
@@ -26,7 +27,7 @@ const getTexts = (onUpdate: (texts: Text[]) => void) => {
 
 const addText = async (text: Text): Promise<boolean> => {
   try {
-    await addDoc(collection(db, "Texts"), text);
+    await addDoc(collection(db, "Texts"), text.toJSON());
     return true;
   } catch (error) {
     console.error("Error adding text:", error);
@@ -36,8 +37,9 @@ const addText = async (text: Text): Promise<boolean> => {
 
 const updateText = async (content: string, id: string): Promise<boolean> => {
   try {
-    const wordCount = content.split(/\s+/).length;
-    await updateDoc(doc(db, "Texts", id), { content: content, wordCount: wordCount });
+    const wordLength = content.split(/\s+/).length;
+    const timestamp = Timestamp.fromMillis(Date.now())
+    await updateDoc(doc(db, "Texts", id), { content: content, wordLength: wordLength, updatedAt: timestamp });
     return true;
   } catch (error) {
     console.error("Error updating text:", error);
