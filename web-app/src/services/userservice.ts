@@ -8,11 +8,12 @@ import {
     deleteDoc,
   } from "firebase/firestore";
 import { app } from "@/firebaseConfig";
+import { User } from "@/types/text";
 
 
 const db = getFirestore(app);
 
-const userService = {
+export const userService = {
     getUsers: (onUpdate: (users: User[]) => void) => {
         const unsubscribe = onSnapshot(collection(db, "Users"), (snapshot) => {
             const users = snapshot.docs.map((doc) => ({
@@ -44,22 +45,3 @@ const userService = {
         }
     },
 }
-
-export class User {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-
-    constructor(
-        id: string,
-        name: string,
-        email: string,
-        role: string
-    ) {
-        this.id = id;
-        this.name = name;
-        this.email = email;
-        this.role = role; 
-    }
-};

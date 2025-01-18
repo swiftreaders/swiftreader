@@ -45,7 +45,6 @@ export class Text {
   
   toJSON() {
     return {
-      id: this.id,
       title: this.title,
       category: this.category,
       content: this.content,
@@ -57,3 +56,28 @@ export class Text {
     };
   }
 }
+
+export class User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  wpm: number;
+  joinDate: Date;
+
+  constructor(
+      id: string,
+      name: string,
+      email: string,
+      role: string,
+      wpm: number,
+      joinDate: Date,
+  ) {
+      this.id = id;
+      this.name = name;
+      this.email = email;
+      this.role = role; 
+      this.wpm = wpm;
+      this.joinDate = joinDate;
+  }
+};

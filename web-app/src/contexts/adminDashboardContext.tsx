@@ -4,14 +4,16 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { textService } from "@/services/textservice";
 
 // import necessary types
-import { Text } from "@/types/text";
+import { Text, User } from "@/types/text";
+import { userService } from "@/services/userservice";
 
 interface AdminDashboardContextType {
   texts: Text[];
   addText: (text: Text) => Promise<boolean>;
   updateText: (content: string, id: string) => Promise<boolean>;
   removeText: (id: string) => Promise<boolean>;
-  // users: string[];
+  users: User[];
+  removeUser: (id: string) => Promise<boolean>;
 }
 
 const AdminDashboardContext = createContext<
@@ -32,9 +34,15 @@ export const AdminDashboardProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
   const [texts, setTexts] = useState<Text[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
     const unsubscribe = textService.getTexts(setTexts);
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = userService.getUsers(setUsers);
     return () => unsubscribe();
   }, []);
 
@@ -45,9 +53,11 @@ export const AdminDashboardProvider: React.FC<{
 
   const removeText = async (id: string) => textService.removeText(id);
 
+  const removeUser = async (id: string) => userService.removeUser(id);
+
   return (
     <AdminDashboardContext.Provider
-      value={{ texts, addText, updateText, removeText }}
+      value={{ texts, addText, updateText, removeText, users, removeUser }}
     >
       {children}
     </AdminDashboardContext.Provider>

@@ -1,148 +1,126 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAdminDashboard, AdminDashboardProvider } from "@/contexts/adminDashboardContext";
-import { Category, Difficulty, Text } from "@/types/text";
+import { useRouter } from "next/navigation";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const AdminDashboardContent = () => {
-  const { texts, addText, updateText, removeText } = useAdminDashboard();
+  const { texts, users, removeUser } = useAdminDashboard(); 
+  const [userMetrics, setUserMetrics] = useState({ totalUsers: 0, newUsers: 0 });
+  const router = useRouter();
 
-  const [newText, setNewText] = useState({
-    title: "",
-    category: Category.NATURE,
-    content: "",
-    difficulty: Difficulty.EASY,
-    isFiction: false,
-  });
+  useEffect(() => {
+    const totalUsers = users.length;
+    const newUsers = 0; // TODO: Use join date and current date to calculate new users - 1 month maybe?
+    setUserMetrics({ totalUsers, newUsers });
+  }, [users]);
 
-  const handleAddText = () => {
-    if (!newText.title || !newText.content) {
-      alert("Title and content are required!");
-      return;
-    }
+  // Mock data for charts
+  const userTrendData = [
+    { month: "Jan", newUsers: 30 },
+    { month: "Feb", newUsers: 50 },
+    { month: "Mar", newUsers: 70 },
+    { month: "Apr", newUsers: 90 },
+    { month: "May", newUsers: 100 },
+    { month: "Jun", newUsers: 120 },
+  ];
 
-    const text = new Text(
-      crypto.randomUUID(), // Generate a unique ID
-      newText.title,
-      newText.category,
-      newText.content,
-      newText.difficulty,
-      newText.isFiction
-    );
-
-    addText(text); // Add the text to the context or Firestore
-    setNewText({
-      title: "",
-      category: Category.NATURE,
-      content: "",
-      difficulty: Difficulty.EASY,
-      isFiction: false,
-    });
-  };
+  const performanceData = [
+    { name: "User 1", score: 80 },
+    { name: "User 2", score: 85 },
+    { name: "User 3", score: 70 },
+    { name: "User 4", score: 95 },
+    { name: "User 5", score: 60 },
+  ];
 
   return (
-    <div>
-      <h1>Admin Dashboard</h1>
-      <p>Manage the content displayed on your website here.</p>
+    <div className="min-h-screen p-8 bg-gray-100">
+      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
 
-      {/* Add New Text Form */}
-      <div style={{ border: "1px solid #ccc", padding: "10px", marginBottom: "20px" }}>
-        <h2>Add New Text</h2>
-        <input
-          type="text"
-          placeholder="Title"
-          value={newText.title}
-          onChange={(e) => setNewText({ ...newText, title: e.target.value })}
-          style={{ display: "block", marginBottom: "10px" }}
-        />
-        <textarea
-          placeholder="Content"
-          value={newText.content}
-          onChange={(e) => setNewText({ ...newText, content: e.target.value })}
-          style={{ display: "block", marginBottom: "10px", width: "100%", height: "80px" }}
-        />
-        <label>Category:</label>
-        <select
-          value={newText.category}
-          onChange={(e) => setNewText({ ...newText, category: e.target.value as Category })}
-          style={{ display: "block", marginBottom: "10px" }}
+      {/* Button to Manage Texts */}
+      <div className="mb-6">
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+          onClick={() => router.push("adminDashboard/textManagement")}
         >
-          {Object.values(Category).map((cat) => (
-            <option key={cat} value={cat}>
-              {cat.charAt(0).toUpperCase() + cat.slice(1)}
-            </option>
-          ))}
-        </select>
-        <label>Difficulty:</label>
-        <select
-          value={newText.difficulty}
-          onChange={(e) => setNewText({ ...newText, difficulty: e.target.value as Difficulty })}
-          style={{ display: "block", marginBottom: "10px" }}
-        >
-          {Object.values(Difficulty).map((diff) => (
-            <option key={diff} value={diff}>
-              {diff.charAt(0).toUpperCase() + diff.slice(1)}
-            </option>
-          ))}
-        </select>
-        <label>
-          <input
-            type="checkbox"
-            checked={newText.isFiction}
-            onChange={(e) => setNewText({ ...newText, isFiction: e.target.checked })}
-          />
-          Is Fiction?
-        </label>
-        <button onClick={handleAddText} style={{ marginTop: "10px" }}>
-          Add Text
+          Manage Texts
         </button>
       </div>
 
-      {/* Existing Texts */}
-      <div>
-        {texts.map((text) => (
-          <div
-            key={text.id}
-            style={{ border: "1px solid #ccc", padding: "10px", marginBottom: "10px" }}
-          >
-            <h2>{text.title}</h2>
-            <p>{text.content}</p>
-            <p>
-              <strong>Category:</strong> {text.category}
-            </p>
-            <p>
-              <strong>Difficulty:</strong> {text.difficulty}
-            </p>
-            <p>
-              <strong>Fiction:</strong> {text.isFiction ? "Yes" : "No"}
-            </p>
-            <p>
-              <strong>Word Count:</strong> {text.wordLength.toString()}
-            </p>
+      {/* Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white shadow-md rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-2">Total Users</h2>
+          <p className="text-4xl font-bold">{userMetrics.totalUsers}</p>
+        </div>
+        <div className="bg-white shadow-md rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-2">New Users (This Month)</h2>
+          <p className="text-4xl font-bold">{userMetrics.newUsers}</p>
+        </div>
+      </div>
 
-            <div style={{ marginTop: "10px" }}>
-              <button
-                onClick={() => {
-                  const newContent = prompt("Enter new content:", text.content);
-                  if (newContent) updateText(newContent, text.id);
-                }}
-                style={{ marginRight: "10px" }}
-              >
-                Update Text
-              </button>
-              <button
-                onClick={() => {
-                  if (window.confirm(`Are you sure you want to remove "${text.title}"?`)) {
-                    removeText(text.id);
-                  }
-                }}
-                style={{ color: "red" }}
-              >
-                Remove Text
-              </button>
-            </div>
-          </div>
-        ))}
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        {/* User Growth Trend */}
+        <div className="bg-white shadow-md rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">User Growth Trend</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={userTrendData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Line type="monotone" dataKey="newUsers" stroke="#4A90E2" strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* User Performance */}
+        <div className="bg-white shadow-md rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">User Performance</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={performanceData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="score" fill="#36A2EB" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* User Table */}
+      <div className="bg-white shadow-md rounded-lg p-6">
+        <h2 className="text-lg font-semibold mb-4">User Details</h2>
+        <table className="min-w-full table-auto border-collapse border border-gray-200">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border border-gray-300 px-4 py-2 text-left">Username</th>
+              <th className="border border-gray-300 px-4 py-2 text-left">WPM</th>
+              <th className="border border-gray-300 px-4 py-2 text-left">Join Date</th>
+              <th className="border border-gray-300 px-4 py-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((user, index) => (
+              <tr key={index} className="hover:bg-gray-50">
+                <td className="border border-gray-300 px-4 py-2">{user.name}</td>
+                <td className="border border-gray-300 px-4 py-2">{user.wpm}</td>
+                <td className="border border-gray-300 px-4 py-2">{new Date(user.joinDate).toLocaleDateString()}</td>
+                <td className="border border-gray-300 px-4 py-2 text-center">
+                  <button
+                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
+                    onClick={() => removeUser(user.id)} // Assuming removeUser takes the user ID
+                  >
+                    Remove
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

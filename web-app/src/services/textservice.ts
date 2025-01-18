@@ -15,10 +15,17 @@ const db = getFirestore(app);
 
 const getTexts = (onUpdate: (texts: Text[]) => void) => {
   const unsubscribe = onSnapshot(collection(db, "Texts"), (snapshot) => {
-    const texts = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Text[];
+    const texts = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return new Text(
+        doc.id,
+        data.title,
+        data.category,
+        data.content,
+        data.difficulty,
+        data.isFiction
+      );
+    });    
     onUpdate(texts);
   });
 
