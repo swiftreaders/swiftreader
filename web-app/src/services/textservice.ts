@@ -18,12 +18,15 @@ const getTexts = (onUpdate: (texts: Text[]) => void) => {
     const texts = snapshot.docs.map((doc) => {
       const data = doc.data();
       return new Text(
-        doc.id,
         data.title,
         data.category,
         data.content,
         data.difficulty,
-        data.isFiction
+        data.isFiction,
+        doc.id,
+        data.createdAt,
+        data.updatedAt,
+        data.wordLength
       );
     });    
     onUpdate(texts);

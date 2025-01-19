@@ -24,23 +24,26 @@ export class Text {
   wordLength: Number;
 
   constructor(
-    id: string,
     title: string,
     category: Category,
     content: string,
     difficulty: Difficulty,
     isFiction: boolean,
+    // Default parameters for adding new texts
+    id: string = "",
+    createdAt: Timestamp = Timestamp.fromMillis(Date.now()),
+    updatedAt: Timestamp = createdAt,
+    wordLength: Number = content.split(" ").length
   ) {
-    const timestamp = Timestamp.fromMillis(Date.now())
     this.id = id;
     this.title = title;
     this.category = category;
     this.content = content;
-    this.createdAt = timestamp;
-    this.updatedAt = timestamp;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
     this.difficulty = difficulty;
     this.isFiction = isFiction;
-    this.wordLength = this.content.split(" ").length
+    this.wordLength = wordLength
   }
   
   toJSON() {

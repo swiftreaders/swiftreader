@@ -22,7 +22,6 @@ const AdminDashboardContent = () => {
     }
 
     const text = new Text(
-      crypto.randomUUID(),
       newText.title,
       newText.category,
       newText.content,
