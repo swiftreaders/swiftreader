@@ -7,7 +7,7 @@ import {
   Timestamp,
   addDoc,
 } from "firebase/firestore/lite";
-import { app } from "@/firebaseConfig";
+import { app } from "../../firebase.config";
 import { Category, Difficulty } from "@/types/text";
 
 export class TextService {

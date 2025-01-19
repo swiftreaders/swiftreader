@@ -6,7 +6,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getFirestore, collection, getDocs } from "firebase/firestore/lite";
-import { app } from "@/firebaseConfig";
+import { app } from "../../../firebase.config";
 import { Session } from "@/types/sessions";
 
 const Dashboard = () => {
@@ -67,8 +67,18 @@ const Dashboard = () => {
   // Stub for reading sessions - TODO: Replace this with Firebase call later
   useEffect(() => {
     const sessions = [
-      { id: 1, title: "The Art of War", date: "2025-01-12", duration: "10 min" },
-      { id: 2, title: "A Brief History of Time", date: "2025-01-10", duration: "15 min" },
+      {
+        id: 1,
+        title: "The Art of War",
+        date: "2025-01-12",
+        duration: "10 min",
+      },
+      {
+        id: 2,
+        title: "A Brief History of Time",
+        date: "2025-01-10",
+        duration: "15 min",
+      },
     ];
     setRecentSessions(sessions);
   }, []);
@@ -88,7 +98,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen p-8 bg-gray-100">
       <h1 className="text-2xl font-bold mb-6">Welcome to the Dashboard</h1>
-      
+
       <div className="mb-6">
         <h2 className="text-xl font-semibold mb-4">Recent Reading Sessions</h2>
         <ul className="bg-white shadow-md rounded-lg p-4">
@@ -98,7 +108,9 @@ const Dashboard = () => {
               className="flex justify-between items-center border-b last:border-b-0 py-2"
             >
               <span>{session.title}</span>
-              <span className="text-gray-500 text-sm">{session.date} - {session.duration}</span>
+              <span className="text-gray-500 text-sm">
+                {session.date} - {session.duration}
+              </span>
             </li>
           ))}
         </ul>
@@ -107,6 +119,7 @@ const Dashboard = () => {
       <div>
         <h2 className="text-xl font-semibold mb-4">Select a Category</h2>
         <select
+          title="category dropdown"
           className="p-2 border rounded-md w-full max-w-md"
           value={selectedCategory}
           onChange={(e) => handleCategoryChange(e.target.value)}

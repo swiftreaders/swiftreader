@@ -7,7 +7,7 @@ import {
   updateDoc,
   deleteDoc,
 } from "firebase/firestore";
-import { app } from "@/firebaseConfig";
+import { app } from "../../firebase.config";
 import { Text } from "@/types/text";
 
 const db = getFirestore(app);
