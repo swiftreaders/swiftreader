@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAdminDashboard, AdminDashboardProvider } from "@/contexts/adminDashboardContext";
 import { useRouter } from "next/navigation";
+import { Timestamp } from "firebase/firestore";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const AdminDashboardContent = () => {
@@ -12,7 +13,7 @@ const AdminDashboardContent = () => {
 
   useEffect(() => {
     const totalUsers = users.length;
-    const newUsers = 0; // TODO: Use join date and current date to calculate new users - 1 month maybe?
+    const newUsers = users.filter(user => Date.now() - user.joinDate.toMillis() < 2419200000).length;
     setUserMetrics({ totalUsers, newUsers });
   }, [users]);
 
@@ -55,7 +56,7 @@ const AdminDashboardContent = () => {
           <p className="text-4xl font-bold">{userMetrics.totalUsers}</p>
         </div>
         <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-2">New Users (This Month)</h2>
+          <h2 className="text-lg font-semibold mb-2">New Users (Last 28 days)</h2>
           <p className="text-4xl font-bold">{userMetrics.newUsers}</p>
         </div>
       </div>
@@ -108,7 +109,7 @@ const AdminDashboardContent = () => {
               <tr key={index} className="hover:bg-gray-50">
                 <td className="border border-gray-300 px-4 py-2">{user.name}</td>
                 <td className="border border-gray-300 px-4 py-2">{user.wpm}</td>
-                <td className="border border-gray-300 px-4 py-2">{new Date(user.joinDate).toLocaleDateString()}</td>
+                <td className="border border-gray-300 px-4 py-2">{user.joinDate.toDate().toLocaleDateString()}</td>
                 <td className="border border-gray-300 px-4 py-2 text-center">
                   <button
                     className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"

@@ -4,7 +4,8 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { textService } from "@/services/textservice";
 
 // import necessary types
-import { Text, User } from "@/types/text";
+import { Text } from "@/types/text";
+import { User } from "@/types/user";
 import { userService } from "@/services/userservice";
 
 interface AdminDashboardContextType {
