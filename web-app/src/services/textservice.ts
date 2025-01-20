@@ -6,10 +6,12 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
-  Timestamp
+  Timestamp,
+  DocumentData
 } from "firebase/firestore";
 import { app } from "@/firebaseConfig";
-import { Text } from "@/types/text";
+import { Category, Text } from "@/types/text";
+import { getDocs, query, where } from "firebase/firestore/lite";
 
 const db = getFirestore(app);
 
@@ -34,6 +36,20 @@ const getTexts = (onUpdate: (texts: Text[]) => void) => {
 
   return unsubscribe;
 };
+
+const getTextsByCategory = async (category: Category): Promise<DocumentData[]> => {
+  const q = query(
+    collection(db, "Texts"),
+    where("category", "==", category)
+  );
+  const querySnapshot = await getDocs(q);
+  const textsList = querySnapshot.docs.map((doc) => doc.data());
+  // console.log(textsList);
+  textsList.forEach((text) => {
+    console.log(text.title);
+  });
+  return textsList;
+}
 
 const addText = async (text: Text): Promise<boolean> => {
   try {
@@ -72,6 +88,7 @@ export const textService = {
   addText,
   updateText,
   removeText,
+  getTextsByCategory,
 };
 
 export default textService;
