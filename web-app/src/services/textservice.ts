@@ -73,3 +73,8 @@ export const textService = {
   updateText,
   removeText,
 };
+
+const textServiceInstance = new TextService();
+
+export default textServiceInstance;
+

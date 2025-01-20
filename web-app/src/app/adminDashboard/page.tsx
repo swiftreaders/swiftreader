@@ -5,6 +5,7 @@ import { useAdminDashboard, AdminDashboardProvider } from "@/contexts/adminDashb
 import { useRouter } from "next/navigation";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
+
 const AdminDashboardContent = () => {
   const { texts, users, removeUser } = useAdminDashboard(); 
   const [userMetrics, setUserMetrics] = useState({ totalUsers: 0, newUsers: 0 });
@@ -57,8 +58,6 @@ const AdminDashboardContent = () => {
         <div className="bg-white shadow-md rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-2">New Users (Last 28 days)</h2>
           <p className="text-4xl font-bold">{userMetrics.newUsers}</p>
-        </div>
-      </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">

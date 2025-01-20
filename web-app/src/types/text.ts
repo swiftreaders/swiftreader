@@ -1,3 +1,4 @@
+
 import { Timestamp } from "firebase/firestore";
 
 export enum Difficulty {
@@ -15,6 +16,7 @@ export enum Category {
 export class Text {
   id: string;
   title: string;
+
   category: Category;
   content: string;
   createdAt: Timestamp;
