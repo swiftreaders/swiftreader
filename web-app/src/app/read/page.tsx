@@ -1,8 +1,4 @@
-"use client"; // Why does this have to be defined as a client-side component?
-// Answer: This indicates that the component will run on the client side. 
-// Components requiring browser-specific features like hooks (`useState`, `useEffect`), 
-// `useRouter`, and DOM manipulations must be client-side components. 
-// Without this, Next.js treats components as server-side by default.
+"use client";   // Component is client side as it needs useEffect, useState and useRouter hooks
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -13,14 +9,11 @@ const Read = () => {
   const [text, setText] = useState("");
   const searchParams = useSearchParams();
   const router = useRouter();
-  const category = searchParams.get("category"); // How are the searchParams used and how do they work?
-  // Answer: `useSearchParams` is a Next.js hook that provides access to the query string in the URL.
-  // In this case, `searchParams.get("category")` retrieves the value of the "category" parameter 
-  // from the URL, such as `?category=Science`. If the parameter is missing, `category` will be `null`.
+  const category = searchParams.get("category");    // Retrieves the value of ?category=... to get what category is set
 
   useEffect(() => {
     if (!category) {
-      router.push("/userDashboard"); // Redirect to dashboard if no category is selected
+      router.push("/userDashboard");    // Redirect to dashboard if no category is selected
       return;
     }
 
@@ -37,9 +30,7 @@ const Read = () => {
     };
 
     fetchRandomText();
-  }, [category, router]); 
-  // This `useEffect` depends on `category` and `router`. If either changes, the effect re-runs.
-  // For example, if the `category` in the URL changes, the text fetched will update accordingly.
+  }, [category, router]);   // If category or router change, this useEffect hook is called
 
   return (
     <div className="min-h-screen p-8 bg-gray-100">
