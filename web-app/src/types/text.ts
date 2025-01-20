@@ -21,7 +21,7 @@ export class Text {
   updatedAt: Timestamp;
   difficulty: Difficulty;
   isFiction: boolean;
-  wordLength: Number;
+  wordLength: number;
 
   constructor(
     title: string,
@@ -33,7 +33,7 @@ export class Text {
     id: string = "",
     createdAt: Timestamp = Timestamp.fromMillis(Date.now()),
     updatedAt: Timestamp = createdAt,
-    wordLength: Number = content.split(" ").length
+    wordLength: number = content.split(" ").length
   ) {
     this.id = id;
     this.title = title;
