@@ -7,7 +7,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Category } from "@/types/text";
-import TextService from "@/services/textservice";
+import textService from "@/services/textservice";
 
 const Read = () => {
   const [text, setText] = useState("");
@@ -30,7 +30,7 @@ const Read = () => {
         const validCategory = category as Category;
 
         // Simulate fetching random text from Firebase
-        const randomText = await TextService.getTextsByCategory(validCategory); 
+        const randomText = await textService.getTextsByCategory(validCategory); 
 
         // This sets the first text's content or a fallback message if the category has no texts.
         setText(randomText[0]?.content || "No text found for this category.");
