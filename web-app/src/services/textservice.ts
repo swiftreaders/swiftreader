@@ -74,7 +74,5 @@ export const textService = {
   removeText,
 };
 
-const textServiceInstance = new TextService();
-
-export default textServiceInstance;
+export default textService;
 
