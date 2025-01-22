@@ -6,53 +6,54 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getFirestore, collection, getDocs } from "firebase/firestore/lite";
-import { app } from "@/firebaseConfig";
 import { Session } from "@/types/sessions";
+import { useReadingContext, ReadingSessionProvider } from "@/contexts/readingSessionsContext";
+import { Category, Difficulty } from "@/types/text";
 
-const Dashboard = () => {
+const DashboardContent = () => {
+  const { recentSessions, text, getText } = useReadingContext();
   const router = useRouter();
-  const [recentSessions, setRecentSessions] = useState<Session[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const difficulties = Object.values(Difficulty); // ["easy", "medium", "hard"]
+  const categories = Object.values(Category);     // ["nature", "science", "technology"]  
 
   // Fetching all the categories of the texts currently stored in the database
   // this useEffect will be called whenever the component mounts
-  useEffect(() => {
-    const fetchCategories = async () => {
-      const db = getFirestore(app); // Why is getFirestore needed and what does it do?
-      // Answer: `getFirestore` initializes the Firestore instance for your Firebase app.
-      // It connects your app (via `app`) to the Firestore database and allows you to perform
-      // database operations like reading, writing, and querying.
+  // useEffect(() => {
+  //   const fetchCategories = async () => {
+  //     const db = getFirestore(app); // Why is getFirestore needed and what does it do?
+  //     // Answer: `getFirestore` initializes the Firestore instance for your Firebase app.
+  //     // It connects your app (via `app`) to the Firestore database and allows you to perform
+  //     // database operations like reading, writing, and querying.
 
-      const textsCollection = collection(db, "Texts"); // Why is await not needed here?
-      // Answer: `collection` is a synchronous function. It simply creates a reference to the "Texts"
-      // collection in Firestore and does not involve a network call or any asynchronous operations.
+  //     const textsCollection = collection(db, "Texts"); // Why is await not needed here?
+  //     // Answer: `collection` is a synchronous function. It simply creates a reference to the "Texts"
+  //     // collection in Firestore and does not involve a network call or any asynchronous operations.
 
-      const textsSnapshot = await getDocs(textsCollection); // Why is await needed here?
-      // Answer: `getDocs` performs an asynchronous network request to fetch all documents
-      // in the "Texts" collection. `await` is needed to wait for the promise to resolve
-      // before continuing to process the fetched data.
+  //     const textsSnapshot = await getDocs(textsCollection); // Why is await needed here?
+  //     // Answer: `getDocs` performs an asynchronous network request to fetch all documents
+  //     // in the "Texts" collection. `await` is needed to wait for the promise to resolve
+  //     // before continuing to process the fetched data.
 
-      // Extract unique categories using a set
-      const categoriesSet = new Set<string>();
-      textsSnapshot.forEach((doc) => {
-        const data = doc.data();
-        // Only add to the set if there is a category field in the document
-        if (data.category) {
-          categoriesSet.add(data.category);
-        }
-      });
+  //     // Extract unique categories using a set
+  //     const categoriesSet = new Set<string>();
+  //     textsSnapshot.forEach((doc) => {
+  //       const data = doc.data();
+  //       // Only add to the set if there is a category field in the document
+  //       if (data.category) {
+  //         categoriesSet.add(data.category);
+  //       }
+  //     });
 
-      // Why do you need to convert set to array?
-      // Answer: A Set is an unordered collection of unique values, but it doesn't have array-like methods
-      // (e.g., `map`, `filter`). Converting the Set to an Array makes it easier to render the categories
-      // as a list in your JSX or perform other operations.
+  //     // Why do you need to convert set to array?
+  //     // Answer: A Set is an unordered collection of unique values, but it doesn't have array-like methods
+  //     // (e.g., `map`, `filter`). Converting the Set to an Array makes it easier to render the categories
+  //     // as a list in your JSX or perform other operations.
 
-      setCategories(Array.from(categoriesSet)); // Convert Set to Array
-    };
+  //     setCategories(Array.from(categoriesSet)); // Convert Set to Array
+  //   };
 
-    fetchCategories();
-  }, []);
+  //   fetchCategories();
+  // }, []);
 
   // Will both useEffects be called since there is one defined above as well?
   // Answer: Yes, both `useEffect` hooks will be called, as they are independent of each other.
@@ -64,25 +65,14 @@ const Dashboard = () => {
   // It improves readability and makes debugging easier. Keeping side effects logically grouped
   // (e.g., one for fetching categories, one for setting sessions) is a recommended approach.
 
-  // Stub for reading sessions - TODO: Replace this with Firebase call later
-  useEffect(() => {
-    const sessions = [
-      { id: 1, title: "The Art of War", date: "2025-01-12", duration: "10 min" },
-      { id: 2, title: "A Brief History of Time", date: "2025-01-10", duration: "15 min" },
-    ];
-    setRecentSessions(sessions);
-  }, []);
-
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
+  const handleNewSessionClick = () => {
+    // setSelectedCategory(category);
     // Surely if you set the category, you don't need to have the if condition below
     // as it will always be true?
     // Answer: The `if` condition is needed to handle the case where the user selects the empty
     // option (`""`). Without the condition, the app would navigate to `/read?category=` when no category
     // is selected, which might not be desirable.
-    if (category) {
-      router.push(`/read?category=${category}`);
-    }
+    router.push(`/read?category=nature`);
   };
 
   return (
@@ -105,21 +95,20 @@ const Dashboard = () => {
       </div>
 
       <div>
-        <h2 className="text-xl font-semibold mb-4">Select a Category</h2>
-        <select
-          className="p-2 border rounded-md w-full max-w-md"
-          value={selectedCategory}
-          onChange={(e) => handleCategoryChange(e.target.value)}
-        >
-          <option value="">-- Select a Category --</option>
-          {categories.map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
+        <button onClick={handleNewSessionClick}>
+          New Session
+        </button>
       </div>
     </div>
+  );
+};
+
+
+const Dashboard = () => {
+  return (
+  <ReadingSessionProvider>
+    <DashboardContent/>
+  </ReadingSessionProvider>
   );
 };
 
