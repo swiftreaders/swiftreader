@@ -1,10 +1,10 @@
 name: Run Tests
 
 on:
-  push:
+  push:  # This will trigger on pushes to any branch
     branches:
-      - "**"
-  pull_request:
+    - "*"
+  pull_request:  # This will trigger on any pull request
 
 jobs:
   test:
@@ -19,7 +19,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16' # Use the version compatible with your project
+          node-version: '16'  # Set the Node.js version compatible with your project
 
       # Install dependencies
       - name: Install dependencies
@@ -27,4 +27,4 @@ jobs:
 
       # Run Jest tests
       - name: Run tests
-        run: npx jest
+        run: npm test
