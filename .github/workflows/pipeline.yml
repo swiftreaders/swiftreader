@@ -1,10 +1,6 @@
 name: Run Tests
 
-on:
-  push:  # This will trigger on pushes to any branch
-    branches:
-    - "*"
-  pull_request:  # This will trigger on any pull request
+on: [push]
 
 jobs:
   test:
