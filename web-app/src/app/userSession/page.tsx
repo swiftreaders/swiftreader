@@ -1,7 +1,6 @@
 "use client";
 
 import { useReadingContext, ReadingSessionProvider } from "@/contexts/readingSessionsContext";
-import { Session } from "inspector/promises";
 import { useState } from "react";
 import { Category, Difficulty } from "@/types/text";
 
@@ -9,6 +8,9 @@ const UserSessionContent = () => {
   const { recentSessions, text, getText } = useReadingContext();
   const [isSettingOneEnabled, setIsSettingOneEnabled] = useState(false);
   const [isSettingTwoEnabled, setIsSettingTwoEnabled] = useState(false);
+  const [wpm, setWpm] = useState(300);
+  const [sessionStarted, setSessionStarted] = useState(false);
+  const [outputText, setOutputText] = useState("");
 
   const handleToggle = (setting: string) => {
     if (setting === "settingOne") {
@@ -18,20 +20,28 @@ const UserSessionContent = () => {
     }
   };
 
+  const handleWpmChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(event.target.value, 10);
+    if (!isNaN(value)) {
+      setWpm(value);
+    }
+  };
+
   const handleStartSession = () => {
     // TODO: Make this read the settings and provide the correct constraints
-    getText(Category.NATURE, Difficulty.MEDIUM, true, 300)
+    getText(Category.NATURE, Difficulty.MEDIUM, true, 361);
     if (text == null) {
-        alert("No texts found with those constraints");
+      alert("No texts found with those constraints");
     } else {
-        startReading(text.content);
+      setSessionStarted(true);
+      startReading(text.content);
     }
-  }
+  };
 
-  // TODO: Make this show the text line by line at a fixed wpm
+  // TODO: Call setOutputText at intervals based on the wpm, only showing one line at a time
   const startReading = (content: string) => {
-    console.log(content);
-  }
+    setOutputText(content);
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-8">
@@ -62,51 +72,71 @@ const UserSessionContent = () => {
       </div>
 
       {/* Settings Bar */}
-      <div className="flex items-center justify-between w-full max-w-lg mb-8">
+      <div className="flex items-center justify-between w-full max-w-lg mb-8 space-x-4">
         {/* Circle Settings Button */}
         <button className="h-10 w-10 rounded-full bg-gray-300 hover:bg-gray-400 transition">
           ⚙️
         </button>
 
         {/* Toggle Buttons */}
-        <div className="flex items-center space-x-4">
-          <button
-            className={`px-4 py-2 rounded ${
-              isSettingOneEnabled ? "bg-blue-500 text-white" : "bg-gray-300"
-            } hover:bg-blue-600 transition`}
-            onClick={() => handleToggle("settingOne")}
-          >
-            Setting 1
-          </button>
-          <button
-            className={`px-4 py-2 rounded ${
-              isSettingTwoEnabled ? "bg-blue-500 text-white" : "bg-gray-300"
-            } hover:bg-blue-600 transition`}
-            onClick={() => handleToggle("settingTwo")}
-          >
-            Setting 2
-          </button>
+        <button
+          className={`px-4 py-2 rounded ${
+            isSettingOneEnabled ? "bg-blue-500 text-white" : "bg-gray-300"
+          } hover:bg-blue-600 transition`}
+          onClick={() => handleToggle("settingOne")}
+        >
+          Setting 1
+        </button>
+        <button
+          className={`px-4 py-2 rounded ${
+            isSettingTwoEnabled ? "bg-blue-500 text-white" : "bg-gray-300"
+          } hover:bg-blue-600 transition`}
+          onClick={() => handleToggle("settingTwo")}
+        >
+          Setting 2
+        </button>
+
+        {/* WPM Input */}
+        <div className="flex items-center space-x-2">
+          <label htmlFor="wpmInput" className="text-sm font-medium">
+            WPM:
+          </label>
+          <input
+            id="wpmInput"
+            type="number"
+            className="border rounded px-2 py-1 w-20 text-center"
+            value={wpm}
+            onChange={handleWpmChange}
+          />
         </div>
       </div>
 
       {/* Session Start Box */}
-      <div className="w-full max-w-md bg-white shadow-md rounded-lg p-8 flex flex-col items-center">
-        <h2 className="text-lg font-semibold mb-4">Start a New Session</h2>
-        <button className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition"
-        onClick={() => handleStartSession()}>
-          Start Session
-        </button>
+      <div className="w-full flex justify-center">
+        {!sessionStarted ? (
+          <button
+            className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition"
+            onClick={handleStartSession}
+          >
+            Start Session
+          </button>
+        ) : (
+          <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner">
+            <p className="text-xl text-gray-800 whitespace-pre-wrap text-center">{outputText}</p>
+          </div>
+        )}
       </div>
+
     </div>
   );
 };
 
 const UserSession = () => {
-    return (
+  return (
     <ReadingSessionProvider>
-        <UserSessionContent/>
+      <UserSessionContent />
     </ReadingSessionProvider>
-    );
-}
+  );
+};
 
 export default UserSession;
