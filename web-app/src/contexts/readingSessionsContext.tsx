@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 // import backend functions to perform CRUD operations on the texts
-import { textService } from "@/services/textservice";
+import { sessionService } from "@/services/sessionservice";
 
 import { Text, Category, Difficulty } from "@/types/text";
 import { User } from "@/types/user";
@@ -11,7 +11,7 @@ import { Session } from "@/types/sessions"
 interface ReadingSessionsContextType {
     recentSessions: Session[];
     text: Text | undefined;
-    getText: (category: Category, difficulty: Difficulty, isFiction: boolean, length: string) => Promise<Text | undefined>;
+    getText: (category: Category, difficulty: Difficulty, isFiction: boolean, length: number) => Promise<Text | undefined>;
 }
 
 const ReadingSessionContext = createContext<
@@ -35,35 +35,30 @@ export const ReadingSessionProvider: React.FC<{
     const [recentSessions, setRecentSessions] = useState<Session[]>([]);
     const [text, setText] = useState<Text | undefined>(undefined);
 
-  // Stub for reading sessions - TODO: Replace this with Firebase call later
   useEffect(() => {
-    const sessions = [
-      new Session(
-        "1", // id
-        "text1", // textId
-        "user1", // userId
-        "The Art of War", // title
-        "2025-01-12", // date
-        "10 min" // duration
-      ),
-      new Session(
-        "2", // id
-        "text2", // textId
-        "user2", // userId
-        "A Brief History of Time", // title
-        "2025-01-10", // date
-        "15 min" // duration
-      ),
-    ];
-
-    setRecentSessions(sessions);
+    const unsubscribe = sessionService.getRecentSessions(setRecentSessions);
+    return () => unsubscribe();
   }, []);
     
     const getText = async (
         category: Category, 
         difficulty: Difficulty, 
         isFiction: boolean, 
-        length: string): Promise<Text | undefined> => { return undefined };
+        length: number): Promise<Text | undefined> => { 
+            // Dynamically build constraints based on non-null arguments
+            const constraints: { [key: string]: any } = {};
+
+            if (category != null) constraints.category = category;
+            if (difficulty != null) constraints.difficulty = difficulty;
+            if (isFiction != null) constraints.isFiction = isFiction;
+            if (length != null) constraints.wordLength = length;
+
+            const text = sessionService.getText(constraints)
+            return undefined
+
+            // TODO: Call sessionService.getText() which finds a random text based on filters given
+            // setText to set the state for text property
+         };
 
     return (
         <ReadingSessionContext.Provider

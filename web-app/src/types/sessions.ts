@@ -1,10 +1,12 @@
+import { Timestamp } from "firebase/firestore"
+
 export class Session {
     id: string;
     textId: string;
     userId: string;
     title: string;
-    date: string;  // You could use `Date` if it's a Date object
-    duration: string;
+    startTime: Timestamp;  // You could use `Date` if it's a Date object
+    endTime: Timestamp
     // + some statistics
 
     constructor(
@@ -12,15 +14,15 @@ export class Session {
       textId: string,
       userId: string,
       title: string,
-      date: string,  // You could use `Date` if it's a Date object
-      duration: string,
+      startTime: Timestamp,  // You could use `Date` if it's a Date object
+      endTime: Timestamp
     ) {
       this.id = id;
       this.textId = textId;
       this.userId = userId;
       this.title = title;
-      this.date = date;
-      this.duration = duration;
+      this.startTime = startTime;
+      this.endTime = endTime;
     }
 
   }

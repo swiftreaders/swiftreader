@@ -72,6 +72,8 @@ const DashboardContent = () => {
     // Answer: The `if` condition is needed to handle the case where the user selects the empty
     // option (`""`). Without the condition, the app would navigate to `/read?category=` when no category
     // is selected, which might not be desirable.
+
+    //TODO: Change this to route to a new sessions page
     router.push(`/read?category=nature`);
   };
 
@@ -82,13 +84,15 @@ const DashboardContent = () => {
       <div className="mb-6">
         <h2 className="text-xl font-semibold mb-4">Recent Reading Sessions</h2>
         <ul className="bg-white shadow-md rounded-lg p-4">
+          {/* {recentSessions.map((session) => (<div>A Sessions</div>))} */}
           {recentSessions.map((session) => (
             <li
               key={session.id}
               className="flex justify-between items-center border-b last:border-b-0 py-2"
             >
               <span>{session.title}</span>
-              <span className="text-gray-500 text-sm">{session.date} - {session.duration}</span>
+              <span className="text-gray-500 text-sm">{session.startTime.toDate().toString()}</span>
+              <span className="text-gray-500 text-sm">{session.endTime.toDate().toString()}</span>
             </li>
           ))}
         </ul>
