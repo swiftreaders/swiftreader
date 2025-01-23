@@ -74,7 +74,7 @@ const DashboardContent = () => {
     // is selected, which might not be desirable.
 
     //TODO: Change this to route to a new sessions page
-    router.push(`/read?category=nature`);
+    router.push(`/userSession`);
   };
 
   return (
