@@ -1,8 +1,12 @@
 "use client";
 
+import { useReadingContext, ReadingSessionProvider } from "@/contexts/readingSessionsContext";
+import { Session } from "inspector/promises";
 import { useState } from "react";
+import { Category, Difficulty } from "@/types/text";
 
-const UserSession = () => {
+const UserSessionContent = () => {
+  const { recentSessions, text, getText } = useReadingContext();
   const [isSettingOneEnabled, setIsSettingOneEnabled] = useState(false);
   const [isSettingTwoEnabled, setIsSettingTwoEnabled] = useState(false);
 
@@ -13,6 +17,21 @@ const UserSession = () => {
       setIsSettingTwoEnabled(!isSettingTwoEnabled);
     }
   };
+
+  const handleStartSession = () => {
+    // TODO: Make this read the settings and provide the correct constraints
+    getText(Category.NATURE, Difficulty.MEDIUM, true, 300)
+    if (text == null) {
+        alert("No texts found with those constraints");
+    } else {
+        startReading(text.content);
+    }
+  }
+
+  // TODO: Make this show the text line by line at a fixed wpm
+  const startReading = (content: string) => {
+    console.log(content);
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-8">
@@ -73,12 +92,21 @@ const UserSession = () => {
       {/* Session Start Box */}
       <div className="w-full max-w-md bg-white shadow-md rounded-lg p-8 flex flex-col items-center">
         <h2 className="text-lg font-semibold mb-4">Start a New Session</h2>
-        <button className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition">
+        <button className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition"
+        onClick={() => handleStartSession()}>
           Start Session
         </button>
       </div>
     </div>
   );
 };
+
+const UserSession = () => {
+    return (
+    <ReadingSessionProvider>
+        <UserSessionContent/>
+    </ReadingSessionProvider>
+    );
+}
 
 export default UserSession;

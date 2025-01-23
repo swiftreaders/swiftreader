@@ -10,8 +10,8 @@ import { Session } from "@/types/sessions"
 
 interface ReadingSessionsContextType {
     recentSessions: Session[];
-    text: Text | undefined;
-    getText: (category: Category, difficulty: Difficulty, isFiction: boolean, length: number) => Promise<Text | undefined>;
+    text: Text | null;
+    getText: (category: Category, difficulty: Difficulty, isFiction: boolean, length: number) => void;
 }
 
 const ReadingSessionContext = createContext<
@@ -33,7 +33,7 @@ export const ReadingSessionProvider: React.FC<{
   }> = ({ children }) => { 
     
     const [recentSessions, setRecentSessions] = useState<Session[]>([]);
-    const [text, setText] = useState<Text | undefined>(undefined);
+    const [text, setText] = useState<Text | null>(null);
 
   useEffect(() => {
     const unsubscribe = sessionService.getRecentSessions(setRecentSessions);
@@ -44,7 +44,7 @@ export const ReadingSessionProvider: React.FC<{
         category: Category, 
         difficulty: Difficulty, 
         isFiction: boolean, 
-        length: number): Promise<Text | undefined> => { 
+        length: number) => { 
             // Dynamically build constraints based on non-null arguments
             const constraints: { [key: string]: any } = {};
 
@@ -53,11 +53,8 @@ export const ReadingSessionProvider: React.FC<{
             if (isFiction != null) constraints.isFiction = isFiction;
             if (length != null) constraints.wordLength = length;
 
-            const text = sessionService.getText(constraints)
-            return undefined
-
-            // TODO: Call sessionService.getText() which finds a random text based on filters given
-            // setText to set the state for text property
+            const text = await sessionService.getText(constraints)
+            setText(text)
          };
 
     return (
