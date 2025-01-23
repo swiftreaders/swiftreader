@@ -21,12 +21,15 @@ jobs:
 
       # Switch to web-app directory
       - name: Enter web-app
+        working-directory: ./web-app
         run: cd web-app
 
       # Install dependencies
       - name: Install dependencies
+        working-directory: ./web-app  
         run: npm install
 
       # Run Jest tests
       - name: Run tests
+        working-directory: ./web-app
         run: npm test
