@@ -20,9 +20,9 @@ jobs:
           node-version: '16'  # Set the Node.js version compatible with your project
 
       # Switch to web-app directory
-      - name: Enter web-app
-        working-directory: ./web-app
-        run: cd web-app
+      # - name: Enter web-app
+      #   working-directory: ./web-app
+      #   run: cd web-app
 
       # Install dependencies
       - name: Install dependencies
