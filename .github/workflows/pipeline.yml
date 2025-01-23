@@ -17,12 +17,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'  # Set the Node.js version compatible with your project
-
-      # Switch to web-app directory
-      # - name: Enter web-app
-      #   working-directory: ./web-app
-      #   run: cd web-app
+          node-version: '20'  
 
       # Install dependencies
       - name: Install dependencies
