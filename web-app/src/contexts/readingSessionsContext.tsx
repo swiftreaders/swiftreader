@@ -6,10 +6,10 @@ import { textService } from "@/services/textservice";
 import { Text, Category, Difficulty } from "@/types/text";
 import { User } from "@/types/user";
 import { userService } from "@/services/userservice";
-import { Session } from "@/types/sessions"
+import { SavedSession } from "@/types/sessions"
 
 interface ReadingSessionsContextType {
-    recentSessions: Session[];
+    recentSessions: SavedSession[];
     text: Text | undefined;
     getText: (category: Category, difficulty: Difficulty, isFiction: boolean, length: string) => Promise<Text | undefined>;
 }
@@ -32,27 +32,33 @@ export const ReadingSessionProvider: React.FC<{
     children: React.ReactNode;
   }> = ({ children }) => { 
     
-    const [recentSessions, setRecentSessions] = useState<Session[]>([]);
+    const [recentSessions, setRecentSessions] = useState<SavedSession[]>([]);
     const [text, setText] = useState<Text | undefined>(undefined);
 
   // Stub for reading sessions - TODO: Replace this with Firebase call later
   useEffect(() => {
     const sessions = [
-      new Session(
-        "1", // id
-        "text1", // textId
-        "user1", // userId
-        "The Art of War", // title
-        "2025-01-12", // date
-        "10 min" // duration
-      ),
-      new Session(
-        "2", // id
-        "text2", // textId
-        "user2", // userId
-        "A Brief History of Time", // title
-        "2025-01-10", // date
-        "15 min" // duration
+      new SavedSession(
+        "1", // sessionId
+        "testText1", // text id
+        "testUser1", // user id
+        "Test Text 1", // text title
+        "2022-01-01", // date  
+        30, // test duration
+        Array(6).fill(120), // wpm
+        "mode 1", // session type
+        "easy", // difficulty
+      ), 
+      new SavedSession(
+        "2", // sessionId
+        "testText2", // text id
+        "testUser2", // user id
+        "Test Text 2", // text title
+        "2022-01-02", // date  
+        60, // test duration
+        Array(12).fill(120), // wpm
+        "mode 2", // session type
+        "medium", // difficulty
       ),
     ];
 
