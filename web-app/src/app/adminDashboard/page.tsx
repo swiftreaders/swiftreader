@@ -4,11 +4,13 @@ import { useState, useEffect } from "react";
 import { useAdminDashboard, AdminDashboardProvider } from "@/contexts/adminDashboardContext";
 import { useRouter } from "next/navigation";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-// import {  } from "@/services/textservice";
 
 const AdminDashboardContent = () => {
   const { texts, users, removeUser } = useAdminDashboard(); 
   const [userMetrics, setUserMetrics] = useState({ totalUsers: 0, newUsers: 0 });
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [sortBy, setSortBy] = useState({ readingSessions: false, dateJoined: false });
   const router = useRouter();
 
   useEffect(() => {
@@ -17,7 +19,25 @@ const AdminDashboardContent = () => {
     setUserMetrics({ totalUsers, newUsers });
   }, [users]);
 
-  // Mock data for charts
+  const handleManageClick = (user) => {
+    setSelectedUser(user);
+    setIsPopupOpen(true);
+  };
+
+  const handleSort = (key) => {
+    setSortBy(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const sortedUsers = [...users].sort((a, b) => {
+    // if (sortBy.readingSessions) {
+    //   return b.readingSessions - a.readingSessions;
+    // }
+    if (sortBy.dateJoined) {
+      return new Date(a.joinDate.toDate()).getTime() - new Date(b.joinDate.toDate()).getTime();
+    }
+    return 0;
+  });
+
   const userTrendData = [
     { month: "Jan", newUsers: 30 },
     { month: "Feb", newUsers: 50 },
@@ -39,7 +59,6 @@ const AdminDashboardContent = () => {
     <div className="min-h-screen p-8 bg-gray-100">
       <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
 
-      {/* Button to Manage Texts */}
       <div className="mb-6">
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
@@ -49,7 +68,6 @@ const AdminDashboardContent = () => {
         </button>
       </div>
 
-      {/* Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white shadow-md rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-2">Total Users</h2>
@@ -61,9 +79,7 @@ const AdminDashboardContent = () => {
         </div>
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {/* User Growth Trend */}
         <div className="bg-white shadow-md rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4">User Growth Trend</h2>
           <ResponsiveContainer width="100%" height={300}>
@@ -77,7 +93,6 @@ const AdminDashboardContent = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* User Performance */}
         <div className="bg-white shadow-md rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4">User Performance</h2>
           <ResponsiveContainer width="100%" height={300}>
@@ -92,9 +107,16 @@ const AdminDashboardContent = () => {
         </div>
       </div>
 
-      {/* User Table */}
       <div className="bg-white shadow-md rounded-lg p-6">
         <h2 className="text-lg font-semibold mb-4">User Details</h2>
+        <div className="mb-4">
+          <button
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition"
+            onClick={() => handleSort('dateJoined')}
+          >
+            Sort by Date Joined
+          </button>
+        </div>
         <table className="min-w-full table-auto border-collapse border border-gray-200">
           <thead className="bg-gray-100">
             <tr>
@@ -105,17 +127,17 @@ const AdminDashboardContent = () => {
             </tr>
           </thead>
           <tbody>
-            {users.map((user, index) => (
+            {sortedUsers.map((user, index) => (
               <tr key={index} className="hover:bg-gray-50">
                 <td className="border border-gray-300 px-4 py-2">{user.name}</td>
                 <td className="border border-gray-300 px-4 py-2">{user.wpm}</td>
                 <td className="border border-gray-300 px-4 py-2">{user.joinDate.toDate().toLocaleDateString()}</td>
                 <td className="border border-gray-300 px-4 py-2 text-center">
                   <button
-                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
-                    onClick={() => removeUser(user.id)} // Assuming removeUser takes the user ID
+                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
+                    onClick={() => handleManageClick(user)}
                   >
-                    Remove
+                    Manage
                   </button>
                 </td>
               </tr>
@@ -123,6 +145,33 @@ const AdminDashboardContent = () => {
           </tbody>
         </table>
       </div>
+
+      {isPopupOpen && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">Manage User: {selectedUser.name}</h2>
+            <p>WPM: {selectedUser.wpm}</p>
+            <p>Join Date: {selectedUser.joinDate.toDate().toLocaleDateString()}</p>
+            <div className="mt-4">
+              <button
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+                onClick={() => {
+                  removeUser(selectedUser.id);
+                  setIsPopupOpen(false);
+                }}
+              >
+                Remove User
+              </button>
+              <button
+                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition ml-2"
+                onClick={() => setIsPopupOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
