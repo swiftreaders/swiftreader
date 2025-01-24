@@ -1,4 +1,4 @@
-import { userService } from "@/services/userService";
+import { userService } from "@/services/userservice";
 import { getFirestore, collection, doc, onSnapshot, deleteDoc, updateDoc } from "firebase/firestore";
 
 // Mock Firebase Firestore functions
