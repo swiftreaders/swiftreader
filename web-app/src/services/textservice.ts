@@ -1,80 +1,97 @@
 import {
   getFirestore,
   collection,
-  getDocs,
-  query,
-  where,
-  Timestamp,
+  doc,
+  onSnapshot,
   addDoc,
-} from "firebase/firestore/lite";
+  updateDoc,
+  deleteDoc,
+  Timestamp,
+  DocumentData,
+} from "firebase/firestore";
 import { app } from "../../firebase.config";
-import { Category, Difficulty } from "@/types/text";
+import { Category, Text } from "@/types/text";
+import { getDocs, query, where } from "firebase/firestore/lite";
 
-export class TextService {
-  private db;
+const db = getFirestore(app);
 
-  constructor() {
-    this.db = getFirestore(app);
-  }
-
-  async getTexts() {
-    const textsCol = collection(this.db, "Texts");
-    const textsSnapshot = await getDocs(textsCol);
-    const textsList = textsSnapshot.docs.map((doc) => doc.data());
-    console.log(textsList);
-    return textsList;
-  }
-
-  async getTextsByCategory(category: Category) {
-    const q = query(
-      collection(this.db, "Texts"),
-      where("category", "==", category)
-    );
-    const querySnapshot = await getDocs(q);
-    const textsList = querySnapshot.docs.map((doc) => doc.data());
-    // console.log(textsList);
-    textsList.forEach((text) => {
-      console.log(text.title);
+const getTexts = (onUpdate: (texts: Text[]) => void) => {
+  const unsubscribe = onSnapshot(collection(db, "Texts"), (snapshot) => {
+    const texts = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return new Text(
+        data.title,
+        data.category,
+        data.content,
+        data.difficulty,
+        data.isFiction,
+        doc.id,
+        data.createdAt,
+        data.updatedAt,
+        data.wordLength
+      );
     });
-    return textsList;
+    onUpdate(texts);
+  });
+
+  return unsubscribe;
+};
+
+const getTextsByCategory = async (
+  category: Category
+): Promise<DocumentData[]> => {
+  const q = query(collection(db, "Texts"), where("category", "==", category));
+  const querySnapshot = await getDocs(q);
+  const textsList = querySnapshot.docs.map((doc) => doc.data());
+  // console.log(textsList);
+  textsList.forEach((text) => {
+    console.log(text.title);
+  });
+  return textsList;
+};
+
+const addText = async (text: Text): Promise<boolean> => {
+  try {
+    await addDoc(collection(db, "Texts"), text.toJSON());
+    return true;
+  } catch (error) {
+    console.error("Error adding text:", error);
+    return false;
   }
+};
 
-  // async getTextsByUserId(userId: string) {}
-
-  async getTextsByDifficulty(difficulty: Difficulty) {}
-
-  async getRandomText(category: Category, difficulty: Difficulty) {}
-
-  /// Add a text to the database
-  async addText(
-    category_: Category,
-    content_: string,
-    difficulty_: Difficulty,
-    title_: string
-  ) {
-    const createdAt_ = Timestamp.now();
-    const wordLength_ = content_.split(" ").length;
-
-    try {
-      const docRef = await addDoc(collection(this.db, "Texts"), {
-        title: title_,
-        content: content_,
-        category: category_,
-        createdAt: createdAt_,
-        updatedAt: createdAt_,
-        difficulty: difficulty_,
-        status: "approved",
-        wordLength: wordLength_,
-      });
-      console.log("Document written with ID: ", docRef.id);
-    } catch (error) {
-      console.error("Error adding document: ", error);
-    }
+const updateText = async (content: string, id: string): Promise<boolean> => {
+  try {
+    const wordLength = content.split(/\s+/).length;
+    const timestamp = Timestamp.fromMillis(Date.now());
+    await updateDoc(doc(db, "Texts", id), {
+      content: content,
+      wordLength: wordLength,
+      updatedAt: timestamp,
+    });
+    return true;
+  } catch (error) {
+    console.error("Error updating text:", error);
+    return false;
   }
+};
 
-  async deleteText(textId: string) {}
-}
+const removeText = async (id: string): Promise<boolean> => {
+  try {
+    await deleteDoc(doc(db, "Texts", id));
+    return true;
+  } catch (error) {
+    console.error("Error removing text:", error);
+    return false;
+  }
+};
 
-const textServiceInstance = new TextService();
+export const textService = {
+  getTexts,
+  addText,
+  updateText,
+  removeText,
+  getTextsByCategory,
+};
 
-export default textServiceInstance;
+export default textService;
