@@ -1,12 +1,14 @@
 export default {
-    preset: "ts-jest",
-    testEnvironment: "jsdom", // Use "jsdom" for frontend tests
-    roots: ["<rootDir>/src", "<rootDir>/__tests__"],
-    moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json"],
+    preset: "ts-jest", // Use ts-jest for TypeScript support
+    testEnvironment: "jest-environment-jsdom", // Use jsdom for React testing
     transform: {
-      "^.+\\.tsx?$": "ts-jest",
+      "^.+\\.(ts|tsx)$": "ts-jest", // Use ts-jest to handle TypeScript files
+      "^.+\\.(js|jsx)$": "babel-jest", // Use babel-jest to handle JavaScript/JSX files
     },
-    testMatch: ["**/__tests__/**/*.test.(ts|tsx)"], // Look for .test.ts/.test.tsx files in __tests__
-    collectCoverage: true, // Optional: Enable coverage reports
+    moduleFileExtensions: ["ts", "tsx", "js", "jsx"],
+    moduleNameMapper: {
+      "\\.(css|less|scss|sass)$": "identity-obj-proxy", // Mock CSS imports
+    },
+    setupFilesAfterEnv: ["@testing-library/jest-dom"], // Add jest-dom matchers
   };
   

@@ -1,17 +1,17 @@
 import { render, screen } from "@testing-library/react";
 import Home from "../src/app/page"; // Adjust the path based on your structure
-import '@testing-library/jest-dom';
+import "@testing-library/jest-dom";
 
 describe("Home Page", () => {
   test("renders the page title", () => {
     render(<Home />);
-    const titleElement = screen.getByText(/src\/app\/page\.tsx/i);
+    const titleElement = screen.getByText("Test Dashboard");
     expect(titleElement).toBeInTheDocument();
   });
 
-  test("renders the buttons", () => {
+  test("renders the list of texts", () => {
     render(<Home />);
-    const buttons = screen.getAllByRole("button");
-    expect(buttons.length).toBeGreaterThan(0);
+    const listItems = screen.getAllByRole("listitem");
+    expect(listItems.length).toBeGreaterThan(0);
   });
 });
