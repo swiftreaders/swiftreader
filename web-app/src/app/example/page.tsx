@@ -24,12 +24,14 @@ const DashboardContent = () => {
   );
 };
 
-export const TestDashboard = () => {
+const TestDashboard = () => {
   return (
     <TestDashboardProvider>
       <DashboardContent />
     </TestDashboardProvider>
   );
 };
+
+
 
 export default TestDashboard;

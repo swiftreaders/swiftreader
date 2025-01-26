@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import { TestDashboard } from "../src/app/example/page";
+import TestDashboard from "@/app/example/page";
 import { TestDashboardProvider } from "@/contexts/exampleContext";
 import React from "react";
 
