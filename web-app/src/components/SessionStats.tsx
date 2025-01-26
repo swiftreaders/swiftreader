@@ -58,7 +58,7 @@ export const SessionStats = ({ session, onClose }: SessionStatsProps) => {
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-2xl font-bold">{session.title}</h3>
-        <p className="text-gray-600">{session.date}</p>
+        <p className="text-gray-600">{session.startTime.toDate().toLocaleDateString()}</p>
       </div>
 
       {/* Content Grid */}

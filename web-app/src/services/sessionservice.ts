@@ -33,9 +33,10 @@ const getRecentSessions = (onUpdate: (sessions: Session[]) => void) => {
 
   // Set up the Firestore real-time listener
   const unsubscribe = onSnapshot(recentSessionsQuery, (snapshot) => {
+
     const sessions = snapshot.docs.map((doc) => {
       const data = doc.data();
-
+      
       // Create a new `Session` instance using the constructor
       return new Session(
         doc.id,
@@ -43,7 +44,10 @@ const getRecentSessions = (onUpdate: (sessions: Session[]) => void) => {
         data.userId,
         data.title, // Default to "Untitled" if `title` is missing
         data.startTime,
-        data.endTime
+        data.endTime,
+        data.wpm,
+        data.sessionType,
+        data.difficulty,
       );
     });
 
