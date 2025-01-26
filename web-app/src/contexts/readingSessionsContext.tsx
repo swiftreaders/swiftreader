@@ -1,17 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 // import backend functions to perform CRUD operations on the texts
-import { textService } from "@/services/textservice";
+import { sessionService } from "@/services/sessionservice";
 
 import { Text, Category, Difficulty } from "@/types/text";
-import { User } from "@/types/user";
-import { userService } from "@/services/userservice";
 import { Session } from "@/types/sessions"
 
 interface ReadingSessionsContextType {
     recentSessions: Session[];
-    text: Text | undefined;
-    getText: (category: Category, difficulty: Difficulty, isFiction: boolean, length: string) => Promise<Text | undefined>;
+    text: Text | null;
+    getText: (category: Category, difficulty: Difficulty, isFiction: boolean, length: number) => void;
 }
 
 const ReadingSessionContext = createContext<
@@ -33,37 +31,29 @@ export const ReadingSessionProvider: React.FC<{
   }> = ({ children }) => { 
     
     const [recentSessions, setRecentSessions] = useState<Session[]>([]);
-    const [text, setText] = useState<Text | undefined>(undefined);
+    const [text, setText] = useState<Text | null>(null);
 
-  // Stub for reading sessions - TODO: Replace this with Firebase call later
   useEffect(() => {
-    const sessions = [
-      new Session(
-        "1", // id
-        "text1", // textId
-        "user1", // userId
-        "The Art of War", // title
-        "2025-01-12", // date
-        "10 min" // duration
-      ),
-      new Session(
-        "2", // id
-        "text2", // textId
-        "user2", // userId
-        "A Brief History of Time", // title
-        "2025-01-10", // date
-        "15 min" // duration
-      ),
-    ];
-
-    setRecentSessions(sessions);
+    const unsubscribe = sessionService.getRecentSessions(setRecentSessions);
+    return () => unsubscribe();
   }, []);
     
     const getText = async (
         category: Category, 
         difficulty: Difficulty, 
         isFiction: boolean, 
-        length: string): Promise<Text | undefined> => { return undefined };
+        length: number) => { 
+            // Dynamically build constraints based on non-null arguments
+            const constraints: { [key: string]: any } = {};
+
+            if (category != null) constraints.category = category;
+            if (difficulty != null) constraints.difficulty = difficulty;
+            if (isFiction != null) constraints.isFiction = isFiction;
+            if (length != null) constraints.wordLength = length;
+
+            const text = await sessionService.getText(constraints)
+            setText(text)
+         };
 
     return (
         <ReadingSessionContext.Provider
