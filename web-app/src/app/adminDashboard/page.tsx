@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import { useAdminDashboard, AdminDashboardProvider } from "@/contexts/adminDashboardContext";
 import { useRouter } from "next/navigation";
+import { User } from "@/types/user";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const AdminDashboardContent = () => {
   const { texts, users, removeUser } = useAdminDashboard(); 
   const [userMetrics, setUserMetrics] = useState({ totalUsers: 0, newUsers: 0 });
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [sortBy, setSortBy] = useState({ readingSessions: false, dateJoined: false });
   const router = useRouter();
 
@@ -19,13 +20,13 @@ const AdminDashboardContent = () => {
     setUserMetrics({ totalUsers, newUsers });
   }, [users]);
 
-  const handleManageClick = (user) => {
+  const handleManageClick = (user: User) => {
     setSelectedUser(user);
     setIsPopupOpen(true);
   };
 
-  const handleSort = (key) => {
-    setSortBy(prev => ({ ...prev, [key]: !prev[key] }));
+  const handleSort = () => {
+    setSortBy(prev => ({ ...prev, ["dateJoined"]: !prev["dateJoined"] }));
   };
 
   const sortedUsers = [...users].sort((a, b) => {
@@ -112,7 +113,7 @@ const AdminDashboardContent = () => {
         <div className="mb-4">
           <button
             className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition"
-            onClick={() => handleSort('dateJoined')}
+            onClick={() => handleSort()}
           >
             Sort by Date Joined
           </button>

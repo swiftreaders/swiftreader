@@ -1,4 +1,4 @@
-export class SavedSession {
+export class Session {
   id: string;
   textId: string;  // - retrievable using Text Service
   userId: string;  
@@ -9,7 +9,7 @@ export class SavedSession {
   // Statistics
   wpm: Array<number>;  // wpm at 5 second intervals for the duration of the session
   average_wpm: number;
-  sessionType: string;
+  sessionType: number;
   difficulty: string;
   text_average_performance: number;
 
@@ -21,7 +21,7 @@ export class SavedSession {
     date: string,  
     duration: number,
     wpm: Array<number>,
-    sessionType: string,
+    sessionType: number,
     difficulty: string,
   ) {
     this.id = id;

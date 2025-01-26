@@ -3,13 +3,13 @@
 
 import { Chart, LinearScale, CategoryScale, LineController, LineElement, PointElement } from 'chart.js';
 import { useEffect, useRef } from 'react';
-import { SavedSession } from '@/types/sessions';
+import { Session } from '@/types/sessions';
 
 // Register Chart.js components once
 Chart.register(LinearScale, CategoryScale, LineController, LineElement, PointElement);
 
 interface SessionStatsProps {
-  session: SavedSession;
+  session: Session;
   onClose?: () => void; // Optional close handler for popup usage
 }
 
