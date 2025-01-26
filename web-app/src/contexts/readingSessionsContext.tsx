@@ -4,8 +4,6 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { sessionService } from "@/services/sessionservice";
 
 import { Text, Category, Difficulty } from "@/types/text";
-import { User } from "@/types/user";
-import { userService } from "@/services/userservice";
 import { Session } from "@/types/sessions"
 
 interface ReadingSessionsContextType {
