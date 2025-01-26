@@ -1,14 +1,16 @@
-export default {
-    preset: "ts-jest", // Use ts-jest for TypeScript support
-    testEnvironment: "jest-environment-jsdom", // Use jsdom for React testing
-    transform: {
-      "^.+\\.(ts|tsx)$": "ts-jest", // Use ts-jest to handle TypeScript files
-      "^.+\\.(js|jsx)$": "babel-jest", // Use babel-jest to handle JavaScript/JSX files
+module.exports = {
+  preset: "ts-jest",
+  testEnvironment: "jsdom",
+  moduleNameMapper: {
+    "^@/(.*)$": "<rootDir>/src/$1", // Map @/ to ./src/
+  },
+  transform: {
+    "^.+\\.(ts|tsx)$": "babel-jest", // Use Babel to transform TypeScript and JSX
+  },
+  setupFilesAfterEnv: ["@testing-library/jest-dom"], // Updated path
+  globals: {
+    "ts-jest": {
+      tsconfig: "tsconfig.json", // Point to your tsconfig file
     },
-    moduleFileExtensions: ["ts", "tsx", "js", "jsx"],
-    moduleNameMapper: {
-      "\\.(css|less|scss|sass)$": "identity-obj-proxy", // Mock CSS imports
-    },
-    setupFilesAfterEnv: ["@testing-library/jest-dom"], // Add jest-dom matchers
-  };
-  
+  },
+};

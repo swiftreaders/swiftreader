@@ -10,7 +10,7 @@ const DashboardContent = () => {
   const { texts } = useTestDashboard();
 
   return (
-    <>
+    <div>
       <h1>Test Dashboard</h1>
       <ul>
         {texts.map((text) => (
@@ -20,11 +20,11 @@ const DashboardContent = () => {
           </li>
         ))}
       </ul>
-    </>
+    </div>
   );
 };
 
-const TestDashboard = () => {
+export const TestDashboard = () => {
   return (
     <TestDashboardProvider>
       <DashboardContent />

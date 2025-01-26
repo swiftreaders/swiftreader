@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Category } from "@/types/text";
-import textService from "@/services/textervice";
+import textService from "@/services/textservice";
 
 const Read = () => {
   const [text, setText] = useState("");
