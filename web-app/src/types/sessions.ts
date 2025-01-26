@@ -6,7 +6,8 @@ export class Session {
     userId: string;
     title: string;
     startTime: Timestamp;  // You could use `Date` if it's a Date object
-    endTime: Timestamp
+    endTime: Timestamp;
+    duration: number
     // + some statistics
 
     constructor(
@@ -15,7 +16,7 @@ export class Session {
       userId: string,
       title: string,
       startTime: Timestamp,  // You could use `Date` if it's a Date object
-      endTime: Timestamp
+      endTime: Timestamp,
     ) {
       this.id = id;
       this.textId = textId;
@@ -23,6 +24,7 @@ export class Session {
       this.title = title;
       this.startTime = startTime;
       this.endTime = endTime;
+      this.duration = (endTime.toMillis() - startTime.toMillis()) / 1000
     }
 
   }
