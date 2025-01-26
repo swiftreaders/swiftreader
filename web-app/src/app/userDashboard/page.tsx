@@ -34,7 +34,16 @@ const DashboardContent = () => {
   const progressPercentage = (totalReadingTime / readingGoal) * 100;
 
   const handleNewSessionClick = () => {
-    router.push(`/read?category=nature`);
+
+    // setSelectedCategory(category);
+    // Surely if you set the category, you don't need to have the if condition below
+    // as it will always be true?
+    // Answer: The `if` condition is needed to handle the case where the user selects the empty
+    // option (`""`). Without the condition, the app would navigate to `/read?category=` when no category
+    // is selected, which might not be desirable.
+
+    router.push(`/userSession`);
+
   };
 
   const handleSetGoalClick = () => {
@@ -132,7 +141,7 @@ const DashboardContent = () => {
               onClick={() => setSelectedSession(session)}
             >
               <span>{session.title}</span>
-              <span className="text-gray-500 text-sm">{session.date} - {session.duration} minutes</span>
+              <span className="text-gray-500 text-sm">{session.startTime.toDate().toLocaleTimeString()} - {session.duration} minutes</span>
             </li>
           ))}
         </ul>

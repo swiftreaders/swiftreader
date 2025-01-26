@@ -7,13 +7,15 @@ import {
   updateDoc,
   deleteDoc,
   Timestamp,
-  DocumentData
+  DocumentData,
+  getDocs,
+  query, 
+  where
 } from "firebase/firestore";
-import { app } from "@/firebaseConfig";
+import { app, db } from "@/firebaseConfig";
 import { Category, Text } from "@/types/text";
-import { getDocs, query, where } from "firebase/firestore/lite";
 
-const db = getFirestore(app);
+// const db = getFirestore(app);
 
 export const textService = {
   getTexts: (onUpdate: (texts: Text[]) => void) => {

@@ -1,16 +1,18 @@
+import { Timestamp } from "firebase/firestore"
+
 export class Session {
   id: string;
-  textId: string;  // - retrievable using Text Service
-  userId: string;  
-  title: string; // text-title 
-  date: string;  // You could use `Date` if it's a Date object
-  duration: number;  // [30 sec, 60secs, 120 secs]
+  textId: string;
+  userId: string;
+  title: string;
+  startTime: Timestamp;  
+  endTime: Timestamp;
+  duration: number
 
-  // Statistics
   wpm: Array<number>;  // wpm at 5 second intervals for the duration of the session
-  average_wpm: number;
+  average_wpm: number; 
   sessionType: number;
-  difficulty: string;
+  difficulty: string;  // easy, medium, hard
   text_average_performance: number;
 
   constructor(
@@ -18,8 +20,8 @@ export class Session {
     textId: string,
     userId: string,
     title: string,
-    date: string,  
-    duration: number,
+    startTime: Timestamp,  // You could use `Date` if it's a Date object
+    endTime: Timestamp, 
     wpm: Array<number>,
     sessionType: number,
     difficulty: string,
@@ -28,8 +30,9 @@ export class Session {
     this.textId = textId;
     this.userId = userId;
     this.title = title;
-    this.date = date;
-    this.duration = duration;
+    this.startTime = startTime;
+    this.endTime = endTime;
+    this.duration = (endTime.toMillis() - startTime.toMillis()) / 1000;
     this.wpm = wpm;
     this.average_wpm = wpm.reduce((a, b) => a + b, 0) / wpm.length;
     this.sessionType = sessionType;
