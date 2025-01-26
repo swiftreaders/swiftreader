@@ -5,12 +5,7 @@ module.exports = {
     "^@/(.*)$": "<rootDir>/src/$1", // Map @/ to ./src/
   },
   transform: {
-    "^.+\\.(ts|tsx)$": "babel-jest", // Use Babel to transform TypeScript and JSX
+    "^.+\\.(t|j)sx?$": ["@swc/jest"],
   },
-  setupFilesAfterEnv: ["@testing-library/jest-dom"], // Updated path
-  globals: {
-    "ts-jest": {
-      tsconfig: "tsconfig.json", // Point to your tsconfig file
-    },
-  },
+  setupFilesAfterEnv: ["@testing-library/jest-dom"], // Optional: for React Testing Library
 };
