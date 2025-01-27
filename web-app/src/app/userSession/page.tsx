@@ -10,7 +10,7 @@ const UserSessionContent = () => {
   const [isSettingTwoEnabled, setIsSettingTwoEnabled] = useState(false);
   const [wpm, setWpm] = useState(300);
   const [sessionStarted, setSessionStarted] = useState(false);
-  const [outputText, setOutputText] = useState("");
+  const [outputLines, setOutputLines] = useState<string[]>([]);
   const [requested, setRequested] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -29,11 +29,47 @@ const UserSessionContent = () => {
     }
   };
 
+  const calculateCharsPerLine = () => {
+    const containerWidth = window.innerWidth;
+    const fontSize = 32; // Example font size in pixels
+    const charWidth = fontSize * 0.6; // Estimate: 0.6x font size
+    return Math.floor(containerWidth / charWidth);
+  };
+
+  const splitTextIntoLines = (content: string) => {
+    const charsPerLine = calculateCharsPerLine();
+    const paragraphs = content.split("\n\n"); // Split content into paragraphs (two newlines)
+    const lines: string[] = [];
+  
+    paragraphs.forEach((paragraph) => {
+      const words = paragraph.split(" "); // Split paragraph into words
+      let currentLine = "";
+  
+      words.forEach((word) => {
+        if ((currentLine + word).length <= charsPerLine) {
+          currentLine += (currentLine ? " " : "") + word;
+        } else {
+          if (currentLine) {
+            lines.push(currentLine); // Push the current line to the array
+          }
+          currentLine = word; // Start a new line with the current word
+        }
+      });
+  
+      if (currentLine) {
+        lines.push(currentLine); // Add the last line of the paragraph
+      }
+    });
+  
+    return lines;
+  };
+  
+
   const handleStartSession = async () => {
     setLoading(true);
     setRequested(true);
     // TODO: Make this read the settings
-    getText(Category.NATURE, Difficulty.MEDIUM, true, 200, setLoading);
+    getText(Category.NATURE, Difficulty.MEDIUM, true, 300, setLoading);
   };
 
   useEffect(() => {
@@ -50,7 +86,8 @@ const UserSessionContent = () => {
 
   const startReading = (content: string) => {
     // TODO: make this output line by line
-    setOutputText(content);
+    const lines = splitTextIntoLines(content);
+    setOutputLines(lines);
   };
 
   return (
@@ -136,7 +173,9 @@ const UserSessionContent = () => {
           </div>
         ) : sessionStarted ? (
           <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner">
-            <p className="text-xl text-gray-800 whitespace-pre-wrap text-center">{outputText}</p>
+            <p className="text-4xl text-gray-800 whitespace-pre-wrap text-center leading-relaxed">
+              {outputLines[3]}
+            </p>
           </div>
         ) : null}
       </div>
