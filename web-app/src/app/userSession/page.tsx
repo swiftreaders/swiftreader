@@ -10,7 +10,7 @@ const UserSessionContent = () => {
   const [isSettingTwoEnabled, setIsSettingTwoEnabled] = useState(false);
   const [wpm, setWpm] = useState(300);
   const [sessionStarted, setSessionStarted] = useState(false);
-  const [outputLines, setOutputLines] = useState<string[]>([]);
+  const [outputLine, setOutputLine] = useState<string>("")
   const [requested, setRequested] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -38,7 +38,7 @@ const UserSessionContent = () => {
 
   const splitTextIntoLines = (content: string) => {
     const charsPerLine = calculateCharsPerLine();
-    const paragraphs = content.split("\n\n"); // Split content into paragraphs (two newlines)
+    const paragraphs = content.split("\n"); // Split content into paragraphs (two newlines)
     const lines: string[] = [];
   
     paragraphs.forEach((paragraph) => {
@@ -63,6 +63,14 @@ const UserSessionContent = () => {
   
     return lines;
   };
+
+  // Assumes a standard word length of 5 characters
+  const calculateSleepTime = (line: string): number => {
+    const words = line.split(" ");
+    let total_chars = 0;
+    words.forEach(word => {total_chars += word.length});
+    return ((total_chars/5)/wpm) * 60000;
+  }
   
 
   const handleStartSession = async () => {
@@ -79,15 +87,20 @@ const UserSessionContent = () => {
         setRequested(false);
       } else {
         setSessionStarted(true);
-        startReading(text.content);
+        startReadingMode1(text.content);
       }
     }
   }, [requested, loading, text]);
 
-  const startReading = (content: string) => {
+  const startReadingMode1 = async (content: string) => {
     // TODO: make this output line by line
     const lines = splitTextIntoLines(content);
-    setOutputLines(lines);
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    for (const line of lines) {
+      setOutputLine(line);
+      const sleepTime = calculateSleepTime(line);
+      await sleep(sleepTime);
+    }
   };
 
   return (
@@ -174,7 +187,7 @@ const UserSessionContent = () => {
         ) : sessionStarted ? (
           <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner">
             <p className="text-4xl text-gray-800 whitespace-pre-wrap text-center leading-relaxed">
-              {outputLines[3]}
+              {outputLine}
             </p>
           </div>
         ) : null}
