@@ -8,8 +8,10 @@ import { useRouter } from "next/navigation";
 import { getFirestore, collection, getDocs } from "firebase/firestore/lite";
 import { app } from "../../../firebase.config";
 import { Session } from "@/types/sessions";
+import { useAuth } from "@/contexts/authContext";
+import AccessDenied from "@/components/errors/accessDenied";
 
-const Dashboard = () => {
+const UserDashboardContent = () => {
   const router = useRouter();
   const [recentSessions, setRecentSessions] = useState<Session[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -111,4 +113,9 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+const UserDashboard = () => {
+  const { user } = useAuth();
+  return <div>{user ? <UserDashboardContent /> : <AccessDenied />}</div>;
+};
+
+export default UserDashboard;

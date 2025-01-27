@@ -18,6 +18,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useAuth } from "@/contexts/authContext";
+import AccessDenied from "@/components/errors/accessDenied";
 // import {  } from "@/services/textservice";
 
 const AdminDashboardContent = () => {
@@ -172,11 +173,7 @@ const AdminDashboard = () => {
           <AdminDashboardContent />
         </AdminDashboardProvider>
       ) : (
-        <div className="min-h-screen flex items-center justify-center">
-          <p className="text-xl font-semibold">
-            You do not have permission to access this page
-          </p>
-        </div>
+        <AccessDenied />
       )}
     </div>
   );
