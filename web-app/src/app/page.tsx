@@ -18,8 +18,5 @@ export default function Home() {
       <main>
         <p>This is the landing page. You are currently not logged in.</p>
       </main>
-    );
-  }
-
-  return null; // Prevents unnecessary rendering
+  );
 }
