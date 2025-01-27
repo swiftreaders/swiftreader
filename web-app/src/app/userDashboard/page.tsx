@@ -1,101 +1,188 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { Session } from "@/types/sessions";
+import { useReadingContext, ReadingSessionProvider } from "@/contexts/readingSessionsContext";
+import { useUserContext, UserProvider } from "@/contexts/userContext";
+import { SessionStats } from "@/components/SessionStats";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+
+const DashboardContent = () => {
+  const { recentSessions } = useReadingContext();
+  const { readingGoal, setReadingGoal, retrieveTotalReadingTime } = useUserContext();
+
+  const router = useRouter();
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+  const [newGoal, setNewGoal] = useState(readingGoal);
+
+  // Mock data for the chart (replace with real data from your context)
+  const readingProgressData = [
+    { date: "2023-10-01", wpm: 50 },
+    { date: "2023-10-05", wpm: 60 },
+    { date: "2023-10-10", wpm: 70 },
+    { date: "2023-10-15", wpm: 80 },
+    { date: "2023-10-20", wpm: 85 },
+    { date: "2023-10-25", wpm: 90 },
+  ];
+
+  // Calculate total reading time (in minutes)
+  const totalReadingTime = 90; //TODO: replace with actual user id once authentication is implemented
+
+  // Calculate progress percentage
+  const progressPercentage = (totalReadingTime / readingGoal) * 100;
+
+  const handleNewSessionClick = () => {
+
+    // setSelectedCategory(category);
+    // Surely if you set the category, you don't need to have the if condition below
+    // as it will always be true?
+    // Answer: The `if` condition is needed to handle the case where the user selects the empty
+    // option (`""`). Without the condition, the app would navigate to `/read?category=` when no category
+    // is selected, which might not be desirable.
+
+    router.push(`/userSession`);
+
+  };
+
+  const handleSetGoalClick = () => {
+    setIsGoalModalOpen(true);
+  };
+
+  const handleGoalSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const stock_userid = "AyYtqKV2YHoWAKjpvAxL";  //TODO: replace with actual user id once authentication is implemented
+    setReadingGoal(newGoal, stock_userid);
+    setIsGoalModalOpen(false);
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Hello everyone, this is
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="min-h-screen p-8 bg-gray-100">
+      <h1 className="text-2xl font-bold mb-6">Welcome to the Dashboard</h1>
+      <div>
+        <button 
+          onClick={handleNewSessionClick}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        > 
+          New Session
+        </button>
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      {/* Progress Header */}
+      <div className="mt-8 bg-white shadow-md rounded-lg p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Your Reading Progress</h2>
+          <button
+            onClick={handleSetGoalClick}
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            Set Goal
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+        <div className="mb-4">
+          <p className="text-gray-700">
+            Total Reading Time: <span className="font-bold">{totalReadingTime} minutes</span>
+          </p>
+          <p className="text-gray-700">
+            Goal: <span className="font-bold">{readingGoal} minutes</span>
+          </p>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-4">
+          <div
+            className="bg-blue-500 h-4 rounded-full"
+            style={{ width: `${progressPercentage}%` }}
+          ></div>
+        </div>
+      </div>
+
+      {/* Goal Setting Modal */}
+      {isGoalModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <h2 className="text-xl font-semibold mb-4">Set Reading Goal</h2>
+            <form onSubmit={handleGoalSubmit}>
+              <input
+                type="number"
+                value={newGoal}
+                onChange={(e) => setNewGoal(Number(e.target.value))}
+                className="w-full p-2 border border-gray-300 rounded mb-4"
+                placeholder="Enter your reading goal (in minutes)"
+                min="1"
+              />
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsGoalModalOpen(false)}
+                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 mr-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                >
+                  Save Goal
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Recent Reading Sessions */}
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">Recent Reading Sessions</h2>
+        <ul className="bg-white shadow-md rounded-lg p-4">
+          {recentSessions.map((session) => (
+            <li
+              key={session.id}
+              className="flex justify-between items-center border-b last:border-b-0 py-2 cursor-pointer hover:bg-gray-50"
+              onClick={() => setSelectedSession(session)}
+            >
+              <span>{session.title}</span>
+              <span className="text-gray-500 text-sm">{session.startTime.toDate().toLocaleTimeString()} - {session.duration} minutes</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Chart */}
+      <div className="mt-8 bg-white shadow-md rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-4">Reading Performance Over Time</h2>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={readingProgressData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip />
+            <Line type="monotone" dataKey="wpm" stroke="#4A90E2" strokeWidth={2} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Session Details Modal */}
+      {selectedSession && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+          onClick={() => setSelectedSession(null)}>
+          <SessionStats 
+            session={selectedSession} 
+            onClose={() => setSelectedSession(null)}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          User Dashboard
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </div>
+      )}
     </div>
   );
-}
+};
+
+const Dashboard = () => {
+  return (
+    <UserProvider>
+      <ReadingSessionProvider>
+        <DashboardContent />
+      </ReadingSessionProvider>
+    </UserProvider>
+  );
+};
+
+export default Dashboard;
