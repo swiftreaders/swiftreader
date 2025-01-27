@@ -9,7 +9,7 @@ import { Session } from "@/types/sessions"
 interface ReadingSessionsContextType {
     recentSessions: Session[];
     text: Text | null;
-    getText: (category: Category, difficulty: Difficulty, isFiction: boolean, length: number) => void;
+    getText: (category: Category, difficulty: Difficulty, isFiction: boolean, length: number, onUpdate: (loading: boolean) => void) => void;
 }
 
 const ReadingSessionContext = createContext<
@@ -42,7 +42,8 @@ export const ReadingSessionProvider: React.FC<{
         category: Category, 
         difficulty: Difficulty, 
         isFiction: boolean, 
-        length: number) => { 
+        length: number,
+        onUpdate: (loading: boolean) => void) => { 
             // Dynamically build constraints based on non-null arguments
             const constraints: { [key: string]: any } = {};
 
@@ -52,7 +53,8 @@ export const ReadingSessionProvider: React.FC<{
             if (length != null) constraints.wordLength = length;
 
             const text = await sessionService.getText(constraints)
-            setText(text)
+            setText(text);
+            onUpdate(false);
          };
 
     return (

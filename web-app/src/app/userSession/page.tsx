@@ -1,16 +1,18 @@
 "use client";
 
 import { useReadingContext, ReadingSessionProvider } from "@/contexts/readingSessionsContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Category, Difficulty } from "@/types/text";
 
 const UserSessionContent = () => {
-  const { recentSessions, text, getText } = useReadingContext();
+  const { text, getText } = useReadingContext();
   const [isSettingOneEnabled, setIsSettingOneEnabled] = useState(false);
   const [isSettingTwoEnabled, setIsSettingTwoEnabled] = useState(false);
   const [wpm, setWpm] = useState(300);
   const [sessionStarted, setSessionStarted] = useState(false);
   const [outputText, setOutputText] = useState("");
+  const [requested, setRequested] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleToggle = (setting: string) => {
     if (setting === "settingOne") {
@@ -27,19 +29,27 @@ const UserSessionContent = () => {
     }
   };
 
-  const handleStartSession = () => {
-    // TODO: Make this read the settings and provide the correct constraints
-    getText(Category.NATURE, Difficulty.MEDIUM, true, 361);
-    if (text == null) {
-      alert("No texts found with those constraints");
-    } else {
-      setSessionStarted(true);
-      startReading(text.content);
-    }
+  const handleStartSession = async () => {
+    setLoading(true);
+    setRequested(true);
+    // TODO: Make this read the settings
+    getText(Category.NATURE, Difficulty.MEDIUM, true, 200, setLoading);
   };
 
-  // TODO: Call setOutputText at intervals based on the wpm, only showing one line at a time
+  useEffect(() => {
+    if (requested && !loading) {
+      if (text == null) {
+        alert("No texts found with those constraints");
+        setRequested(false);
+      } else {
+        setSessionStarted(true);
+        startReading(text.content);
+      }
+    }
+  }, [requested, loading, text]);
+
   const startReading = (content: string) => {
+    // TODO: make this output line by line
     setOutputText(content);
   };
 
@@ -113,20 +123,23 @@ const UserSessionContent = () => {
 
       {/* Session Start Box */}
       <div className="w-full flex justify-center">
-        {!sessionStarted ? (
+        {!requested ? (
           <button
             className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition"
             onClick={handleStartSession}
           >
             Start Session
           </button>
-        ) : (
+        ) : loading ? (
+          <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner flex justify-center items-center">
+            <p className="text-xl text-gray-800">Loading...</p>
+          </div>
+        ) : sessionStarted ? (
           <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner">
             <p className="text-xl text-gray-800 whitespace-pre-wrap text-center">{outputText}</p>
           </div>
-        )}
+        ) : null}
       </div>
-
     </div>
   );
 };
