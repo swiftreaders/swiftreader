@@ -1,19 +1,38 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAdminDashboard, AdminDashboardProvider } from "@/contexts/adminDashboardContext";
+import {
+  useAdminDashboard,
+  AdminDashboardProvider,
+} from "@/contexts/adminDashboardContext";
 import { useRouter } from "next/navigation";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { useAuth } from "@/contexts/authContext";
 // import {  } from "@/services/textservice";
 
 const AdminDashboardContent = () => {
-  const { texts, users, removeUser } = useAdminDashboard(); 
-  const [userMetrics, setUserMetrics] = useState({ totalUsers: 0, newUsers: 0 });
+  const { texts, users, removeUser } = useAdminDashboard();
+  const [userMetrics, setUserMetrics] = useState({
+    totalUsers: 0,
+    newUsers: 0,
+  });
   const router = useRouter();
 
   useEffect(() => {
     const totalUsers = users.length;
-    const newUsers = users.filter(user => Date.now() - user.joinDate.toMillis() < 2419200000).length;
+    const newUsers = users.filter(
+      (user) => Date.now() - user.joinDate.toMillis() < 2419200000
+    ).length;
     setUserMetrics({ totalUsers, newUsers });
   }, [users]);
 
@@ -56,7 +75,9 @@ const AdminDashboardContent = () => {
           <p className="text-4xl font-bold">{userMetrics.totalUsers}</p>
         </div>
         <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-2">New Users (Last 28 days)</h2>
+          <h2 className="text-lg font-semibold mb-2">
+            New Users (Last 28 days)
+          </h2>
           <p className="text-4xl font-bold">{userMetrics.newUsers}</p>
         </div>
       </div>
@@ -72,7 +93,12 @@ const AdminDashboardContent = () => {
               <XAxis dataKey="month" />
               <YAxis />
               <Tooltip />
-              <Line type="monotone" dataKey="newUsers" stroke="#4A90E2" strokeWidth={2} />
+              <Line
+                type="monotone"
+                dataKey="newUsers"
+                stroke="#4A90E2"
+                strokeWidth={2}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -98,18 +124,28 @@ const AdminDashboardContent = () => {
         <table className="min-w-full table-auto border-collapse border border-gray-200">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border border-gray-300 px-4 py-2 text-left">Username</th>
-              <th className="border border-gray-300 px-4 py-2 text-left">WPM</th>
-              <th className="border border-gray-300 px-4 py-2 text-left">Join Date</th>
+              <th className="border border-gray-300 px-4 py-2 text-left">
+                Username
+              </th>
+              <th className="border border-gray-300 px-4 py-2 text-left">
+                WPM
+              </th>
+              <th className="border border-gray-300 px-4 py-2 text-left">
+                Join Date
+              </th>
               <th className="border border-gray-300 px-4 py-2">Actions</th>
             </tr>
           </thead>
           <tbody>
             {users.map((user, index) => (
               <tr key={index} className="hover:bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2">{user.name}</td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {user.name}
+                </td>
                 <td className="border border-gray-300 px-4 py-2">{user.wpm}</td>
-                <td className="border border-gray-300 px-4 py-2">{user.joinDate.toDate().toLocaleDateString()}</td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {user.joinDate.toDate().toLocaleDateString()}
+                </td>
                 <td className="border border-gray-300 px-4 py-2 text-center">
                   <button
                     className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
@@ -128,10 +164,21 @@ const AdminDashboardContent = () => {
 };
 
 const AdminDashboard = () => {
+  const { user } = useAuth();
   return (
-    <AdminDashboardProvider>
-      <AdminDashboardContent />
-    </AdminDashboardProvider>
+    <div>
+      {user?.isAdmin ? (
+        <AdminDashboardProvider>
+          <AdminDashboardContent />
+        </AdminDashboardProvider>
+      ) : (
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-xl font-semibold">
+            You do not have permission to access this page
+          </p>
+        </div>
+      )}
+    </div>
   );
 };
 

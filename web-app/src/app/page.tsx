@@ -1,33 +1,25 @@
-import { auth0 } from "@/lib/auth0";
-import "../../public/assets/styles/globals.css";
+"use client";
 
-export default async function Home() {
-  // Fetch the user session
-  const session = await auth0.getSession();
+import { useAuth } from "@/contexts/authContext";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-  // If no session, show sign-up and login buttons
-  if (!session) {
+export default function Home() {
+  const { user, loggedIn } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loggedIn) return;
+    router.push(user?.isAdmin ? "/adminDashboard" : "/userDashboard");
+  }, [loggedIn, user, router]);
+
+  if (!loggedIn) {
     return (
       <main>
-        <a href="/auth/login?screen_hint=signup">
-          <button>Sign up</button>
-        </a>
-        <a href="/auth/login">
-          <button>Log in</button>
-        </a>
+        <p>This is the landing page. You are currently not logged in.</p>
       </main>
     );
   }
 
-  // If session exists, show a welcome message and logout button
-  return (
-    <main>
-      <h1>Welcome, {session.user.name}!</h1>
-      <p>
-        <a href="/auth/logout">
-          <button>Log out</button>
-        </a>
-      </p>
-    </main>
-  );
+  return null; // Prevents unnecessary rendering
 }
