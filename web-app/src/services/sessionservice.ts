@@ -130,10 +130,10 @@ const getText = async (constraints: { [key: string]: any }): Promise<Text | null
       // Create and return a `Text` instance
       return new Text(
         data.title,
-        data.category,
         data.content,
         data.difficulty,
         data.isFiction,
+        (data.isFiction ? data.genre : data.category),
         randomDoc.id,
         data.createdAt,
         data.updatedAt,

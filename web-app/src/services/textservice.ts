@@ -24,10 +24,10 @@ export const textService = {
         const data = doc.data();
         return new Text(
           data.title,
-          data.category,
           data.content,
           data.difficulty,
           data.isFiction,
+          (data.isFiction ? data.genre : data.category),
           doc.id,
           data.createdAt,
           data.updatedAt,

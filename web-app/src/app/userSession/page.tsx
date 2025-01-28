@@ -2,13 +2,14 @@
 
 import { useReadingContext, ReadingSessionProvider } from "@/contexts/readingSessionsContext";
 import { useState, useEffect } from "react";
-import { Category, Difficulty } from "@/types/text";
+import { Category, Difficulty, Genre } from "@/types/text";
 
 const UserSessionContent = () => {
   const { text, getText } = useReadingContext();
   const [difficulty, setDifficulty] = useState(Difficulty.EASY);
   const [category, setCategory] = useState(Category.NATURE);
-  const [fiction, setFiction] = useState(true);
+  const [genre, setGenre] = useState(Genre.FANTASY);
+  const [fiction, setFiction] = useState(false);
   const [length, setLength] = useState(500);
   const [wpm, setWpm] = useState(300);
   const [sessionStarted, setSessionStarted] = useState(false);
@@ -63,11 +64,12 @@ const UserSessionContent = () => {
   const handleStartSession = async () => {
     setLoading(true);
     setRequested(true);
-    getText(category, difficulty, fiction, length, setLoading);
+    getText(fiction ? genre : category, difficulty, fiction, length, setLoading);
   };
 
   useEffect(() => {
     if (requested && !loading) {
+      console.log(text);
       if (text == null) {
         alert("No texts found with those constraints");
         setRequested(false);
@@ -132,24 +134,39 @@ const UserSessionContent = () => {
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setFiction(event.target.checked)}
           />
         </div>
-        
-        {/* Category Dropdown */}
+
+        {/* Conditional Dropdown */}
         <div className="flex items-center space-x-2">
-          <label htmlFor="categorySelect" className="text-sm font-medium text-gray-700">
-            Category:
+          <label htmlFor={fiction ? "genreSelect" : "categorySelect"} className="text-sm font-medium text-gray-700">
+            {fiction ? "Genre:" : "Category:"}
           </label>
-          <select
-            id="categorySelect"
-            value={category}
-            onChange={(e) => setCategory(e.target.value as Category)}
-            className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
-          >
-            {Object.values(Category).map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
+          {fiction ? (
+            <select
+              id="genreSelect"
+              value={genre}
+              onChange={(e) => setGenre(e.target.value as Genre)}
+              className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
+            >
+              {Object.values(Genre).map((gen) => (
+                <option key={gen} value={gen}>
+                  {gen}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <select
+              id="categorySelect"
+              value={category}
+              onChange={(e) => setCategory(e.target.value as Category)}
+              className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
+            >
+              {Object.values(Category).map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         {/* Difficulty Dropdown */}
@@ -199,6 +216,7 @@ const UserSessionContent = () => {
           />
         </div>
       </div>
+
 
       {/* Session Start Box */}
       <div className="w-full flex justify-center">
