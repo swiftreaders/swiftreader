@@ -6,28 +6,15 @@ import { Category, Difficulty } from "@/types/text";
 
 const UserSessionContent = () => {
   const { text, getText } = useReadingContext();
-  const [isSettingOneEnabled, setIsSettingOneEnabled] = useState(false);
-  const [isSettingTwoEnabled, setIsSettingTwoEnabled] = useState(false);
+  const [difficulty, setDifficulty] = useState(Difficulty.EASY);
+  const [category, setCategory] = useState(Category.NATURE);
+  const [fiction, setFiction] = useState(true);
+  const [length, setLength] = useState(500);
   const [wpm, setWpm] = useState(300);
   const [sessionStarted, setSessionStarted] = useState(false);
-  const [outputLine, setOutputLine] = useState<string>("")
+  const [outputLine, setOutputLine] = useState<string>("");
   const [requested, setRequested] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const handleToggle = (setting: string) => {
-    if (setting === "settingOne") {
-      setIsSettingOneEnabled(!isSettingOneEnabled);
-    } else if (setting === "settingTwo") {
-      setIsSettingTwoEnabled(!isSettingTwoEnabled);
-    }
-  };
-
-  const handleWpmChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(event.target.value, 10);
-    if (!isNaN(value)) {
-      setWpm(value);
-    }
-  };
 
   const calculateCharsPerLine = () => {
     const containerWidth = window.innerWidth;
@@ -40,11 +27,11 @@ const UserSessionContent = () => {
     const charsPerLine = calculateCharsPerLine();
     const paragraphs = content.split("\n"); // Split content into paragraphs (two newlines)
     const lines: string[] = [];
-  
+
     paragraphs.forEach((paragraph) => {
       const words = paragraph.split(" "); // Split paragraph into words
       let currentLine = "";
-  
+
       words.forEach((word) => {
         if ((currentLine + word).length <= charsPerLine) {
           currentLine += (currentLine ? " " : "") + word;
@@ -55,12 +42,12 @@ const UserSessionContent = () => {
           currentLine = word; // Start a new line with the current word
         }
       });
-  
+
       if (currentLine) {
         lines.push(currentLine); // Add the last line of the paragraph
       }
     });
-  
+    
     return lines;
   };
 
@@ -76,8 +63,7 @@ const UserSessionContent = () => {
   const handleStartSession = async () => {
     setLoading(true);
     setRequested(true);
-    // TODO: Make this read the settings
-    getText(Category.NATURE, Difficulty.MEDIUM, true, 300, setLoading);
+    getText(category, difficulty, fiction, length, setLoading);
   };
 
   useEffect(() => {
@@ -93,7 +79,6 @@ const UserSessionContent = () => {
   }, [requested, loading, text]);
 
   const startReadingMode1 = async (content: string) => {
-    // TODO: make this output line by line
     const lines = splitTextIntoLines(content);
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
     for (const line of lines) {
@@ -132,41 +117,85 @@ const UserSessionContent = () => {
       </div>
 
       {/* Settings Bar */}
-      <div className="flex items-center justify-between w-full max-w-lg mb-8 space-x-4">
-        {/* Circle Settings Button */}
-        <button className="h-10 w-10 rounded-full bg-gray-300 hover:bg-gray-400 transition">
-          ⚙️
-        </button>
+      <div className="flex flex-wrap items-center justify-between w-full bg-white shadow-md p-4 rounded-lg space-y-4 md:space-y-0 md:flex-nowrap">
 
-        {/* Toggle Buttons */}
-        <button
-          className={`px-4 py-2 rounded ${
-            isSettingOneEnabled ? "bg-blue-500 text-white" : "bg-gray-300"
-          } hover:bg-blue-600 transition`}
-          onClick={() => handleToggle("settingOne")}
-        >
-          Setting 1
-        </button>
-        <button
-          className={`px-4 py-2 rounded ${
-            isSettingTwoEnabled ? "bg-blue-500 text-white" : "bg-gray-300"
-          } hover:bg-blue-600 transition`}
-          onClick={() => handleToggle("settingTwo")}
-        >
-          Setting 2
-        </button>
+        {/* Fiction Checkbox */}
+        <div className="flex items-center space-x-2">
+          <label htmlFor="fictionCheckbox" className="text-sm font-medium text-gray-700">
+            Fiction:
+          </label>
+          <input
+            id="fictionCheckbox"
+            type="checkbox"
+            className="h-5 w-5 text-blue-500 focus:ring focus:ring-blue-300"
+            checked={fiction}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setFiction(event.target.checked)}
+          />
+        </div>
+        
+        {/* Category Dropdown */}
+        <div className="flex items-center space-x-2">
+          <label htmlFor="categorySelect" className="text-sm font-medium text-gray-700">
+            Category:
+          </label>
+          <select
+            id="categorySelect"
+            value={category}
+            onChange={(e) => setCategory(e.target.value as Category)}
+            className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
+          >
+            {Object.values(Category).map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Difficulty Dropdown */}
+        <div className="flex items-center space-x-2">
+          <label htmlFor="difficultySelect" className="text-sm font-medium text-gray-700">
+            Difficulty:
+          </label>
+          <select
+            id="difficultySelect"
+            value={difficulty}
+            onChange={(e) => setDifficulty(e.target.value as Difficulty)}
+            className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
+          >
+            {Object.values(Difficulty).map((diff) => (
+              <option key={diff} value={diff}>
+                {diff}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Length Input */}
+        <div className="flex items-center space-x-2">
+          <label htmlFor="lengthInput" className="text-sm font-medium text-gray-700">
+            Length in words:
+          </label>
+          <input
+            id="lengthInput"
+            type="number"
+            className="border border-gray-300 rounded px-3 py-2 text-center text-gray-700 focus:outline-none focus:ring focus:ring-blue-300 w-24"
+            value={length}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setLength(parseInt(event.target.value, 10))}
+          />
+        </div>
 
         {/* WPM Input */}
         <div className="flex items-center space-x-2">
-          <label htmlFor="wpmInput" className="text-sm font-medium">
+          <label htmlFor="wpmInput" className="text-sm font-medium text-gray-700">
             WPM:
           </label>
           <input
             id="wpmInput"
             type="number"
-            className="border rounded px-2 py-1 w-20 text-center"
+            className="border border-gray-300 rounded px-3 py-2 text-center text-gray-700 focus:outline-none focus:ring focus:ring-blue-300 w-24"
             value={wpm}
-            onChange={handleWpmChange}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setWpm(parseInt(event.target.value, 10))}
           />
         </div>
       </div>
