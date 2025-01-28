@@ -19,6 +19,7 @@ import {
 } from "recharts";
 import { useAuth } from "@/contexts/authContext";
 import AccessDenied from "@/components/errors/accessDenied";
+import { User } from "@/types/user";
 // import {  } from "@/services/textservice";
 
 const AdminDashboardContent = () => {

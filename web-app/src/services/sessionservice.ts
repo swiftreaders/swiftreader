@@ -15,7 +15,7 @@ import {
     where
 } from "firebase/firestore";
 import { Session } from "@/types/sessions";
-import { app } from "@/firebaseConfig";
+import { app } from "@/../firebase.config";
 import { Category, Text } from "@/types/text";
 
 const db = getFirestore(app);

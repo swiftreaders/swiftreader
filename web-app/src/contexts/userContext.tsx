@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { userService } from "@/services/userservice";
+import { userService } from "@/services/userService";
 import { User } from "@/types/user";
 
 interface UserContextType {
@@ -18,7 +18,9 @@ export const useUserContext = () => {
   return context;
 };
 
-export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [readingGoal, setReadingGoalState] = useState(1000); // Default goal
 
   const setReadingGoal = async (goal: number, userId: string) => {
@@ -34,7 +36,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <UserContext.Provider value={{ readingGoal, setReadingGoal, retrieveTotalReadingTime }}>
+    <UserContext.Provider
+      value={{ readingGoal, setReadingGoal, retrieveTotalReadingTime }}
+    >
       {children}
     </UserContext.Provider>
   );

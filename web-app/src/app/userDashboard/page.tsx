@@ -2,9 +2,22 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { getFirestore, collection, getDocs } from "firebase/firestore/lite";
-import { app } from "../../../firebase.config";
 import { Session } from "@/types/sessions";
+import {
+  useReadingContext,
+  ReadingSessionProvider,
+} from "@/contexts/readingSessionsContext";
+import { useUserContext, UserProvider } from "@/contexts/userContext";
+import { SessionStats } from "@/components/SessionStats";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { useAuth } from "@/contexts/authContext";
 import AccessDenied from "@/components/errors/accessDenied";
 
@@ -12,6 +25,9 @@ const UserDashboardContent = () => {
   const router = useRouter();
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+  const { recentSessions } = useReadingContext();
+  const { readingGoal, setReadingGoal, retrieveTotalReadingTime } =
+    useUserContext();
   const [newGoal, setNewGoal] = useState(readingGoal);
 
   // Mock data for the chart (replace with real data from your context)
@@ -183,19 +199,21 @@ const UserDashboardContent = () => {
   );
 };
 
-const Dashboard = () => {
-  return (
-    <UserProvider>
-      <ReadingSessionProvider>
-        <DashboardContent />
-      </ReadingSessionProvider>
-    </UserProvider>
-  );
-};
-
 const UserDashboard = () => {
   const { user } = useAuth();
-  return <div>{user ? <UserDashboardContent /> : <AccessDenied />}</div>;
+  return (
+    <div>
+      {user ? (
+        <UserProvider>
+          <ReadingSessionProvider>
+            <UserDashboardContent />
+          </ReadingSessionProvider>
+        </UserProvider>
+      ) : (
+        <AccessDenied />
+      )}
+    </div>
+  );
 };
 
 export default UserDashboard;
