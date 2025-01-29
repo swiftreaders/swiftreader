@@ -17,6 +17,10 @@ import { Category, Text } from "@/types/text";
 
 // const db = getFirestore(app);
 
+// function to get text from json query and return just the text
+
+
+
 export const textService = {
   getTexts: (onUpdate: (texts: Text[]) => void) => {
     const unsubscribe = onSnapshot(collection(db, "Texts"), (snapshot) => {
@@ -90,7 +94,11 @@ export const textService = {
     
     return 0;
   }
+
+
+
 }
+
 
 export default textService;
 

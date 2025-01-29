@@ -97,6 +97,60 @@ const AdminDashboardContent = () => {
           Add Text
         </button>
       </div>
+      
+      {/* Add New Text Form */}
+      <div className="bg-white shadow-md rounded-lg p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4">Add New Text</h2>
+        <input
+          type="text"
+          placeholder="Title"
+          value={newText.title}
+          onChange={(e) => setNewText({ ...newText, title: e.target.value })}
+          className="w-full p-2 mb-4 border rounded-md"
+        />
+        <textarea
+          placeholder="Content"
+          value={newText.content}
+          onChange={(e) => setNewText({ ...newText, content: e.target.value })}
+          className="w-full p-2 mb-4 border rounded-md"
+        />
+        <label className="block mb-2">Category:</label>
+        <select
+          value={newText.category}
+          onChange={(e) => setNewText({ ...newText, category: e.target.value as Category })}
+          className="w-full p-2 mb-4 border rounded-md"
+        >
+          {Object.values(Category).map((cat) => (
+            <option key={cat} value={cat}>
+              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+            </option>
+          ))}
+        </select>
+        <label className="block mb-2">Difficulty:</label>
+        <select
+          value={newText.difficulty}
+          onChange={(e) => setNewText({ ...newText, difficulty: e.target.value as Difficulty })}
+          className="w-full p-2 mb-4 border rounded-md"
+        >
+          {Object.values(Difficulty).map((diff) => (
+            <option key={diff} value={diff}>
+              {diff.charAt(0).toUpperCase() + diff.slice(1)}
+            </option>
+          ))}
+        </select>
+        <label className="block mb-4">
+          <input
+            type="checkbox"
+            checked={newText.isFiction}
+            onChange={(e) => setNewText({ ...newText, isFiction: e.target.checked })}
+            className="mr-2"
+          />
+          Is Fiction?
+        </label>
+        <button onClick={handleAddText} className="bg-blue-500 text-white px-4 py-2 rounded-md">
+          Add Text
+        </button>
+      </div>
 
       {/* Existing Texts */}
       <div>
