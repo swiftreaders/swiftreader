@@ -1,9 +1,11 @@
 "use client";
 
 import { useReadingContext, ReadingSessionProvider } from "@/contexts/readingSessionsContext";
+import Script from "next/script";
 import { useState, useEffect } from "react";
 import { Category, Difficulty, Genre } from "@/types/text";
-
+import WebGazerClient from "./WebGazerClient"; // We'll keep a separate file
+import Calibration from "./Calibration";
 const UserSessionContent = () => {
   const { text, getText } = useReadingContext();
   const [difficulty, setDifficulty] = useState(Difficulty.EASY);
@@ -43,8 +45,6 @@ const UserSessionContent = () => {
     if (currentLine) lines.push(currentLine);
     return lines;
 };
-
-
   // Assumes a standard word length of 5 characters
   const calculateSleepTime = (line: string): number => {
     const words = line.split(" ");
@@ -53,6 +53,26 @@ const UserSessionContent = () => {
     return ((total_chars/5)/wpm) * 60000;
   }
   
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const webgazer = (window as any).webgazer;
+    if (!webgazer) {
+      console.error("WebGazer is not defined on window.");
+      return;
+    }
+
+    console.log("WebGazer found. Setting up...");
+    webgazer
+      .begin()
+      .then(() => console.log("WebGazer started!"))
+      .catch((err: any) => console.error("WebGazer failed to start:", err));
+
+    return () => {
+      webgazer.end();
+      console.log("WebGazer stopped on unmount.");
+    };
+  }, []); // ✅ Runs only once when the component mounts
 
   const handleStartSession = async () => {
     setLoading(true);
@@ -73,17 +93,74 @@ const UserSessionContent = () => {
     }
   }, [requested, loading, text]);
 
-  const startReadingMode1 = async (content: string) => {
-    const lines = splitTextIntoLines(content);
-    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-    for (const line of lines) {
-      setOutputLine(line);
-      const sleepTime = calculateSleepTime(line);
-      await sleep(sleepTime);
+  //Global (or module-level) variable to track the previously active quarter
+let previousQuarter = 0;
+
+/**
+ * Starts "reading mode" by splitting text into lines
+ * and advancing through them each time the user looks
+ * at the 4th quarter of the screen.
+ */
+const startReadingMode1 = (content: string) => {
+  // 1. Split content into lines
+  const lines = splitTextIntoLines(content);
+  let currentLineIndex = 0;
+
+  // 2. Define a helper to show the next line
+  const showNextLine = () => {
+    if (currentLineIndex < lines.length) {
+      setOutputLine(lines[currentLineIndex]);
+      currentLineIndex++;
+    } else {
+      // Optionally handle the end of content here (e.g., stop WebGazer, etc.)
+      console.log("All lines have been displayed.");
     }
   };
 
+  // 3. Gaze listener function
+  function handleGaze(data: { x: number; y: number } | null) {
+    if (!data) return;
+
+    // Calculate which quarter the gaze is in
+    const screenWidth = window.innerWidth;
+    const quarterWidth = screenWidth / 4;
+    let activeQuarter = 0;
+
+    if (data.x < quarterWidth) {
+      activeQuarter = 1;
+    } else if (data.x < quarterWidth * 2) {
+      activeQuarter = 2;
+    } else if (data.x < quarterWidth * 3) {
+      activeQuarter = 3;
+    } else {
+      activeQuarter = 4;
+    }
+
+    // If the gaze just entered the 4th quarter (from any other quarter),
+    // show the next line
+    if (activeQuarter === 4 && previousQuarter !== 4) {
+      showNextLine();
+    }
+
+    // Update the previous quarter for the next reading
+    previousQuarter = activeQuarter;
+  }
+
+  // 4. Initialize WebGazer & set the gaze listener
+  // Make sure WebGazer is loaded on `window` (as in your example).
+  (window as any).webgazer.setGazeListener(handleGaze);
+};
+
   return (
+    <>
+    {/* Load WebGazer before everything else */}
+    <Script
+      src="https://webgazer.cs.brown.edu/webgazer.js"
+      strategy="beforeInteractive" // ensures script is loaded early
+      onLoad={() => console.log("WebGazer script loaded (beforeInteractive)!")}
+      onError={() => console.error("Failed to load WebGazer script.")}
+    />
+
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-8">
       {/* Progress Circles */}
       <div className="flex items-center justify-center mb-8">
@@ -232,10 +309,12 @@ const UserSessionContent = () => {
           </div>
         ) : null}
       </div>
+    {/* Our separate client file where we can configure WebGazer params */}
+    <WebGazerClient />
     </div>
+    </>
   );
 };
-
 const UserSession = () => {
   return (
     <ReadingSessionProvider>
