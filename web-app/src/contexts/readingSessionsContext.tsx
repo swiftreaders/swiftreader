@@ -3,13 +3,17 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 // import backend functions to perform CRUD operations on the texts
 import { sessionService } from "@/services/sessionservice";
 
-import { Text, Category, Difficulty } from "@/types/text";
+import { Text, Category, Difficulty, Genre } from "@/types/text";
 import { Session } from "@/types/sessions"
 
 interface ReadingSessionsContextType {
     recentSessions: Session[];
     text: Text | null;
-    getText: (category: Category, difficulty: Difficulty, isFiction: boolean, length: number) => void;
+    getText: (categoryOrGenre: Category | Genre,
+              difficulty: Difficulty, 
+              isFiction: boolean, 
+              length: number, 
+              onUpdate: (loading: boolean) => void) => void;
 }
 
 const ReadingSessionContext = createContext<
@@ -39,20 +43,27 @@ export const ReadingSessionProvider: React.FC<{
   }, []);
     
     const getText = async (
-        category: Category, 
+        categoryOrGenre: Category | Genre, 
         difficulty: Difficulty, 
         isFiction: boolean, 
-        length: number) => { 
+        length: number,
+        onUpdate: (loading: boolean) => void) => { 
             // Dynamically build constraints based on non-null arguments
             const constraints: { [key: string]: any } = {};
 
-            if (category != null) constraints.category = category;
             if (difficulty != null) constraints.difficulty = difficulty;
             if (isFiction != null) constraints.isFiction = isFiction;
             if (length != null) constraints.wordLength = length;
 
+            if (isFiction) {
+              if (categoryOrGenre != null) constraints.genre = categoryOrGenre as Genre;
+            } else {
+              if (categoryOrGenre != null) constraints.category = categoryOrGenre as Category;
+            }
+
             const text = await sessionService.getText(constraints)
-            setText(text)
+            setText(text);
+            onUpdate(false);
          };
 
     return (

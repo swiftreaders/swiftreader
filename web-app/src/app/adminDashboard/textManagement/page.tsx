@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAdminDashboard, AdminDashboardProvider } from "@/contexts/adminDashboardContext";
-import { Category, Difficulty, Text } from "@/types/text";
+import { Category, Difficulty, Text, Genre } from "@/types/text";
 
 const AdminDashboardContent = () => {
   const { texts, addText, updateText, removeText } = useAdminDashboard();
@@ -10,6 +10,7 @@ const AdminDashboardContent = () => {
   const [newText, setNewText] = useState({
     title: "",
     category: Category.NATURE,
+    genre: Genre.FANTASY,
     content: "",
     difficulty: Difficulty.EASY,
     isFiction: false,
@@ -23,16 +24,17 @@ const AdminDashboardContent = () => {
 
     const text = new Text(
       newText.title,
-      newText.category,
       newText.content,
       newText.difficulty,
-      newText.isFiction
+      newText.isFiction,
+      newText.isFiction ? newText.genre : newText.category
     );
 
     addText(text);
     setNewText({
       title: "",
       category: Category.NATURE,
+      genre: Genre.FANTASY,
       content: "",
       difficulty: Difficulty.EASY,
       isFiction: false,
@@ -60,18 +62,34 @@ const AdminDashboardContent = () => {
           onChange={(e) => setNewText({ ...newText, content: e.target.value })}
           className="w-full p-2 mb-4 border rounded-md"
         />
-        <label className="block mb-2">Category:</label>
-        <select
-          value={newText.category}
-          onChange={(e) => setNewText({ ...newText, category: e.target.value as Category })}
-          className="w-full p-2 mb-4 border rounded-md"
-        >
-          {Object.values(Category).map((cat) => (
-            <option key={cat} value={cat}>
-              {cat.charAt(0).toUpperCase() + cat.slice(1)}
-            </option>
-          ))}
-        </select>
+        <label className="block mb-2">
+          {newText.isFiction ? "Genre:" : "Category:"}
+        </label>
+        {newText.isFiction ? (
+          <select
+            value={newText.genre}
+            onChange={(e) => setNewText({ ...newText, genre: e.target.value as Genre })}
+            className="w-full p-2 mb-4 border rounded-md"
+          >
+            {Object.values(Genre).map((gen) => (
+              <option key={gen} value={gen}>
+                {gen.charAt(0).toUpperCase() + gen.slice(1)}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <select
+            value={newText.category}
+            onChange={(e) => setNewText({ ...newText, category: e.target.value as Category })}
+            className="w-full p-2 mb-4 border rounded-md"
+          >
+            {Object.values(Category).map((cat) => (
+              <option key={cat} value={cat}>
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </option>
+            ))}
+          </select>
+        )}
         <label className="block mb-2">Difficulty:</label>
         <select
           value={newText.difficulty}
@@ -109,7 +127,7 @@ const AdminDashboardContent = () => {
             <h3 className="text-lg font-semibold mb-2">{text.title}</h3>
             <p className="mb-2">{text.content}</p>
             <p className="text-sm text-gray-500">
-              <strong>Category:</strong> {text.category}
+              <strong>{text.isFiction ? "Genre:" : "Category:"}</strong> {text.isFiction ? text.genre : text.category}
             </p>
             <p className="text-sm text-gray-500">
               <strong>Difficulty:</strong> {text.difficulty}
