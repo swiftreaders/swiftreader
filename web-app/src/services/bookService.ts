@@ -1,5 +1,7 @@
 import axios from "axios";
 
+const CORS_PROXY = "https://api.allorigins.win/get?url=";
+
 // Define the types for the books and texts
 interface Book {
   id: string;
@@ -16,10 +18,10 @@ interface FilterOptions {
   wordCount?: { min: number; max: number };
 }
 
-// Gutendex API base URL
+/// Gutendex API base URL
 const GUTENDEX_API = "https://gutendex.com/books";
 
-// Helper function to classify text difficulty
+/// Helper function to classify text difficulty
 const classifyDifficulty = (text: string): "easy" | "medium" | "hard" => {
   const wordCount = text.split(" ").length;
   const averageWordLength = text
@@ -31,7 +33,7 @@ const classifyDifficulty = (text: string): "easy" | "medium" | "hard" => {
   return "hard";
 };
 
-// Fetch books from the Gutendex API
+/// Fetch books from the Gutendex API
 const fetchBooks = async (subject: string): Promise<Book[]> => {
   try {
     const response = await axios.get(GUTENDEX_API, {
@@ -60,24 +62,37 @@ const fetchBooks = async (subject: string): Promise<Book[]> => {
 const fetchBookContent = async (book: Book): Promise<Book> => {
   try {
     const response = await axios.get(
-      `https://www.gutenberg.org/files/${book.id}/${book.id}-0.txt`
+      `${CORS_PROXY}https://www.gutenberg.org/files/${book.id}/${book.id}-0.txt`
     );
     const fullText = response.data;
-    const excerpt = fullText
-      .split(" ")
-      .slice(0, 300)
-      .join(" ");
-    
-    const difficulty = classifyDifficulty(excerpt);
+    console.log(typeof fullText, fullText);
+    if (fullText.status.http_code == 200) {
+      const excerpt = fullText
+        .contents
+        .split(" ")
+        .slice(0, 300)
+        .join(" ");
 
-    return { ...book, content: excerpt, difficulty };
+      // Process excerpt to remove unwanted characters
+      const cleanedExcerpt = excerpt
+        .replace(/[\n\r]/g, " ")
+        .replace(/[^a-zA-Z0-9 ]/g, "");
+      console.log("cleanedExcerpt:", cleanedExcerpt);
+      const difficulty = classifyDifficulty(cleanedExcerpt);
+  
+      return { ...book, content: cleanedExcerpt, difficulty };
+    }
+    return { ...book, content: "COULD NOT FIND CONTENT", difficulty: "easy" };
+
+    
+    
   } catch (error) {
     console.error(`Error fetching content for book ${book.id}:`, error);
     return { ...book, content: "", difficulty: "easy" };
   }
 };
 
-// Filter books based on criteria
+/// Filter books based on criteria
 const filterBooks = (books: Book[], filters: FilterOptions): Book[] => {
   return books.filter((book) => {
     const meetsDifficulty =
@@ -95,7 +110,7 @@ const filterBooks = (books: Book[], filters: FilterOptions): Book[] => {
 };
 
 
-// Service to retrieve texts
+/// Service to retrieve texts from Gutendex
 export const getTexts = async (
   subject: string,
   filters: FilterOptions
