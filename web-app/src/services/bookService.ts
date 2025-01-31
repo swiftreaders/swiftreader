@@ -3,7 +3,7 @@ import axios from "axios";
 const CORS_PROXY = "https://api.allorigins.win/get?url=";
 
 // Define the types for the books and texts
-interface Book {
+export interface Book {
   id: string;
   title: string;
   author: string;
@@ -36,11 +36,13 @@ const classifyDifficulty = (text: string): "easy" | "medium" | "hard" => {
 /// Fetch books from the Gutendex API
 const fetchBooks = async (subject: string): Promise<Book[]> => {
   try {
+    console.log("fetchBooks: waiting for list of books fetch");
     const response = await axios.get(GUTENDEX_API, {
-      params: { topic: subject },
+      params: { topic: subject, languages: ["en"], mime_type: "text/plain" },
     });
 
     const books = response.data.results
+    .sort(() => 0.5 - Math.random())  // Shuffle the results
     .slice(0, 20)
     .map((book: any) => ({
       id: book.id,
@@ -87,14 +89,15 @@ const fetchBookContent = async (book: Book): Promise<Book> => {
     
     
   } catch (error) {
-    console.error(`Error fetching content for book ${book.id}:`, error);
-    return { ...book, content: "", difficulty: "easy" };
+    console.error(`Error fetching content for book ${book.id}:`);
+    return { ...book, content: "COULD NOT FIND CONTENT", difficulty: "easy" };
   }
 };
 
 /// Filter books based on criteria
 const filterBooks = (books: Book[], filters: FilterOptions): Book[] => {
   return books.filter((book) => {
+    if (book.content == "COULD NOT FIND CONTENT") return false;
     const meetsDifficulty =
       !filters.difficulty || book.difficulty === filters.difficulty;
     const meetsSubjects =
