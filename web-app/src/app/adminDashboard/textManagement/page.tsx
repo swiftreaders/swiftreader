@@ -59,8 +59,13 @@ const AdminDashboardContent = () => {
         },
       });
 
-      setGeneratedTexts(response);
-      setCurrentIndex(0);
+      if (response.length === 0) {  
+        alert("No texts found with the given criteria.");
+        return;
+      } else {
+        setGeneratedTexts(response);
+        setCurrentIndex(0);
+      }
     } catch (error: any) {
       console.error(`Error: ${error.message}`);
     } finally {

@@ -1,8 +1,9 @@
 import { Category, Difficulty } from "@/types/text";
 import axios from "axios";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const CORS_PROXY = "https://api.allorigins.win/get?url=";
-
+const GEMINI_KEY = "";  //  add this in for the ai fucniton to work 
 
 // Define the types for the books and texts
 export interface Book {
@@ -54,7 +55,9 @@ const fetchBooks = async (subject: Category): Promise<Book[]> => {
   try {
     console.log("fetchBooks: waiting for list of books fetch");
     const response = await axios.get(GUTENDEX_API, {
-      params: { topic: subject as string, languages: ["en"], mime_type: ["text/plain; charset=us-ascii"] },
+      params: { topic: subject as string, languages: ["en"], mime_type: ["text/plain; charset=us-ascii"],
+        copyright: "false"
+       },
     });
     const temp_books = response.data.results;
 
@@ -83,7 +86,7 @@ const fetchBooks = async (subject: Category): Promise<Book[]> => {
 };
 
 // Fetch the content of a specific book and classify its difficulty
-const fetchBookContent = async (book: Book): Promise<Book> => {
+const fetchBookContent = async (book: Book, wordlimit: number): Promise<Book> => {
   try {
     if (book.text_link === "NOT_FOUND") { 
       console.log("skipping book - text link not found", book.id);
@@ -98,16 +101,22 @@ const fetchBookContent = async (book: Book): Promise<Book> => {
       const excerpt = fullText
         .contents
         .split(" ")
-        .slice(0, 300)
+        .slice(1000, 1500)
         .join(" ");
 
-    // const excerpt = await getBookById(book.id);
-    console.log("excerpt:", excerpt);
-    // Process excerpt to remove unwanted characters
     const cleanedExcerpt = excerpt
-      .replace(/[\n\r]/g, " ")
-      .replace(/[^a-zA-Z0-9 ]/g, "");
+      .replace(/[\n\r]/g, " ") // Replace newlines and carriage returns with spaces
+      .replace(/\s+/g, " ") // Normalize multiple spaces into single spaces
+      .trim(); 
     console.log("cleanedExcerpt:", cleanedExcerpt);
+    // const AIExcerpt = await filterTextUsingAI(cleanedExcerpt);
+    // let paragraphedExcerpt = "";
+    // if (AIExcerpt) {
+    //   paragraphedExcerpt = AIExcerpt;
+    // } else {
+    //   paragraphedExcerpt = cleanedExcerpt;
+    // }
+    // paragraphedExcerpt = paragraphedExcerpt.split(" ").slice(0, wordlimit).join(" ");
     const difficulty = classifyDifficulty(cleanedExcerpt); 
     return { ...book, content: cleanedExcerpt, difficulty };
     } else {
@@ -138,6 +147,34 @@ const filterBooks = (books: Book[], filters: FilterOptions): Book[] => {
 };
 
 
+/// Filter text using AI - probs not needed by quite nice ngl. - kinda want to use tho cos would be good to have ai somewhere
+/// Note i havent provided the api key for security reasons ofc
+const filterTextUsingAI = async (content: string): Promise<string> => {
+  try {
+    const gemini = new GoogleGenerativeAI(GEMINI_KEY);
+    const model = gemini.getGenerativeModel({ 
+      model: "gemini-1.5-flash"
+    });
+
+    const prompt = "Produce an output of maximum 500 words and only the content - no introductions - Retrieve word for word paragraphs of 200 - 500 words from the copyright free content here, Give only the content and nothing else: "
+    
+    // Generate content with structured input
+    const result = await model.generateContent(prompt + content);
+
+    // Properly extract the response text
+    const response = result.response;
+    const text = response.text();
+    
+    console.log("AI-generated content:", text);
+    return text;
+
+  } catch (error) {
+    console.error("Error filtering text with AI:", error);
+    throw new Error("Failed to process content with AI filter");
+  }
+};
+
+
 /// Service to retrieve texts from Gutendex
 export const getTexts = async (
   subject: Category,
@@ -145,6 +182,6 @@ export const getTexts = async (
 ): Promise<Book[]> => {
   const books = await fetchBooks(subject);
   console.log("bookService.ts - getTexts:", books.map((book) => book.title));
-  const booksWithContent = await Promise.all(books.map(fetchBookContent));
+  const booksWithContent = await Promise.all(books.map(fetchBookContent, filters.wordCount?.max ?? 500));
   return filterBooks(booksWithContent, filters);
 };
