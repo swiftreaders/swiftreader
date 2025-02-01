@@ -1,15 +1,18 @@
+import { Category, Difficulty } from "@/types/text";
 import axios from "axios";
 
 const CORS_PROXY = "https://api.allorigins.win/get?url=";
+
 
 // Define the types for the books and texts
 export interface Book {
   id: string;
   title: string;
   author: string;
-  subjects: string[];
-  difficulty: "easy" | "medium" | "hard";
+  subject: Category;
+  difficulty: Difficulty;
   content: string;
+  text_link: string;
 }
 
 interface FilterOptions {
@@ -22,37 +25,56 @@ interface FilterOptions {
 const GUTENDEX_API = "https://gutendex.com/books";
 
 /// Helper function to classify text difficulty
-const classifyDifficulty = (text: string): "easy" | "medium" | "hard" => {
+const classifyDifficulty = (text: string): Difficulty => {
   const wordCount = text.split(" ").length;
   const averageWordLength = text
     .split(" ")
     .reduce((acc, word) => acc + word.length, 0) / wordCount;
 
-  if (averageWordLength < 5) return "easy";
-  if (averageWordLength < 7) return "medium";
-  return "hard";
+  if (averageWordLength < 5) return Difficulty.EASY;
+  if (averageWordLength < 7) return Difficulty.MEDIUM;
+  return Difficulty.HARD;
+};
+
+const findTxtUrl = (data: { [key: string]: string }, id: string): string => {
+  for (const [key, value] of Object.entries(data)) {
+    console.log("key:", key, "value:", value);
+    if (value.endsWith(".txt")) {
+      console.log("found txt url:", value);
+      return value;
+    } else if (value.endsWith(".txt.utf-8")) {
+      return `https://www.gutenberg.org/cache/epub/${id}/pg${id}.txt`;
+    }
+  }
+  return "NOT_FOUND";
 };
 
 /// Fetch books from the Gutendex API
-const fetchBooks = async (subject: string): Promise<Book[]> => {
+const fetchBooks = async (subject: Category): Promise<Book[]> => {
   try {
     console.log("fetchBooks: waiting for list of books fetch");
     const response = await axios.get(GUTENDEX_API, {
-      params: { topic: subject, languages: ["en"], mime_type: "text/plain" },
+      params: { topic: subject as string, languages: ["en"], mime_type: ["text/plain; charset=us-ascii"] },
     });
+    const temp_books = response.data.results;
 
-    const books = response.data.results
+    console.log(`fetchBooks: ${temp_books.length} books fetched`);
+
+    const books = temp_books
     .sort(() => 0.5 - Math.random())  // Shuffle the results
-    .slice(0, 20)
+    .slice(0, 5)
     .map((book: any) => ({
       id: book.id,
       title: book.title,
       author: book.authors[0]?.name || "Unknown Author",
-      subjects: book.subjects,
-      difficulty: "easy", // Placeholder difficulty
+      subjects: subject,
+      difficulty: Difficulty.EASY, // Placeholder difficulty
+      text_link: findTxtUrl(book.formats || {}, book.id) || "NOT_FOUND",
       content: "", // fetch the content later
     }));
 
+    console.log("books: ",books);
+    
     return books;
   } catch (error) {
     console.error("Error fetching books from Gutendex:", error);
@@ -63,8 +85,12 @@ const fetchBooks = async (subject: string): Promise<Book[]> => {
 // Fetch the content of a specific book and classify its difficulty
 const fetchBookContent = async (book: Book): Promise<Book> => {
   try {
+    if (book.text_link === "NOT_FOUND") { 
+      console.log("skipping book - text link not found", book.id);
+      return { ...book, content: "COULD NOT FIND CONTENT", difficulty: Difficulty.EASY }; 
+    }
     const response = await axios.get(
-      `${CORS_PROXY}https://www.gutenberg.org/files/${book.id}/${book.id}-0.txt`
+      CORS_PROXY + book.text_link
     );
     const fullText = response.data;
     console.log(typeof fullText, fullText);
@@ -75,22 +101,24 @@ const fetchBookContent = async (book: Book): Promise<Book> => {
         .slice(0, 300)
         .join(" ");
 
-      // Process excerpt to remove unwanted characters
-      const cleanedExcerpt = excerpt
-        .replace(/[\n\r]/g, " ")
-        .replace(/[^a-zA-Z0-9 ]/g, "");
-      console.log("cleanedExcerpt:", cleanedExcerpt);
-      const difficulty = classifyDifficulty(cleanedExcerpt);
+    // const excerpt = await getBookById(book.id);
+    console.log("excerpt:", excerpt);
+    // Process excerpt to remove unwanted characters
+    const cleanedExcerpt = excerpt
+      .replace(/[\n\r]/g, " ")
+      .replace(/[^a-zA-Z0-9 ]/g, "");
+    console.log("cleanedExcerpt:", cleanedExcerpt);
+    const difficulty = classifyDifficulty(cleanedExcerpt); 
+    return { ...book, content: cleanedExcerpt, difficulty };
+    } else {
+      console.log("skipping book: ", book.id);
+      return { ...book, content: "COULD NOT FIND CONTENT", difficulty: Difficulty.EASY };
   
-      return { ...book, content: cleanedExcerpt, difficulty };
-    }
-    return { ...book, content: "COULD NOT FIND CONTENT", difficulty: "easy" };
-
-    
-    
+    } 
   } catch (error) {
-    console.error(`Error fetching content for book ${book.id}:`);
-    return { ...book, content: "COULD NOT FIND CONTENT", difficulty: "easy" };
+    // console.error(`Error fetching content for book ${book.id}:`);
+    console.log("skipping book: ", book.id);
+    return { ...book, content: "COULD NOT FIND CONTENT", difficulty: Difficulty.EASY };
   }
 };
 
@@ -100,22 +128,19 @@ const filterBooks = (books: Book[], filters: FilterOptions): Book[] => {
     if (book.content == "COULD NOT FIND CONTENT") return false;
     const meetsDifficulty =
       !filters.difficulty || book.difficulty === filters.difficulty;
-    const meetsSubjects =
-      !filters.subjects ||
-      filters.subjects.some((subject) => book.subjects.includes(subject));
     const meetsWordCount =
       !filters.wordCount ||
       (book.content.split(" ").length >= filters.wordCount.min &&
         book.content.split(" ").length <= filters.wordCount.max);
 
-    return meetsDifficulty && meetsSubjects && meetsWordCount;
+    return meetsDifficulty && meetsWordCount;
   });
 };
 
 
 /// Service to retrieve texts from Gutendex
 export const getTexts = async (
-  subject: string,
+  subject: Category,
   filters: FilterOptions
 ): Promise<Book[]> => {
   const books = await fetchBooks(subject);

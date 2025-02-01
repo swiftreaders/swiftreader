@@ -4,71 +4,93 @@ import { useState } from "react";
 import { useAdminDashboard, AdminDashboardProvider } from "@/contexts/adminDashboardContext";
 import { Category, Difficulty, Text } from "@/types/text";
 import { getTexts, Book } from "@/services/bookService"; // Import your bookService function here
+import { time, timeStamp } from "console";
+
+
+const DEFAULT_TEXT = new Text("", Category.NATURE, "", Difficulty.EASY, false); 
 
 const AdminDashboardContent = () => {
   const { texts, addText, updateText, removeText } = useAdminDashboard();
 
-  const [newText, setNewText] = useState({
-    title: "",
-    category: Category.NATURE,
-    content: "",
-    difficulty: Difficulty.EASY,
-    isFiction: false,
-  });
-
+  // State variables
+  const [newManualText, setNewManualText] = useState(DEFAULT_TEXT);
+  const [newGeneratedText, setNewGeneratedText] = useState(DEFAULT_TEXT);
   const [generateTextOptions, setGenerateTextOptions] = useState({
     category: Category.NATURE,
     difficulty: Difficulty.EASY,
     minLength: 100,
     maxLength: 500,
   });
-
-  const [bookServiceResponse, setBookServiceResponse] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"manual" | "generate">("manual");
+  const [generatedTexts, setGeneratedTexts] = useState<Book[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const currentText = generatedTexts[currentIndex];
+  const [isLoading, setIsLoading] = useState(false); // Add loading state
 
   const handleAddText = () => {
+    let newText: Text | null = null;
+    if (activeTab == "manual") {
+      newText = newManualText;
+      setNewManualText(DEFAULT_TEXT);
+    } else {
+      newText = newGeneratedText;
+      setNewGeneratedText(DEFAULT_TEXT);
+    }
     if (!newText.title || !newText.content) {
       alert("Title and content are required!");
       return;
     }
 
-    const text = new Text(
-      newText.title,
-      newText.category,
-      newText.content,
-      newText.difficulty,
-      newText.isFiction
-    );
+    // print each field in newText:
+    console.log("newText:", newText.title, newText.category, newText.content, newText.difficulty, newText.isFiction);
 
-    addText(text);
-    setNewText({
-      title: "",
-      category: Category.NATURE,
-      content: "",
-      difficulty: Difficulty.EASY,
-      isFiction: false,
-    });
+    addText(newText);
   };
+
 
   const handleGenerateText = async () => {
     try {
+      setIsLoading(true);
       const response = await getTexts(generateTextOptions.category, {
         difficulty: generateTextOptions.difficulty,
         wordCount: {
           min: generateTextOptions.minLength,
           max: generateTextOptions.maxLength,
         },
-      }) as Book[];
-
-      
-      setNewText({
-        ...newText,
-        content: "No content generated.",
       });
-      setBookServiceResponse(JSON.stringify(response, null, 2));
+
+      setGeneratedTexts(response);
+      setCurrentIndex(0);
     } catch (error: any) {
-      setBookServiceResponse(`Error: ${error.message}`);
+      console.error(`Error: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleApproveText = () => {
+    const currentText = generatedTexts[currentIndex];
+
+    if (currentText) {
+      addText(new Text(currentText.title, 
+        currentText.subject, 
+        currentText.content, 
+        currentText.difficulty, 
+        false));
+      setGeneratedTexts((prev) => prev.filter((_, index) => index !== currentIndex));
+    }
+  };
+
+  const handleRejectText = () => {
+    setGeneratedTexts((prev) => prev.filter((_, index) => index !== currentIndex));
+  };
+
+  const handleNextText = () => {
+    setCurrentIndex((prev) => (prev + 1) % generatedTexts.length);
+  };
+
+  const handlePreviousText = () => {
+    setCurrentIndex((prev) => (prev - 1 + generatedTexts.length) % generatedTexts.length);
   };
 
   return (
@@ -108,20 +130,20 @@ const AdminDashboardContent = () => {
             <input
               type="text"
               placeholder="Title"
-              value={newText.title}
-              onChange={(e) => setNewText({ ...newText, title: e.target.value })}
+              value={newManualText.title}
+              onChange={(e) => setNewManualText({ ...newManualText, title: e.target.value } as Text)}
               className="w-full p-2 mb-4 border rounded-md"
             />
             <textarea
               placeholder="Content"
-              value={newText.content}
-              onChange={(e) => setNewText({ ...newText, content: e.target.value })}
+              value={newManualText.content}
+              onChange={(e) => setNewManualText({ ...newManualText, content: e.target.value } as Text)}
               className="w-full p-2 mb-4 border rounded-md"
             />
             <label className="block mb-2">Category:</label>
             <select
-              value={newText.category}
-              onChange={(e) => setNewText({ ...newText, category: e.target.value as Category })}
+              value={newManualText.category}
+              onChange={(e) => setNewManualText({ ...newManualText, category: e.target.value as Category } as Text)}
               className="w-full p-2 mb-4 border rounded-md"
             >
               {Object.values(Category).map((cat) => (
@@ -132,8 +154,8 @@ const AdminDashboardContent = () => {
             </select>
             <label className="block mb-2">Difficulty:</label>
             <select
-              value={newText.difficulty}
-              onChange={(e) => setNewText({ ...newText, difficulty: e.target.value as Difficulty })}
+              value={newManualText.difficulty}
+              onChange={(e) => setNewManualText({ ...newManualText, difficulty: e.target.value as Difficulty } as Text)}
               className="w-full p-2 mb-4 border rounded-md"
             >
               {Object.values(Difficulty).map((diff) => (
@@ -145,8 +167,8 @@ const AdminDashboardContent = () => {
             <label className="block mb-4">
               <input
                 type="checkbox"
-                checked={newText.isFiction}
-                onChange={(e) => setNewText({ ...newText, isFiction: e.target.checked })}
+                checked={newManualText.isFiction}
+                onChange={(e) => setNewManualText({ ...newManualText, isFiction: e.target.checked } as Text)}
                 className="mr-2"
               />
               Is Fiction?
@@ -158,79 +180,170 @@ const AdminDashboardContent = () => {
         ) : (
           // Generate Text Form
           <>
-            <label className="block mb-2">Category:</label>
-            <select
-              value={generateTextOptions.category}
-              onChange={(e) =>
-                setGenerateTextOptions({
-                  ...generateTextOptions,
-                  category: e.target.value as Category,
-                })
-              }
-              className="w-full p-2 mb-4 border rounded-md"
-            >
-              {Object.values(Category).map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                </option>
-              ))}
-            </select>
-            <label className="block mb-2">Difficulty:</label>
-            <select
-              value={generateTextOptions.difficulty}
-              onChange={(e) =>
-                setGenerateTextOptions({
-                  ...generateTextOptions,
-                  difficulty: e.target.value as Difficulty,
-                })
-              }
-              className="w-full p-2 mb-4 border rounded-md"
-            >
-              {Object.values(Difficulty).map((diff) => (
-                <option key={diff} value={diff}>
-                  {diff.charAt(0).toUpperCase() + diff.slice(1)}
-                </option>
-              ))}
-            </select>
-            <label className="block mb-2">Minimum Length:</label>
-            <input
-              type="number"
-              value={generateTextOptions.minLength}
-              onChange={(e) =>
-                setGenerateTextOptions({
-                  ...generateTextOptions,
-                  minLength: parseInt(e.target.value, 10),
-                })
-              }
-              className="w-full p-2 mb-4 border rounded-md"
-            />
-            <label className="block mb-2">Maximum Length:</label>
-            <input
-              type="number"
-              value={generateTextOptions.maxLength}
-              onChange={(e) =>
-                setGenerateTextOptions({
-                  ...generateTextOptions,
-                  maxLength: parseInt(e.target.value, 10),
-                })
-              }
-              className="w-full p-2 mb-4 border rounded-md"
-            />
-            <button
-              onClick={handleGenerateText}
-              className="bg-green-500 text-white px-4 py-2 rounded-md"
-            >
-              Generate Text
-            </button>
-            {bookServiceResponse && (
-            <pre className="bg-gray-100 p-4 rounded-md text-sm overflow-auto max-h-40">
-              {bookServiceResponse}
-            </pre>
-          )}
+            {/* Filters in horizontal line */}
+            <div className="flex gap-4 items-end">
+              {/* Category Filter */}
+              <div className="flex-1">
+                <label className="block mb-2 text-sm font-medium">Category</label>
+                <select
+                  value={generateTextOptions.category}
+                  onChange={(e) =>
+                    setGenerateTextOptions({
+                      ...generateTextOptions,
+                      category: e.target.value as Category,
+                    })
+                  }
+                  className="w-full p-2 border rounded-md"
+                >
+                  {Object.values(Category).map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Difficulty Filter */}
+              <div className="flex-1">
+                <label className="block mb-2 text-sm font-medium">Difficulty</label>
+                <select
+                  value={generateTextOptions.difficulty}
+                  onChange={(e) =>
+                    setGenerateTextOptions({
+                      ...generateTextOptions,
+                      difficulty: e.target.value as Difficulty,
+                    })
+                  }
+                  className="w-full p-2 border rounded-md"
+                >
+                  {Object.values(Difficulty).map((diff) => (
+                    <option key={diff} value={diff}>
+                      {diff.charAt(0).toUpperCase() + diff.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Word Length Filters */}
+              <div className="flex-1">
+                <label className="block mb-2 text-sm font-medium">Word Range</label>
+                <div className="flex gap-2">
+                  <input
+                  type="number"
+                  placeholder="Min"
+                  value={generateTextOptions.minLength}
+                  onChange={(e) =>
+                    setGenerateTextOptions({
+                    ...generateTextOptions,
+                    minLength: parseInt(e.target.value, 10),
+                    })
+                  }
+                  className="w-full p-2 border rounded-md"
+                  />
+                  <input
+                  type="number"
+                  placeholder="Max"
+                  value={generateTextOptions.maxLength}
+                  onChange={(e) =>
+                    setGenerateTextOptions({
+                    ...generateTextOptions,
+                    maxLength: parseInt(e.target.value, 10),
+                    })
+                  }
+                  className="w-full p-2 border rounded-md"
+                  />
+                </div>
+                </div>
+              </div>
+
+              {/* Generate Text Button */}
+              <div className="mt-4">
+                <button
+                onClick={handleGenerateText}
+                disabled={isLoading}
+                className="bg-green-500 text-white px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                {isLoading ? (
+                  <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Generating...
+                  </span>
+                ) : (
+                  'Generate Text'
+                )}
+                </button>
+              </div>
+
+
+            {/* Generated Texts Navigation */}
+            {currentText && (
+              <div className="bg-white shadow-md rounded-lg p-6 mb-8">
+
+                <input
+                  type="text"
+                  value={currentText.title}
+                  onChange={(e) =>
+                    setGeneratedTexts((prev) => {
+                      const updated = [...prev];
+                      updated[currentIndex] = {
+                        ...updated[currentIndex],
+                        title: e.target.value,
+                      };
+                      return updated;
+                    })
+                    }
+                    className="w-full p-2 mb-4 border rounded-md"
+                  />
+                  <textarea
+                    value={currentText.content}
+                    onChange={(e) =>
+                    setGeneratedTexts((prev) => {
+                      const updated = [...prev];
+                      updated[currentIndex] = {
+                      ...updated[currentIndex],
+                      content: e.target.value,
+                      };
+                      return updated;
+                    })
+                    }
+                    className="w-full p-2 mb-4 border rounded-md h-64"
+                  />
+                <div className="flex justify-between">
+                  <button
+                    onClick={handlePreviousText}
+                    className="bg-gray-500 text-white px-4 py-2 rounded-md"
+                  >
+                    Previous
+                  </button>
+                  <div className="space-x-4">
+                    <button
+                      onClick={handleApproveText}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-md"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={handleRejectText}
+                      className="bg-red-500 text-white px-4 py-2 rounded-md"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                  <button
+                    onClick={handleNextText}
+                    className="bg-gray-500 text-white px-4 py-2 rounded-md"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
-
       {/* Existing Texts */}
       <div>
         <h2 className="text-xl font-semibold mb-4">Existing Texts</h2>
