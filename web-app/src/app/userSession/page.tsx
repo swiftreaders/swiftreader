@@ -2,15 +2,17 @@
 
 import { useReadingContext, ReadingSessionProvider } from "@/contexts/readingSessionsContext";
 import { useState, useEffect } from "react";
-import { Category, Difficulty, Genre } from "@/types/text";
+import { Category, Difficulty, Genre, Text } from "@/types/text";
+import { Session } from "@/types/sessions"
+import { Timestamp } from "firebase/firestore";
 
 const UserSessionContent = () => {
   const { text, getText } = useReadingContext();
-  const [difficulty, setDifficulty] = useState(Difficulty.EASY);
+  const [difficulty, setDifficulty] = useState(Difficulty.MEDIUM);
   const [category, setCategory] = useState(Category.NATURE);
-  const [genre, setGenre] = useState(Genre.FANTASY);
-  const [fiction, setFiction] = useState(false);
-  const [length, setLength] = useState(500);
+  const [genre, setGenre] = useState(Genre.DRAMA);
+  const [fiction, setFiction] = useState(true);
+  const [length, setLength] = useState(400);
   const [wpm, setWpm] = useState(300);
   const [sessionStarted, setSessionStarted] = useState(false);
   const [outputLine, setOutputLine] = useState<string>("");
@@ -60,6 +62,8 @@ const UserSessionContent = () => {
     getText(fiction ? genre : category, difficulty, fiction, length, setLoading);
   };
 
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
   useEffect(() => {
     if (requested && !loading) {
       console.log(text);
@@ -68,20 +72,44 @@ const UserSessionContent = () => {
         setRequested(false);
       } else {
         setSessionStarted(true);
-        startReadingMode1(text.content);
+        startReadingMode1(text);
       }
     }
   }, [requested, loading, text]);
 
-  const startReadingMode1 = async (content: string) => {
-    const lines = splitTextIntoLines(content);
-    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  const startReadingMode1 = async (text: Text): Promise<Session> => {
+    const lines = splitTextIntoLines(text.content);
+    setOutputLine("Reading '" + text.title + "'");
+    await sleep(3000);
+    setOutputLine("Ready...");
+    await sleep(1000);
+    setOutputLine("Set...");
+    await sleep(1000);
+    setOutputLine("Go!");
+    await sleep(1000);
+    const startTime = Timestamp.fromDate(new Date());
     for (const line of lines) {
       setOutputLine(line);
       const sleepTime = calculateSleepTime(line);
       await sleep(sleepTime);
     }
+    const endTime = Timestamp.fromDate(new Date());
+    console.log(sessionCompleteMode1(startTime, endTime, text));
+    return sessionCompleteMode1(startTime, endTime, text);
   };
+
+  const sessionCompleteMode1 = (startTime: Timestamp, endTime: Timestamp, text: Text): Session => {
+    // TODO: Pass in our own userId
+    const stubUserId = "Ss4hOp2vmTZkbV2H0w68"
+    return new Session(text.id, 
+      stubUserId, 
+      text.title, 
+      startTime, 
+      endTime, 
+      new Array(Math.floor((endTime.toMillis() - startTime.toMillis()) / 5000)).fill(wpm),
+      1,
+      text.difficulty)
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-8">

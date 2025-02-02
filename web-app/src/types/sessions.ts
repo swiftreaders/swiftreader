@@ -16,7 +16,6 @@ export class Session {
   text_average_performance: number;
 
   constructor(
-    id: string,
     textId: string,
     userId: string,
     title: string,
@@ -25,6 +24,8 @@ export class Session {
     wpm: Array<number>,
     sessionType: number,
     difficulty: string,
+    // Default arguments
+    id: string = "",
   ) {
     this.id = id;
     this.textId = textId;
