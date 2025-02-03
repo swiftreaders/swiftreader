@@ -12,11 +12,11 @@ import Calibration, { CalibrationRef } from "./Calibration"; // Modified import 
 const UserSessionContent = () => {
   const { text, getText } = useReadingContext();
   const [mode, setMode] = useState(1);
-  const [difficulty, setDifficulty] = useState(Difficulty.MEDIUM);
-  const [category, setCategory] = useState(Category.NATURE);
-  const [genre, setGenre] = useState(Genre.DRAMA);
+  const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
+  const [category, setCategory] = useState<Category | null>(null);
+  const [genre, setGenre] = useState<Genre | null>(null);
   const [fiction, setFiction] = useState(true);
-  const [length, setLength] = useState(400);
+  const [length, setLength] = useState<number | null>(null);
   const [wpm, setWpm] = useState(300);
   const [sessionStarted, setSessionStarted] = useState(false);
   const [outputLine, setOutputLine] = useState<string>("");
@@ -286,10 +286,11 @@ const UserSessionContent = () => {
             {fiction ? (
               <select
                 id="genreSelect"
-                value={genre}
-                onChange={(e) => setGenre(e.target.value as Genre)}
+                value={genre ?? ""}
+                onChange={(e) => setGenre(e.target.value === "" ? null : e.target.value as Genre)}
                 className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
               >
+              <option value="">Any</option> {/* Option for "Any" */}
                 {Object.values(Genre).map((gen) => (
                   <option key={gen} value={gen}>
                     {gen}
@@ -299,10 +300,11 @@ const UserSessionContent = () => {
             ) : (
               <select
                 id="categorySelect"
-                value={category}
-                onChange={(e) => setCategory(e.target.value as Category)}
+                value={category ?? ""}
+                onChange={(e) => setCategory(e.target.value === "" ? null : e.target.value as Category)}
                 className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
               >
+              <option value="">Any</option> {/* Option for "Any" */}
                 {Object.values(Category).map((cat) => (
                   <option key={cat} value={cat}>
                     {cat}
@@ -319,10 +321,11 @@ const UserSessionContent = () => {
             </label>
             <select
               id="difficultySelect"
-              value={difficulty}
-              onChange={(e) => setDifficulty(e.target.value as Difficulty)}
+              value={difficulty ?? ""} // If difficulty is null, set value to ""
+              onChange={(e) => setDifficulty(e.target.value === "" ? null : (e.target.value as Difficulty))}
               className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
             >
+              <option value="">Any</option> {/* Option for "Any" */}
               {Object.values(Difficulty).map((diff) => (
                 <option key={diff} value={diff}>
                   {diff}
@@ -340,8 +343,19 @@ const UserSessionContent = () => {
               id="lengthInput"
               type="number"
               className="border border-gray-300 rounded px-3 py-2 text-center text-gray-700 focus:outline-none focus:ring focus:ring-blue-300 w-24"
-              value={length}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setLength(parseInt(event.target.value, 10))}
+              value={length ?? ""} // If length is null, show empty string
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setLength(event.target.value === "" ? null : parseInt(event.target.value, 10))}
+            />
+            {/* Checkbox for "Any" */}
+            <label htmlFor="anyLength" className="text-sm text-gray-500">
+              Any
+            </label>
+            <input
+              id="anyLength"
+              type="checkbox"
+              checked={length === null}
+              onChange={(e) => setLength(e.target.checked ? null : 300)} // Set to null or 0
+              className="ml-2"
             />
           </div>
 
