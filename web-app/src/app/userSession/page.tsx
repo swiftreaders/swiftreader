@@ -2,12 +2,16 @@
 
 import { useReadingContext, ReadingSessionProvider } from "@/contexts/readingSessionsContext";
 import { useState, useEffect } from "react";
+import Script from "next/script";
 import { Category, Difficulty, Genre, Text } from "@/types/text";
 import { Session } from "@/types/sessions"
 import { Timestamp } from "firebase/firestore";
+import WebGazerClient from "./WebGazerClient"; // We'll keep a separate file
+import Calibration from "./Calibration";
 
 const UserSessionContent = () => {
   const { text, getText } = useReadingContext();
+  const [mode, setMode] = useState(1);
   const [difficulty, setDifficulty] = useState(Difficulty.MEDIUM);
   const [category, setCategory] = useState(Category.NATURE);
   const [genre, setGenre] = useState(Genre.DRAMA);
@@ -44,7 +48,7 @@ const UserSessionContent = () => {
 
     if (currentLine) lines.push(currentLine);
     return lines;
-};
+  };
 
 
   // Assumes a standard word length of 5 characters
@@ -72,13 +76,41 @@ const UserSessionContent = () => {
         setRequested(false);
       } else {
         setSessionStarted(true);
-        startReadingMode1(text);
+        if (mode == 1) {
+          startReadingMode1(text);
+        } else if (mode == 2) {
+          console.log("reading mode 2")
+          startReadingMode2(text);
+        }
       }
     }
   }, [requested, loading, text]);
 
-  const startReadingMode1 = async (text: Text): Promise<Session> => {
-    const lines = splitTextIntoLines(text.content);
+  useEffect(() => {
+    if (mode == 2) {
+      if (typeof window === "undefined") return;
+
+      const webgazer = (window as any).webgazer;
+      if (!webgazer) {
+        console.error("WebGazer is not defined on window.");
+        return;
+      }
+
+      console.log("WebGazer found. Setting up...");
+      webgazer
+        .begin()
+        .then(() => console.log("WebGazer started!"))
+        .catch((err: any) => console.error("WebGazer failed to start:", err));
+
+      return () => {
+        webgazer.end();
+        console.log("WebGazer stopped on unmount.");
+      };
+    }
+  }, [mode]); // Runs when mode updates
+
+
+  const preRead = async (text:Text) => {
     setOutputLine("Reading '" + text.title + "'");
     await sleep(3000);
     setOutputLine("Ready...");
@@ -87,6 +119,11 @@ const UserSessionContent = () => {
     await sleep(1000);
     setOutputLine("Go!");
     await sleep(1000);
+  }
+
+  const startReadingMode1 = async (text: Text): Promise<Session> => {
+    const lines = splitTextIntoLines(text.content);
+    await preRead(text);
     const startTime = Timestamp.fromDate(new Date());
     for (const line of lines) {
       setOutputLine(line);
@@ -111,7 +148,68 @@ const UserSessionContent = () => {
       text.difficulty)
   }
 
+  let previousQuarter = 0;
+
+  const startReadingMode2 = async (text: Text) => {
+    // 1. Split content into lines
+    const lines = splitTextIntoLines(text.content);
+    await preRead(text);
+    let currentLineIndex = 0;
+  
+    // 2. Define a helper to show the next line
+    setOutputLine(lines[currentLineIndex]);
+    const showNextLine = () => {
+      if (currentLineIndex < lines.length) {
+        setOutputLine(lines[currentLineIndex]);
+        currentLineIndex++;
+      } else {
+        // Optionally handle the end of content here (e.g., stop WebGazer, etc.)
+        console.log("All lines have been displayed.");
+      }
+    };
+  
+    // 3. Gaze listener function
+    function handleGaze(data: { x: number; y: number } | null) {
+      if (!data) return;
+  
+      // Calculate which quarter the gaze is in
+      const screenWidth = window.innerWidth;
+      const quarterWidth = screenWidth / 4;
+      let activeQuarter = 0;
+  
+      if (data.x < quarterWidth) {
+        activeQuarter = 1;
+      } else if (data.x < quarterWidth * 2) {
+        activeQuarter = 2;
+      } else if (data.x < quarterWidth * 3) {
+        activeQuarter = 3;
+      } else {
+        activeQuarter = 4;
+      }
+  
+      // If the gaze just entered the 4th quarter (from any other quarter),
+      // show the next line
+      if (activeQuarter === 4 && previousQuarter !== 4) {
+        showNextLine();
+      }
+  
+      // Update the previous quarter for the next reading
+      previousQuarter = activeQuarter;
+    }
+  
+    // 4. Initialize WebGazer & set the gaze listener
+    // Make sure WebGazer is loaded on `window` (as in your example).
+    (window as any).webgazer.setGazeListener(handleGaze);
+  };
+
   return (
+    <>
+    <Script
+      src="https://webgazer.cs.brown.edu/webgazer.js"
+      strategy="beforeInteractive" // ensures script is loaded early
+      onLoad={() => console.log("WebGazer script loaded (beforeInteractive)!")}
+      onError={() => console.error("Failed to load WebGazer script.")}
+    />
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-8">
       {/* Progress Circles */}
       <div className="flex items-center justify-center mb-8">
@@ -141,6 +239,24 @@ const UserSessionContent = () => {
 
       {/* Settings Bar */}
       <div className="flex flex-wrap items-center justify-between w-full bg-white shadow-md p-4 rounded-lg space-y-4 md:space-y-0 md:flex-nowrap">
+        {/* Select Mode Dropdown*/}        
+        <div className="flex items-center space-x-2">
+          <label htmlFor="modeSelect" className="text-sm font-medium text-gray-700">
+            Mode:
+          </label>
+          <select
+            id="modeSelect"
+            value={mode}
+            onChange={(e) => setMode(parseInt(e.target.value, 10))}
+            className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
+          >
+          {[1, 2, 3].map((num) => (
+            <option key={num} value={num}>
+              {num}
+            </option>
+          ))}
+          </select>
+        </div>
 
         {/* Fiction Checkbox */}
         <div className="flex items-center space-x-2">
@@ -260,7 +376,10 @@ const UserSessionContent = () => {
           </div>
         ) : null}
       </div>
+    <WebGazerClient />
     </div>
+    </>
+
   );
 };
 
