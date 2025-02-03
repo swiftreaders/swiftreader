@@ -57,7 +57,7 @@ const Calibration = forwardRef<CalibrationRef>((props, ref) => {
     setCalibrating(false);
   };
 
-  // Added: Expose the startCalibration method via ref
+  // Expose the startCalibration method via ref
   useImperativeHandle(ref, () => ({
     startCalibration,
   }));
@@ -138,5 +138,8 @@ const Calibration = forwardRef<CalibrationRef>((props, ref) => {
     </div>
   );
 });
+
+// Added: Provide a display name for the component to satisfy ESLint rules.
+Calibration.displayName = "Calibration";
 
 export default Calibration;
