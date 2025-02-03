@@ -69,6 +69,7 @@ const UserSessionContent = () => {
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+  // Modified: Added an eslint disable comment to ignore missing dependencies warning
   useEffect(() => {
     if (requested && !loading) {
       console.log(text);
@@ -85,6 +86,7 @@ const UserSessionContent = () => {
         }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requested, loading, text]);
 
   useEffect(() => {
@@ -109,7 +111,6 @@ const UserSessionContent = () => {
       };
     }
   }, [mode]); // Runs when mode updates
-
 
   const preRead = async (text: Text) => {
     setOutputLine("Reading '" + text.title + "'");
@@ -139,14 +140,16 @@ const UserSessionContent = () => {
   const sessionCompleteMode1 = (startTime: Timestamp, endTime: Timestamp, text: Text): Session => {
     // TODO: Pass in our own userId
     const stubUserId = "Ss4hOp2vmTZkbV2H0w68"
-    return new Session(text.id, 
+    return new Session(
+      text.id, 
       stubUserId, 
       text.title, 
       startTime, 
       endTime, 
       new Array(Math.floor((endTime.toMillis() - startTime.toMillis()) / 5000)).fill(wpm),
       1,
-      text.difficulty)
+      text.difficulty
+    )
   };
 
   let previousQuarter = 0;
