@@ -1,9 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useImperativeHandle, forwardRef } from "react";
 import { trainWebGazer } from "./TrainWebGazer"; // (Adjust import path)
 
-export default function Calibration() {
+// Exporting the ref interface for external components
+export interface CalibrationRef {
+  startCalibration: () => Promise<void>;
+}
+
+const Calibration = forwardRef<CalibrationRef>((props, ref) => {
   const [calibrating, setCalibrating] = useState(false);
 
   const startCalibration = async () => {
@@ -52,11 +57,19 @@ export default function Calibration() {
     setCalibrating(false);
   };
 
+  // Added: Expose the startCalibration method via ref
+  useImperativeHandle(ref, () => ({
+    startCalibration,
+  }));
+
   return (
     <div>
-      <button onClick={startCalibration} disabled={calibrating}>
-        {calibrating ? "Calibrating..." : "Start Calibration"}
-      </button>
+      {/*
+        // Commented out the calibration button since it's not needed:
+        <button onClick={startCalibration} disabled={calibrating}>
+          {calibrating ? "Calibrating..." : "Start Calibration"}
+        </button>
+      */}
 
       {/* Render the dot elements */}
       <div className="calibration-container">
@@ -124,4 +137,6 @@ export default function Calibration() {
       `}</style>
     </div>
   );
-}
+});
+
+export default Calibration;
