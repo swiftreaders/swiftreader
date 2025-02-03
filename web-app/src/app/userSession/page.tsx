@@ -3,6 +3,7 @@
 import { useReadingContext, ReadingSessionProvider } from "@/contexts/readingSessionsContext";
 import { useState } from "react";
 import { Category, Difficulty } from "@/types/text";
+import Quiz from "@/components/Quiz";
 
 const UserSessionContent = () => {
   const { recentSessions, text, getText } = useReadingContext();
@@ -11,6 +12,7 @@ const UserSessionContent = () => {
   const [wpm, setWpm] = useState(300);
   const [sessionStarted, setSessionStarted] = useState(false);
   const [outputText, setOutputText] = useState("");
+  const [readingComplete, setReadingComplete] = useState(false);
 
   const handleToggle = (setting: string) => {
     if (setting === "settingOne") {
@@ -42,6 +44,10 @@ const UserSessionContent = () => {
   const startReading = (content: string) => {
     setOutputText(content);
   };
+
+  if (readingComplete) {
+    return <Quiz onComplete={() => alert("Quiz Completed!")} />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-8">
