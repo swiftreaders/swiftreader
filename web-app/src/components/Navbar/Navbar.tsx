@@ -7,24 +7,37 @@ export default function Navbar() {
   const { user, loggedIn } = useAuth();
 
   return (
-    <nav className="navbar">
-      <ul>
+    <nav className="bg-gray-800 p-4">
+      <ul className="flex space-x-4 justify-end">
         {loggedIn ? (
           <>
             <li>
-              <Link href={user?.isAdmin ? "/adminDashboard" : "/userDashboard"}>
+              <Link
+                href={user?.isAdmin ? "/adminDashboard" : "/userDashboard"}
+                className="text-white hover:text-gray-300"
+              >
                 Dashboard
               </Link>
             </li>
 
             <li>
-              <Link href="/auth/logout">Logout</Link>
+              <Link
+                href="/auth/logout"
+                className="text-white hover:text-gray-300"
+              >
+                Logout
+              </Link>
             </li>
           </>
         ) : (
           <>
             <li>
-              <Link href="/auth/login">Login</Link>
+              <Link
+                href="/auth/login"
+                className="text-white hover:text-gray-300"
+              >
+                Login
+              </Link>
             </li>
           </>
         )}
