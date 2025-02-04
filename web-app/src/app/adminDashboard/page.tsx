@@ -28,8 +28,7 @@ const AdminDashboardContent = () => {
     setIsPopupOpen(true);
   };
 
-   // Dummy session data
-   const dummySessions = [
+  const dummySessions = [
     {
       id: 1,
       title: "Session 1",
@@ -37,7 +36,7 @@ const AdminDashboardContent = () => {
       difficulty: "Medium",
       wpm: 72,
       comprehensionScore: 88,
-      sessionDate: "01 Feb 2025, 14:00",
+      sessionDate: Timestamp.fromDate(new Date("2025-02-01T14:00:00Z")), // Firebase Timestamp
     },
     {
       id: 2,
@@ -46,7 +45,7 @@ const AdminDashboardContent = () => {
       difficulty: "Hard",
       wpm: 64,
       comprehensionScore: 75,
-      sessionDate: "31 Jan 2025, 10:30",
+      sessionDate: Timestamp.fromDate(new Date("2025-01-31T10:30:00Z")),
     },
     {
       id: 3,
@@ -55,9 +54,10 @@ const AdminDashboardContent = () => {
       difficulty: "Easy",
       wpm: 85,
       comprehensionScore: 92,
-      sessionDate: "30 Jan 2025, 16:15",
+      sessionDate: Timestamp.fromDate(new Date("2025-01-30T16:15:00Z")),
     },
   ];
+  
 
   const userTrendData = [
     { month: "Jan", newUsers: 30 },
@@ -179,7 +179,7 @@ const AdminDashboardContent = () => {
                   Comprehension Score: {session.comprehensionScore}
                 </div>
                 <div className="mt-2 text-xs text-gray-500 text-center">
-                  {session.sessionDate}
+                  {session.sessionDate.toDate().toLocaleString()}
                 </div>
               </div>
             ))}
@@ -217,4 +217,10 @@ const AdminDashboardContent = () => {
   );
 };
 
-export default () => <AdminDashboardProvider><AdminDashboardContent /></AdminDashboardProvider>;
+const AdminDashboard = () => (
+  <AdminDashboardProvider>
+    <AdminDashboardContent />
+  </AdminDashboardProvider>
+);
+
+export default AdminDashboard;
