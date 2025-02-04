@@ -7,8 +7,12 @@ export default function Navbar() {
   const { user, loggedIn } = useAuth();
 
   return (
-    <nav className="bg-gray-800 p-4">
-      <ul className="flex space-x-4 justify-end">
+    <nav className="bg-gray-800 p-4 flex justify-between items-center">
+      {/* Left Side - Branding */}
+      <div className="text-white text-lg font-bold">SwiftReader</div>
+
+      {/* Right Side - Navigation Links */}
+      <ul className="flex space-x-4">
         {loggedIn ? (
           <>
             <li>
