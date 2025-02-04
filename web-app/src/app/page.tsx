@@ -24,7 +24,7 @@ export default function Home() {
       <p>Your id is: {user.id}</p>
       <p>Your email is: {user.email}</p>
       {user.isAdmin ? (
-        <p>You are an admin</p>
+        <p>You are an admin user</p>
       ) : (
         <p>You are not an admin user</p>
       )}
