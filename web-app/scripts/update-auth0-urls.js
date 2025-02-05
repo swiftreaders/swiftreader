@@ -5,7 +5,7 @@ const {
   AUTH0_MGMT_CLIENT_ID,
   AUTH0_MGMT_CLIENT_SECRET,
   AUTH0_DOMAIN, // The Auth0 domain, e.g. 'dev-xxxxx.us.auth0.com'
-  AUTH0_APP_ID, // The Auth0 Application ID for your Next.js app
+  AUTH0_CLIENT_ID, // The Auth0 Application ID for your Next.js app
   VERCEL_URL, // The current deployment URL from Vercel
 } = process.env;
 
@@ -13,7 +13,7 @@ const {
 const cleanedAuth0Domain = AUTH0_DOMAIN.replace(/^https?:\/\//, '').replace(/\/$/, '');
 
 // Auth0 API endpoint for updating application settings
-const AUTH0_API_URL = `https://${cleanedAuth0Domain}/api/v2/clients/${AUTH0_APP_ID}`;
+const AUTH0_API_URL = `https://${cleanedAuth0Domain}/api/v2/clients/${AUTH0_CLIENT_ID}`;
 
 // Function to get an Auth0 Management API access token
 async function getAuth0Token() {
