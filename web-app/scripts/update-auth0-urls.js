@@ -49,8 +49,8 @@ async function updateAuth0Urls() {
 
     // Add new URL if not already included
     if (!allowedLogoutUrls.includes(newUrl)) allowedLogoutUrls.push(newUrl);
-    if (!allowedCallbackUrls.includes(`${newUrl}/api/auth/callback`)) // Make sure it's /api/auth/callback
-      allowedCallbackUrls.push(`${newUrl}/api/auth/callback`);
+    if (!allowedCallbackUrls.includes(`${newUrl}/auth/callback`)) // Make sure it's /api/auth/callback
+      allowedCallbackUrls.push(`${newUrl}/auth/callback`);
     if (!allowedWebOrigins.includes(newUrl)) allowedWebOrigins.push(newUrl);
 
     // Update the application settings in Auth0
