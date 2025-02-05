@@ -15,10 +15,6 @@ import {
 import { app, db } from "@/firebaseConfig";
 import { Category, Text } from "@/types/text";
 
-// const db = getFirestore(app);
-
-// function to get text from json query and return just the text
-
 
 
 export const textService = {
@@ -60,6 +56,7 @@ export const textService = {
 
   addText: async (text: Text): Promise<boolean> => {
     try {
+      console.log("Adding text to firestore: ", text.toJSON());
       await addDoc(collection(db, "Texts"), text.toJSON());
       return true;
     } catch (error) {
