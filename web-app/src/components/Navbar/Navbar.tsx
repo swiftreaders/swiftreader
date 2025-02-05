@@ -9,7 +9,9 @@ export default function Navbar() {
   return (
     <nav className="bg-gray-800 p-4 flex justify-between items-center">
       {/* Left Side - Branding */}
-      <div className="text-white text-lg font-bold">SwiftReader</div>
+      <div className="text-white text-lg font-bold">
+        <Link href="/">SwiftReader</Link>
+      </div>
 
       {/* Right Side - Navigation Links */}
       <ul className="flex space-x-4">
