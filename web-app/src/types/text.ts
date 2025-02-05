@@ -8,9 +8,10 @@ export enum Difficulty {
 }
 
 export enum Category {
-  NATURE = "nature",
   SCIENCE = "science",
+  NATURE = "nature",
   TECHNOLOGY = "technology",
+  HISTORY = "history",
 }
 
 export class Text {
@@ -49,6 +50,7 @@ export class Text {
   }
   
   toJSON() {
+    console.log("Text.toJSON: ", this);
     return {
       title: this.title,
       category: this.category,

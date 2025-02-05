@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useAdminDashboard, AdminDashboardProvider } from "@/contexts/adminDashboardContext";
 import { Category, Difficulty, Text } from "@/types/text";
-import { getTexts, Book } from "@/services/bookService"; // Import your bookService function here
-import { time, timeStamp } from "console";
+import { getTexts, Book, fetchBooks, fetchBookContent } from "@/services/bookService"; // Import your bookService function here
+
 
 
 const DEFAULT_TEXT = new Text("", Category.NATURE, "", Difficulty.EASY, false); 
@@ -48,26 +48,39 @@ const AdminDashboardContent = () => {
   };
 
 
+  // To paralellize the processing of each book, we gonna do all the processing here in the state 
   const handleGenerateText = async () => {
     try {
       setIsLoading(true);
-      const response = await getTexts(generateTextOptions.category, {
-        difficulty: generateTextOptions.difficulty,
-        wordCount: {
-          min: generateTextOptions.minLength,
-          max: generateTextOptions.maxLength,
-        },
+      setGeneratedTexts([]); 
+  
+      // Fetch book metadata
+      const booksMetadata = await fetchBooks(generateTextOptions.category);
+  
+      const processingPromises = booksMetadata.map(async (book) => {
+        try {
+          const processedBook = await fetchBookContent(book, generateTextOptions.maxLength);
+  
+          // Check filters
+          const meetsDifficulty = processedBook.difficulty === generateTextOptions.difficulty;
+          const wordCount = processedBook.content.split(/\s+/).length;
+          const meetsWordCount = wordCount >= generateTextOptions.minLength;
+  
+          if (meetsDifficulty && meetsWordCount) {
+            setGeneratedTexts((prev) => [...prev, processedBook]);
+          }
+        } catch (error) {
+          console.error("Error processing book:", error);
+        }
       });
-
-      if (response.length === 0) {  
-        alert("No texts found with the given criteria.");
-        return;
-      } else {
-        setGeneratedTexts(response);
-        setCurrentIndex(0);
-      }
+  
+      await Promise.all(processingPromises);
     } catch (error: any) {
-      console.error(`Error: ${error.message}`);
+      if (error.message.includes("Network Error")) {
+        alert("Network error occurred. Please check your internet connection and try again.");
+      } else {
+        console.error(`Error: ${error.message}`);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -81,9 +94,10 @@ const AdminDashboardContent = () => {
         currentText.subject, 
         currentText.content, 
         currentText.difficulty, 
-        false));
+        true));
       setGeneratedTexts((prev) => prev.filter((_, index) => index !== currentIndex));
     }
+
   };
 
   const handleRejectText = () => {
