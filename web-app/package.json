@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node scripts/update-auth0-urls.js",
     "start": "next start",
     "lint": "next lint"
   },
