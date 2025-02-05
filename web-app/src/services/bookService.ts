@@ -3,7 +3,10 @@ import axios from "axios";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const CORS_PROXY = "https://api.allorigins.win/get?url=";
-const GEMINI_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;  //  add this in for the ai fucniton to work 
+const GEMINI_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;  
+
+/// Gutendex API base URL
+const GUTENDEX_API = "https://gutendex.com/books";
 
 // Define the types for the books and texts
 export interface Book {
@@ -14,6 +17,19 @@ export interface Book {
   difficulty: Difficulty;
   content: string;
   text_link: string;
+  questions: Question[];  
+}
+
+export interface Excerpt {
+  book_id: string;
+  excerpt: string;
+  questions: Question[];
+}
+
+export interface Question {
+  question: string;
+  choices: string[];
+  answer: string;
 }
 
 interface FilterOptions {
@@ -21,9 +37,6 @@ interface FilterOptions {
   subjects?: string[];
   wordCount?: { min: number; max: number };
 }
-
-/// Gutendex API base URL
-const GUTENDEX_API = "https://gutendex.com/books";
 
 /// Helper function to classify text difficulty
 const classifyDifficulty = (text: string): Difficulty => {
@@ -117,56 +130,103 @@ const findNaturalExcerpt = (text: string, targetWordCount: number): string => {
   return selectedSentences.join(" ");
 };
 
-const filterTextUsingAI = async (content: string, wordLimit: number): Promise<string> => {
+const filterTextUsingAI = async (content: string, wordLimit: number): Promise<{ excerpt: string, questions: any[] }> => {
   try {
     const gemini = new GoogleGenerativeAI(GEMINI_KEY ?? "");
     const model = gemini.getGenerativeModel({ model: "gemini-1.5-flash" });
     
     const prompt = `
       Identify and extract ONE continuous, meaningful excerpt from the following text that:
-      1. Forms a coherent narrative or complete thought
-      2. Is between ${wordLimit * 0.8} and ${wordLimit} words
-      3. Maintains proper sentence structure
-      4. Avoids abrupt beginnings/endings
+      1. Forms a coherent narrative or complete thought.
+      2. Is between ${wordLimit * 0.8} and ${wordLimit} words.
+      3. Maintains proper sentence structure.
+      4. Avoids abrupt beginnings/endings.
+      5. Where possible, do not choose text from the preface or author's notes.
+s
+      Additionally, generate at least 3 multiple-choice questions based on the excerpt:
+      1. Each question should be derived solely from the content of the text.
+      2. Each question should have 4 answer choices.
+      3. The correct answer should be clear and unambiguous.
 
-      Return ONLY the excerpt text with no additional commentary or formatting.
-      Original text: ${content.slice(0, 7500)}`; // Cut to stay in the token limit 
+      Return the result in a format with the following structure without any additional text:
+      \`\`\`json
+      {
+        "excerpt": "Your extracted text here",
+        "questions": [
+          {
+            "question": "First question here",
+            "choices": ["Option A", "Option B", "Option C", "Option D"],
+            "answer": "Correct answer here"
+          },
+          {
+            "question": "Second question here",
+            "choices": ["Option A", "Option B", "Option C", "Option D"],
+            "answer": "Correct answer here"
+          },
+          {
+            "question": "Third question here",
+            "choices": ["Option A", "Option B", "Option C", "Option D"],
+            "answer": "Correct answer here"
+          }
+        ]
+      }
+      \`\`\`  
 
-    const result = await model.generateContent(prompt);
-    const response = result.response.text().trim();
+      Original text: ${content.slice(0, 7500)}`;
 
-    // Verify AI response quality
-    const isValid = response && !response.includes("I cannot") 
-      && response.split(/\s+/).length >= wordLimit * 0.8;
-
-    return isValid ? response : findNaturalExcerpt(content, wordLimit);
-  } catch (error) {
-    console.error("AI filtering failed, using fallback:", error);
-    return findNaturalExcerpt(content, wordLimit);
-  }
+      // console.log("prompt: ", prompt);
+      const result = await model.generateContent(prompt);
+      const rawResponse = result.response.text().trim();
+  
+      // console.log("Raw AI Response: ", rawResponse);
+  
+      // Ensure we strip any unwanted formatting
+      const jsonStart = rawResponse.indexOf("{");
+      const jsonEnd = rawResponse.lastIndexOf("}");
+      const cleanJson = rawResponse.slice(jsonStart, jsonEnd + 1);
+  
+      const response = JSON.parse(cleanJson);
+  
+      console.log("Parsed Content: ", response);
+  
+      // Verify AI response quality
+      const isValid = response.excerpt && 
+                      typeof response.excerpt === "string" && 
+                      response.excerpt.split(/\s+/).length >= wordLimit * 0.8;
+  
+      return isValid ? response : { excerpt: findNaturalExcerpt(content, wordLimit), questions: [] };
+    } catch (error) {
+      console.error("AI filtering failed, using fallback:", error);
+      return { excerpt: findNaturalExcerpt(content, wordLimit), questions: [] };
+    }
 };
 
 // Updated fetchBookContent
-export const fetchBookContent = async (book: Book, wordlimit: number): Promise<Book> => {
+export const fetchBookContent = async (book: Book, wordLimit: number): Promise<Book> => {
   try {
     if (book.text_link === "NOT_FOUND") {
-      return { ...book, content: "CONTENT_UNAVAILABLE", difficulty: Difficulty.EASY };
+      return { 
+        ...book, 
+        content: "CONTENT_UNAVAILABLE", 
+        difficulty: Difficulty.EASY, 
+        questions: [] 
+      };
     }
 
     const response = await axios.get(`${CORS_PROXY}${encodeURIComponent(book.text_link)}`);
     const fullText = response.data.contents || "";
-    
-    // Get AI-curated excerpt
-    const aiExcerpt = await filterTextUsingAI(fullText, wordlimit);
-    
-    // Fallback to natural excerpt if AI failed
-    const finalExcerpt = aiExcerpt.startsWith("CONTENT_UNAVAILABLE") 
-      ? findNaturalExcerpt(fullText, wordlimit)
-      : aiExcerpt;
+
+    // Get AI-generated excerpt & questions
+    const aiResponse = await filterTextUsingAI(fullText, wordLimit);
+
+    // Ensure AI response is valid
+    const finalExcerpt = aiResponse.excerpt && aiResponse.excerpt.length > 0 
+      ? aiResponse.excerpt 
+      : findNaturalExcerpt(fullText, wordLimit);
 
     // Ensure word limit
     const trimmedExcerpt = finalExcerpt.split(/\s+/)
-      .slice(0, wordlimit)
+      .slice(0, wordLimit)
       .join(" ");
 
     const difficulty = classifyDifficulty(trimmedExcerpt);
@@ -174,18 +234,25 @@ export const fetchBookContent = async (book: Book, wordlimit: number): Promise<B
     return { 
       ...book, 
       content: trimmedExcerpt,
-      difficulty 
+      difficulty,
+      questions: aiResponse.questions || [] 
     };
   } catch (error) {
     console.error(`Error processing ${book.title}:`, error);
-    return { ...book, content: "CONTENT_UNAVAILABLE", difficulty: Difficulty.EASY };
+    return { 
+      ...book, 
+      content: "CONTENT_UNAVAILABLE", 
+      difficulty: Difficulty.EASY, 
+      questions: []  
+    };
   }
 };
+
 
 /// Filter books based on criteria
 const filterBooks = (books: Book[], filters: FilterOptions): Book[] => {
   return books.filter((book) => {
-    if (book.content == "COULD NOT FIND CONTENT") return false;
+    if (book.content === "CONTENT_UNAVAILABLE") return false;
 
     const meetsDifficulty =
       !filters.difficulty || book.difficulty === filters.difficulty;
@@ -193,11 +260,11 @@ const filterBooks = (books: Book[], filters: FilterOptions): Book[] => {
       !filters.wordCount ||
       (book.content.split(" ").length >= filters.wordCount.min &&
         book.content.split(" ").length <= filters.wordCount.max);
+
     console.log("filterBooks: ", meetsDifficulty, meetsWordCount);
     return meetsDifficulty && meetsWordCount;
   });
 };
-
 
 /// Service to retrieve texts from Gutendex
 export const getTexts = async (
@@ -206,8 +273,14 @@ export const getTexts = async (
 ): Promise<Book[]> => {
   const books = await fetchBooks(subject);
   console.log("bookService.ts - getTexts:", books.map((book) => book.title));
-  const booksWithContent = await Promise.all(books.map(fetchBookContent, filters.wordCount?.max ?? 500));
-  filterBooks(booksWithContent, filters);
-  return booksWithContent;
-  // return filterBooks(booksWithContent, filters);
+
+  // Ensure word limit fallback exists
+  const wordLimit = filters.wordCount?.max ?? 500;
+
+  // Fetch book contents with AI processing
+  const booksWithContent = await Promise.all(
+    books.map(book => fetchBookContent(book, wordLimit))
+  );
+
+  return filterBooks(booksWithContent, filters);
 };
