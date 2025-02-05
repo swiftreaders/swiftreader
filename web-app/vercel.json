@@ -1,8 +1,5 @@
 {
   "build": {
-    "env": {
-      "VERCEL_URL": "https://${process.env.VERCEL_URL}"
-    },
     "postdeploy": "node scripts/update-auth0-urls.js"
   }
 }
