@@ -8,7 +8,7 @@ import { Session } from "@/types/sessions";
 import { Timestamp } from "firebase/firestore";
 import WebGazerClient from "./WebGazerClient"; // We'll keep a separate file
 import Calibration, { CalibrationRef } from "./Calibration"; // Modified import to include ref type
-import { Info } from "lucide-react";
+import HelpPopup from "./helpPopup" 
 
 const UserSessionContent = () => {
   const { text, getText } = useReadingContext();
@@ -417,33 +417,6 @@ const UserSessionContent = () => {
     </>
   );
 };
-
-function HelpPopup({ message }: { message: string }) {
-  const [isVisible, setIsVisible] = useState(false);
-
-  return (
-    <div className="relative inline-block">
-      <div
-        className="flex items-center justify-center w-6 h-6 bg-gray-200 rounded-full cursor-pointer"
-        onMouseEnter={() => setIsVisible(true)}
-        onMouseLeave={() => setIsVisible(false)}
-      >
-        <Info size={16} className="text-gray-600" />
-      </div>
-      {isVisible && (
-        <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-48 p-2 bg-black text-white text-sm rounded-lg shadow-lg">
-          {message.split("\\n").map((line, index) => (
-            <span key={index}>
-              {line}
-              <br />
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 
 const UserSession = () => {
   return (
