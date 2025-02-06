@@ -1,16 +1,24 @@
 "use client";
 
 import { useAuth } from "@/contexts/authContext";
+import { auth0 } from "@/lib/auth0";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user, loggedIn } = useAuth();
 
   if (!user) {
     return (
       <main>
-        <p>This is the landing page. You are currently not logged in.</p>
+        {loggedIn ? (
+          <p>
+            This is the landing page. Your user has been blocked. Please contact
+            a swiftreader admin.
+          </p>
+        ) : (
+          <p>This is the landing page. You are not logged in.</p>
+        )}
       </main>
     );
   }

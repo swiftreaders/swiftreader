@@ -31,6 +31,7 @@ export const AuthProvider: React.FC<{
   const [loggedIn, setLoggedIn] = useState<boolean>(false);
 
   const refreshUser = async () => {
+    console.log("Refreshing user...");
     try {
       const session = await auth0.getSession();
       if (session?.user) {
@@ -39,6 +40,7 @@ export const AuthProvider: React.FC<{
         setUserId(currUser?.id || null);
         setLoggedIn(true);
       } else {
+        console.log("No user found in session. Logging out...");
         setUser(null);
         setUserId(null);
         setLoggedIn(false);

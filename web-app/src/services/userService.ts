@@ -31,6 +31,7 @@ export const userService = {
 
   // getUser by id (filter the results of getUsers)
   getUser: async (id: string): Promise<User | null> => {
+    console.log("Getting user with id:", id);
     const docRef = doc(db, "Users", id);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
