@@ -8,6 +8,7 @@ import { Session } from "@/types/sessions";
 import { Timestamp } from "firebase/firestore";
 import WebGazerClient from "./WebGazerClient"; // We'll keep a separate file
 import Calibration, { CalibrationRef } from "./Calibration"; // Modified import to include ref type
+import { Info } from "lucide-react";
 
 const UserSessionContent = () => {
   const { text, getText } = useReadingContext();
@@ -81,7 +82,7 @@ const UserSessionContent = () => {
         if (mode == 1) {
           startReadingMode1(text);
         } else if (mode == 2) {
-          console.log("reading mode 2")
+          console.log("reading mode 2");
           startReadingMode2(text);
         }
       }
@@ -139,7 +140,7 @@ const UserSessionContent = () => {
 
   const sessionCompleteMode1 = (startTime: Timestamp, endTime: Timestamp, text: Text): Session => {
     // TODO: Pass in our own userId
-    const stubUserId = "Ss4hOp2vmTZkbV2H0w68"
+    const stubUserId = "Ss4hOp2vmTZkbV2H0w68";
     return new Session(
       text.id, 
       stubUserId, 
@@ -149,16 +150,14 @@ const UserSessionContent = () => {
       new Array(Math.floor((endTime.toMillis() - startTime.toMillis()) / 5000)).fill(wpm),
       1,
       text.difficulty
-    )
+    );
   };
 
   let previousQuarter = 0;
 
   const startReadingMode2 = async (text: Text) => {
-    // Modified: Call the calibration function via ref before proceeding
-    if (calibrationRef.current) {
-      await calibrationRef.current.startCalibration();
-    }
+    // Removed: Automatic calibration call has been removed.
+    // Instead, calibration will be triggered by a recalibrate button in the UI.
 
     // 1. Split content into lines
     const lines = splitTextIntoLines(text.content);
@@ -219,7 +218,17 @@ const UserSessionContent = () => {
         onLoad={() => console.log("WebGazer script loaded (beforeInteractive)!")}
         onError={() => console.error("Failed to load WebGazer script.")}
       />
-      <div className="min-h-screen bg-gray-100 flex flex-col items-center p-8">
+      <div className="min-h-screen bg-gray-100 flex flex-col items-center p-8 relative">
+        {/* Added: Recalibrate Button in the top right */}
+        {mode === 2 && (
+          <button
+            onClick={() => calibrationRef.current && calibrationRef.current.startCalibration()}
+            className="absolute top-6 right-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+          >
+            Recalibrate
+          </button>
+        
+        )}
         {/* Progress Circles */}
         <div className="flex items-center justify-center mb-8">
           <div className="flex items-center space-x-4">
@@ -265,6 +274,9 @@ const UserSessionContent = () => {
                 </option>
               ))}
             </select>
+            <HelpPopup message="Mode 1: Read at a fixed WPM \n
+            Mode 2: Use eye-tracking software to dynamically adjust reading speed \n
+            Mode 3 (Non-fiction only): Summarise the text for even faster comprehension" />
           </div>
 
           {/* Fiction Checkbox */}
@@ -293,7 +305,7 @@ const UserSessionContent = () => {
                 onChange={(e) => setGenre(e.target.value === "" ? null : e.target.value as Genre)}
                 className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
               >
-              <option value="">Any</option> {/* Option for "Any" */}
+                <option value="">Any</option> {/* Option for "Any" */}
                 {Object.values(Genre).map((gen) => (
                   <option key={gen} value={gen}>
                     {gen}
@@ -307,7 +319,7 @@ const UserSessionContent = () => {
                 onChange={(e) => setCategory(e.target.value === "" ? null : e.target.value as Category)}
                 className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
               >
-              <option value="">Any</option> {/* Option for "Any" */}
+                <option value="">Any</option> {/* Option for "Any" */}
                 {Object.values(Category).map((cat) => (
                   <option key={cat} value={cat}>
                     {cat}
@@ -324,7 +336,7 @@ const UserSessionContent = () => {
             </label>
             <select
               id="difficultySelect"
-              value={difficulty ?? ""} // If difficulty is null, set value to ""
+              value={difficulty ?? ""}
               onChange={(e) => setDifficulty(e.target.value === "" ? null : (e.target.value as Difficulty))}
               className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
             >
@@ -346,7 +358,7 @@ const UserSessionContent = () => {
               id="lengthInput"
               type="number"
               className="border border-gray-300 rounded px-3 py-2 text-center text-gray-700 focus:outline-none focus:ring focus:ring-blue-300 w-24"
-              value={length ?? ""} // If length is null, show empty string
+              value={length ?? ""}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => setLength(event.target.value === "" ? null : parseInt(event.target.value, 10))}
             />
             {/* Checkbox for "Any" */}
@@ -357,7 +369,7 @@ const UserSessionContent = () => {
               id="anyLength"
               type="checkbox"
               checked={length === null}
-              onChange={(e) => setLength(e.target.checked ? null : 300)} // Set to null or 0
+              onChange={(e) => setLength(e.target.checked ? null : 300)}
               className="ml-2"
             />
           </div>
@@ -405,6 +417,33 @@ const UserSessionContent = () => {
     </>
   );
 };
+
+function HelpPopup({ message }: { message: string }) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  return (
+    <div className="relative inline-block">
+      <div
+        className="flex items-center justify-center w-6 h-6 bg-gray-200 rounded-full cursor-pointer"
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
+      >
+        <Info size={16} className="text-gray-600" />
+      </div>
+      {isVisible && (
+        <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-48 p-2 bg-black text-white text-sm rounded-lg shadow-lg">
+          {message.split("\\n").map((line, index) => (
+            <span key={index}>
+              {line}
+              <br />
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 const UserSession = () => {
   return (
