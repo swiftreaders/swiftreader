@@ -9,10 +9,10 @@ import { Session } from "@/types/sessions"
 interface ReadingSessionsContextType {
     recentSessions: Session[];
     text: Text | null;
-    getText: (categoryOrGenre: Category | Genre,
-              difficulty: Difficulty, 
+    getText: (categoryOrGenre: Category | Genre | null,
+              difficulty: Difficulty | null, 
               isFiction: boolean, 
-              length: number, 
+              length: number | null, 
               onUpdate: (loading: boolean) => void) => void;
 }
 
@@ -43,10 +43,10 @@ export const ReadingSessionProvider: React.FC<{
   }, []);
     
     const getText = async (
-        categoryOrGenre: Category | Genre, 
-        difficulty: Difficulty, 
+        categoryOrGenre: Category | Genre | null, 
+        difficulty: Difficulty | null, 
         isFiction: boolean, 
-        length: number,
+        length: number | null,
         onUpdate: (loading: boolean) => void) => { 
             // Dynamically build constraints based on non-null arguments
             const constraints: { [key: string]: any } = {};
