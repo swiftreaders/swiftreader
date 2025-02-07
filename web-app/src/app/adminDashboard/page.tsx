@@ -6,17 +6,6 @@ import {
   AdminDashboardProvider,
 } from "@/contexts/adminDashboardContext";
 import { useRouter } from "next/navigation";
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 import { useAuth } from "@/contexts/authContext";
 import AccessDenied from "@/components/errors/accessDenied";
 import { User } from "@/types/user";
@@ -283,10 +272,19 @@ const AdminDashboardContent = () => {
   );
 };
 
-const AdminDashboard = () => (
-  <AdminDashboardProvider>
-    <AdminDashboardContent />
-  </AdminDashboardProvider>
-);
+function AdminDashboard() {
+  const { user } = useAuth();
+  return (
+    <>
+      {user?.isAdmin ? (
+        <AdminDashboardProvider>
+          <AdminDashboardContent />
+        </AdminDashboardProvider>
+      ) : (
+        <AccessDenied />
+      )}
+    </>
+  );
+}
 
 export default AdminDashboard;
