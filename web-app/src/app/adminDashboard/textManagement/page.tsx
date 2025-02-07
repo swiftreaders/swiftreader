@@ -2,232 +2,14 @@
 
 import { useState } from "react";
 import { useAdminDashboard, AdminDashboardProvider } from "@/contexts/adminDashboardContext";
-import { Category, Difficulty, Text } from "@/types/text";
-import { getTexts, Book, fetchBooks, fetchBookContent } from "@/services/bookService";
-import { Question } from "@/services/bookService"; // Ensure the Question type is exported
+import { Category, Difficulty, Text, Question } from "@/types/text";
+import { Book, fetchBooks, fetchBookContent } from "@/services/bookService";
+import { UpdateTextPopup } from "@/components/UpdateTextPopup";
+import { ExistingTextCard } from "@/components/ExistingTextCard";
 
 // Default text instance for initializing forms
 const DEFAULT_TEXT = new Text("", Category.NATURE, "", Difficulty.EASY, false);
 
-// ==================== Existing Text Card Component ====================
-interface ExistingTextCardProps {
-  text: Text;
-  onUpdate: () => void;
-  onRemove: () => void;
-}
-
-const ExistingTextCard = ({ text, onUpdate, onRemove }: ExistingTextCardProps) => {
-  // Extract first line of text – if no newline is found, show up to 100 characters.
-  const firstLine =
-    text.content.split("\n")[0] || (text.content.length > 100 ? text.content.slice(0, 100) + "..." : text.content);
-  return (
-    <div className="bg-white p-6 rounded-lg shadow-md border">
-      <h3 className="text-xl font-semibold mb-2 text-gray-800">{text.title}</h3>
-      <p className="mb-2 text-gray-700">{firstLine}</p>
-      <p className="text-sm text-gray-600">
-        <strong>Category:</strong> {text.category}
-      </p>
-      <p className="text-sm text-gray-600">
-        <strong>Difficulty:</strong> {text.difficulty}
-      </p>
-      <p className="text-sm text-gray-600">
-        <strong>Fiction:</strong> {text.isFiction ? "Yes" : "No"}
-      </p>
-      <p className="text-sm text-gray-600">
-        <strong>Word Count:</strong> {text.wordLength.toString()}
-      </p>
-      <div className="mt-4 flex flex-wrap gap-3">
-        <button
-          onClick={onUpdate}
-          className="py-2 px-4 bg-yellow-500 text-white rounded-md transition-all duration-200 hover:bg-yellow-600"
-        >
-          Update Text
-        </button>
-        <button
-          onClick={onRemove}
-          className="py-2 px-4 bg-red-500 text-white rounded-md transition-all duration-200 hover:bg-red-600"
-        >
-          Remove Text
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// ==================== Update Text Popup Component ====================
-interface UpdateTextPopupProps {
-  text: Text;
-  onClose: () => void;
-  onSave: (updatedText: Text) => void;
-}
-
-const UpdateTextPopup = ({ text, onClose, onSave }: UpdateTextPopupProps) => {
-  const [title, setTitle] = useState(text.title);
-  const [content, setContent] = useState(text.content);
-  const [category, setCategory] = useState(text.category);
-  const [difficulty, setDifficulty] = useState(text.difficulty);
-  const [isFiction, setIsFiction] = useState(text.isFiction);
-  const [questions, setQuestions] = useState(text.questions || []);
-
-  // Handle changes for individual question fields
-  const handleQuestionChange = (index: number, field: keyof Question, value: string) => {
-    const updatedQuestions = [...questions];
-    if (field === "choices") {
-      updatedQuestions[index] = {
-        ...updatedQuestions[index],
-        choices: value.split(",").map((choice) => choice.trim()),
-      };
-    } else {
-      updatedQuestions[index] = {
-        ...updatedQuestions[index],
-        [field]: value,
-      };
-    }
-    setQuestions(updatedQuestions);
-  };
-
-  const addQuestion = () => {
-    setQuestions([...questions, { question: "", choices: ["", "", "", ""], answer: "" }]);
-  };
-
-  const removeQuestion = (index: number) => {
-    const updatedQuestions = [...questions];
-    updatedQuestions.splice(index, 1);
-    setQuestions(updatedQuestions);
-  };
-
-  const handleSave = () => {
-    // Create an updated Text instance – make sure to preserve the text id.
-    const updatedText = new Text(title, category, content, difficulty, isFiction);
-    updatedText.questions = questions;
-    updatedText.id = text.id; // Preserve the original id (ensure your Text type supports this)
-    onSave(updatedText);
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-3xl">
-        <h2 className="text-2xl font-bold mb-4">Update Text</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Title</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Category</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value as Category)}
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-            >
-              {Object.values(Category).map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Difficulty</label>
-            <select
-              value={difficulty}
-              onChange={(e) => setDifficulty(e.target.value as Difficulty)}
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-            >
-              {Object.values(Difficulty).map((diff) => (
-                <option key={diff} value={diff}>
-                  {diff.charAt(0).toUpperCase() + diff.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center">
-            <label className="block text-sm font-medium text-gray-700 mr-2">Fiction</label>
-            <input
-              type="checkbox"
-              checked={isFiction}
-              onChange={(e) => setIsFiction(e.target.checked)}
-              className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-            />
-          </div>
-        </div>
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 h-48"
-          />
-        </div>
-        <div className="mt-4">
-          <h3 className="text-xl font-semibold text-gray-800 mb-3">Questions</h3>
-          {questions.length > 0 ? (
-            questions.map((q, index) => (
-              <div key={index} className="mb-4 p-4 border rounded-md bg-gray-50">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Question:</label>
-                <input
-                  type="text"
-                  value={q.question}
-                  onChange={(e) => handleQuestionChange(index, "question", e.target.value)}
-                  className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-2"
-                />
-                <label className="block text-sm font-medium text-gray-700 mb-1">Choices (comma-separated):</label>
-                <input
-                  type="text"
-                  value={q.choices.join(", ")}
-                  onChange={(e) => handleQuestionChange(index, "choices", e.target.value)}
-                  className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-2"
-                />
-                <label className="block text-sm font-medium text-gray-700 mb-1">Answer:</label>
-                <input
-                  type="text"
-                  value={q.answer}
-                  onChange={(e) => handleQuestionChange(index, "answer", e.target.value)}
-                  className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-                <button
-                  onClick={() => removeQuestion(index)}
-                  className="mt-2 text-red-500 text-sm hover:underline"
-                >
-                  Remove
-                </button>
-              </div>
-            ))
-          ) : (
-            <p className="text-sm text-gray-500">No questions available.</p>
-          )}
-          <button
-            onClick={addQuestion}
-            className="mt-2 py-2 px-4 bg-blue-600 text-white rounded-md transition-all duration-200 hover:bg-blue-700"
-          >
-            Add Question
-          </button>
-        </div>
-        <div className="mt-6 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-500 text-white rounded-md transition hover:bg-gray-600 mr-2"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className="px-4 py-2 bg-green-500 text-white rounded-md transition hover:bg-green-600"
-          >
-            Save Changes
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ==================== AdminDashboardContent Component ====================
 const AdminDashboardContent = () => {
   const { texts, addText, updateText, removeText } = useAdminDashboard();
 
@@ -335,7 +117,6 @@ const AdminDashboardContent = () => {
     setCurrentIndex((prev) => (prev - 1 + generatedTexts.length) % generatedTexts.length);
   };
 
-  // --- Question Adjustment Handlers for Generated Text (unchanged) ---
   const handleQuestionChange = (
     questionIndex: number,
     field: keyof Question,
@@ -383,6 +164,372 @@ const AdminDashboardContent = () => {
     });
   };
 
+  const renderTextManagementSection = () => {
+    return (
+      <section className="bg-white rounded-lg shadow-xl p-6 mb-8">
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Add New Text</h2>
+        <div className="flex space-x-4 mb-6">
+          <button
+            onClick={() => setActiveTab("manual")}
+            className={`flex-1 py-2 rounded-md transition-all duration-200 ${
+              activeTab === "manual"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            Manual
+          </button>
+          <button
+            onClick={() => setActiveTab("generate")}
+            className={`flex-1 py-2 rounded-md transition-all duration-200 ${
+              activeTab === "generate"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            Generate
+          </button>
+        </div>
+
+        {activeTab === "manual" ? (
+          <div className="space-y-4">
+            <input
+              type="text"
+              placeholder="Title"
+              value={newManualText.title}
+              onChange={(e) =>
+                setNewManualText({ ...newManualText, title: e.target.value } as Text)
+              }
+              className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+            <textarea
+              placeholder="Content"
+              value={newManualText.content}
+              onChange={(e) =>
+                setNewManualText({ ...newManualText, content: e.target.value } as Text)
+              }
+              className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              rows={6}
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select
+                  value={newManualText.category}
+                  onChange={(e) =>
+                    setNewManualText({ ...newManualText, category: e.target.value as Category } as Text)
+                  }
+                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                >
+                  {Object.values(Category).map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
+                <select
+                  value={newManualText.difficulty}
+                  onChange={(e) =>
+                    setNewManualText({ ...newManualText, difficulty: e.target.value as Difficulty } as Text)
+                  }
+                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                >
+                  {Object.values(Difficulty).map((diff) => (
+                    <option key={diff} value={diff}>
+                      {diff.charAt(0).toUpperCase() + diff.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                checked={newManualText.isFiction}
+                onChange={(e) =>
+                  setNewManualText({ ...newManualText, isFiction: e.target.checked } as Text)
+                }
+                className="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded"
+              />
+              <span className="text-gray-700">Is Fiction?</span>
+            </div>
+            <button
+              onClick={handleAddText}
+              className="w-full mt-4 py-3 bg-blue-600 text-white rounded-md transition-all duration-200 hover:bg-blue-700"
+            >
+              Add Text
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex flex-wrap gap-4">
+              {/* Category Filter */}
+              <div className="flex-1 min-w-[150px]">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select
+                  value={generateTextOptions.category}
+                  onChange={(e) =>
+                    setGenerateTextOptions({
+                      ...generateTextOptions,
+                      category: e.target.value as Category,
+                    })
+                  }
+                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                >
+                  {Object.values(Category).map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {/* Difficulty Filter */}
+              <div className="flex-1 min-w-[150px]">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
+                <select
+                  value={generateTextOptions.difficulty}
+                  onChange={(e) =>
+                    setGenerateTextOptions({
+                      ...generateTextOptions,
+                      difficulty: e.target.value as Difficulty,
+                    })
+                  }
+                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                >
+                  {Object.values(Difficulty).map((diff) => (
+                    <option key={diff} value={diff}>
+                      {diff.charAt(0).toUpperCase() + diff.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {/* Word Range Filters */}
+              <div className="flex-1 min-w-[150px]">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Word Range</label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    value={generateTextOptions.minLength}
+                    onChange={(e) =>
+                      setGenerateTextOptions({
+                        ...generateTextOptions,
+                        minLength: parseInt(e.target.value, 10),
+                      })
+                    }
+                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={generateTextOptions.maxLength}
+                    onChange={(e) =>
+                      setGenerateTextOptions({
+                        ...generateTextOptions,
+                        maxLength: parseInt(e.target.value, 10),
+                      })
+                    }
+                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+              </div>
+            </div>
+            <div>
+              <button
+                onClick={handleGenerateText}
+                disabled={isLoading}
+                className="w-full py-3 bg-green-600 text-white rounded-md transition-all duration-200 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <span className="flex items-center justify-center">
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Generating...
+                  </span>
+                ) : (
+                  "Generate Text"
+                )}
+              </button>
+            </div>
+
+            {/* Generated Texts Navigation */}
+            {currentText && (
+              <div className="bg-gray-50 p-6 rounded-lg shadow-lg">
+                <input
+                  type="text"
+                  value={currentText.title}
+                  onChange={(e) =>
+                    setGeneratedTexts((prev) => {
+                      const updated = [...prev];
+                      updated[currentIndex] = {
+                        ...updated[currentIndex],
+                        title: e.target.value,
+                      };
+                      return updated;
+                    })
+                  }
+                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4"
+                />
+                <textarea
+                  value={currentText.content}
+                  onChange={(e) =>
+                    setGeneratedTexts((prev) => {
+                      const updated = [...prev];
+                      updated[currentIndex] = {
+                        ...updated[currentIndex],
+                        content: e.target.value,
+                      };
+                      return updated;
+                    })
+                  }
+                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 h-64 mb-4"
+                />
+
+                {/* Display Word Count and Questions Produced */}
+                <div className="mb-6">
+                  <p className="text-sm text-gray-600">
+                    <strong>Word Count:</strong>{" "}
+                    {currentText.content
+                      ? currentText.content.trim().split(/\s+/).length
+                      : 0}
+                  </p>
+                </div>
+
+                {/* Option to Alter Difficulty */}
+                <div className="mb-6">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">Difficulty</label>
+                  <select
+                    value={currentText.difficulty}
+                    onChange={(e) => {
+                      const newDifficulty = e.target.value as Difficulty;
+                      setGeneratedTexts((prev) => {
+                        const updated = [...prev];
+                        updated[currentIndex] = {
+                          ...updated[currentIndex],
+                          difficulty: newDifficulty,
+                        };
+                        return updated;
+                      });
+                    }}
+                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  >
+                    {Object.values(Difficulty).map((diff) => (
+                      <option key={diff} value={diff}>
+                        {diff.charAt(0).toUpperCase() + diff.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* QUESTION ADJUSTMENT SECTION */}
+                <div className="mb-6">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-3">Adjust Questions</h3>
+                  {currentText.questions && currentText.questions.length > 0 ? (
+                    currentText.questions.map((q, i) => (
+                      <div key={i} className="mb-4 p-4 border rounded-md bg-white">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Question:</label>
+                        <input
+                          type="text"
+                          value={q.question}
+                          onChange={(e) =>
+                            handleQuestionChange(i, "question", e.target.value)
+                          }
+                          className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-2"
+                        />
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Choices (comma-separated):</label>
+                        <input
+                          type="text"
+                          value={q.choices.join(", ")}
+                          onChange={(e) =>
+                            handleQuestionChange(i, "choices", e.target.value)
+                          }
+                          className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-2"
+                        />
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Answer:</label>
+                        <input
+                          type="text"
+                          value={q.answer}
+                          onChange={(e) =>
+                            handleQuestionChange(i, "answer", e.target.value)
+                          }
+                          className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        />
+                        <button
+                          onClick={() => removeQuestion(i)}
+                          className="mt-2 text-red-500 text-sm hover:underline"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500">No questions available.</p>
+                  )}
+                  <button
+                    onClick={addQuestion}
+                    className="mt-2 py-2 px-4 bg-blue-600 text-white rounded-md transition-all duration-200 hover:bg-blue-700"
+                  >
+                    Add Question
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap justify-between gap-4">
+                  <button
+                    onClick={handlePreviousText}
+                    className="flex-1 py-3 bg-gray-600 text-white rounded-md transition-all duration-200 hover:bg-gray-700"
+                  >
+                    Previous
+                  </button>
+                  <div className="flex flex-1 gap-4">
+                    <button
+                      onClick={handleApproveText}
+                      className="flex-1 py-3 bg-blue-600 text-white rounded-md transition-all duration-200 hover:bg-blue-700"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={handleRejectText}
+                      className="flex-1 py-3 bg-red-600 text-white rounded-md transition-all duration-200 hover:bg-red-700"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                  <button
+                    onClick={handleNextText}
+                    className="flex-1 py-3 bg-gray-600 text-white rounded-md transition-all duration-200 hover:bg-gray-700"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Header */}
@@ -395,310 +542,7 @@ const AdminDashboardContent = () => {
 
       {/* Main Container */}
       <main className="container mx-auto px-4 py-8">
-        <section className="bg-white rounded-lg shadow-xl p-6 mb-8">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-800">Add New Text</h2>
-          <div className="flex space-x-4 mb-6">
-            <button
-              onClick={() => setActiveTab("manual")}
-              className={`flex-1 py-2 rounded-md transition-all duration-200 ${
-                activeTab === "manual"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-            >
-              Manual
-            </button>
-            <button
-              onClick={() => setActiveTab("generate")}
-              className={`flex-1 py-2 rounded-md transition-all duration-200 ${
-                activeTab === "generate"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-            >
-              Generate
-            </button>
-          </div>
-
-          {activeTab === "manual" ? (
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Title"
-                value={newManualText.title}
-                onChange={(e) =>
-                  setNewManualText({ ...newManualText, title: e.target.value } as Text)
-                }
-                className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
-              <textarea
-                placeholder="Content"
-                value={newManualText.content}
-                onChange={(e) =>
-                  setNewManualText({ ...newManualText, content: e.target.value } as Text)
-                }
-                className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                rows={6}
-              />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                  <select
-                    value={newManualText.category}
-                    onChange={(e) =>
-                      setNewManualText({ ...newManualText, category: e.target.value as Category } as Text)
-                    }
-                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  >
-                    {Object.values(Category).map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
-                  <select
-                    value={newManualText.difficulty}
-                    onChange={(e) =>
-                      setNewManualText({ ...newManualText, difficulty: e.target.value as Difficulty } as Text)
-                    }
-                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  >
-                    {Object.values(Difficulty).map((diff) => (
-                      <option key={diff} value={diff}>
-                        {diff.charAt(0).toUpperCase() + diff.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={newManualText.isFiction}
-                  onChange={(e) =>
-                    setNewManualText({ ...newManualText, isFiction: e.target.checked } as Text)
-                  }
-                  className="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded"
-                />
-                <span className="text-gray-700">Is Fiction?</span>
-              </div>
-              <button
-                onClick={handleAddText}
-                className="w-full mt-4 py-3 bg-blue-600 text-white rounded-md transition-all duration-200 hover:bg-blue-700"
-              >
-                Add Text
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <div className="flex flex-wrap gap-4">
-                {/* Category Filter */}
-                <div className="flex-1 min-w-[150px]">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                  <select
-                    value={generateTextOptions.category}
-                    onChange={(e) =>
-                      setGenerateTextOptions({
-                        ...generateTextOptions,
-                        category: e.target.value as Category,
-                      })
-                    }
-                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  >
-                    {Object.values(Category).map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {/* Difficulty Filter */}
-                <div className="flex-1 min-w-[150px]">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
-                  <select
-                    value={generateTextOptions.difficulty}
-                    onChange={(e) =>
-                      setGenerateTextOptions({
-                        ...generateTextOptions,
-                        difficulty: e.target.value as Difficulty,
-                      })
-                    }
-                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  >
-                    {Object.values(Difficulty).map((diff) => (
-                      <option key={diff} value={diff}>
-                        {diff.charAt(0).toUpperCase() + diff.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {/* Word Range Filters */}
-                <div className="flex-1 min-w-[150px]">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Word Range</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      placeholder="Min"
-                      value={generateTextOptions.minLength}
-                      onChange={(e) =>
-                        setGenerateTextOptions({
-                          ...generateTextOptions,
-                          minLength: parseInt(e.target.value, 10),
-                        })
-                      }
-                      className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Max"
-                      value={generateTextOptions.maxLength}
-                      onChange={(e) =>
-                        setGenerateTextOptions({
-                          ...generateTextOptions,
-                          maxLength: parseInt(e.target.value, 10),
-                        })
-                      }
-                      className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                  </div>
-                </div>
-              </div>
-              <div>
-                <button
-                  onClick={handleGenerateText}
-                  disabled={isLoading}
-                  className="w-full py-3 bg-green-600 text-white rounded-md transition-all duration-200 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? (
-                    <span className="flex items-center justify-center">
-                      <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Generating...
-                    </span>
-                  ) : (
-                    "Generate Text"
-                  )}
-                </button>
-              </div>
-
-              {/* Generated Texts Navigation */}
-              {currentText && (
-                <div className="bg-gray-50 p-6 rounded-lg shadow-lg">
-                  <input
-                    type="text"
-                    value={currentText.title}
-                    onChange={(e) =>
-                      setGeneratedTexts((prev) => {
-                        const updated = [...prev];
-                        updated[currentIndex] = {
-                          ...updated[currentIndex],
-                          title: e.target.value,
-                        };
-                        return updated;
-                      })
-                    }
-                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4"
-                  />
-                  <textarea
-                    value={currentText.content}
-                    onChange={(e) =>
-                      setGeneratedTexts((prev) => {
-                        const updated = [...prev];
-                        updated[currentIndex] = {
-                          ...updated[currentIndex],
-                          content: e.target.value,
-                        };
-                        return updated;
-                      })
-                    }
-                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 h-64 mb-4"
-                  />
-                  <div className="mb-6">
-                    <p className="text-sm text-gray-600">
-                      <strong>Word Count:</strong>{" "}
-                      {currentText.content
-                        ? currentText.content.trim().split(/\s+/).length
-                        : 0}
-                    </p>
-                  </div>
-                  <div className="mb-6">
-                    <label className="block mb-2 text-sm font-medium text-gray-700">Difficulty</label>
-                    <select
-                      value={currentText.difficulty}
-                      onChange={(e) => {
-                        const newDifficulty = e.target.value as Difficulty;
-                        setGeneratedTexts((prev) => {
-                          const updated = [...prev];
-                          updated[currentIndex] = {
-                            ...updated[currentIndex],
-                            difficulty: newDifficulty,
-                          };
-                          return updated;
-                        });
-                      }}
-                      className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    >
-                      {Object.values(Difficulty).map((diff) => (
-                        <option key={diff} value={diff}>
-                          {diff.charAt(0).toUpperCase() + diff.slice(1)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex flex-wrap justify-between gap-4">
-                    <button
-                      onClick={handlePreviousText}
-                      className="flex-1 py-3 bg-gray-600 text-white rounded-md transition-all duration-200 hover:bg-gray-700"
-                    >
-                      Previous
-                    </button>
-                    <div className="flex flex-1 gap-4">
-                      <button
-                        onClick={handleApproveText}
-                        className="flex-1 py-3 bg-blue-600 text-white rounded-md transition-all duration-200 hover:bg-blue-700"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={handleRejectText}
-                        className="flex-1 py-3 bg-red-600 text-white rounded-md transition-all duration-200 hover:bg-red-700"
-                      >
-                        Reject
-                      </button>
-                    </div>
-                    <button
-                      onClick={handleNextText}
-                      className="flex-1 py-3 bg-gray-600 text-white rounded-md transition-all duration-200 hover:bg-gray-700"
-                    >
-                      Next
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </section>
+        {renderTextManagementSection()}
 
         {/* Existing Texts Section */}
         <section>
@@ -731,7 +575,7 @@ const AdminDashboardContent = () => {
             setSelectedTextForUpdate(null);
           }}
           onSave={(updatedText) => {
-            updateText(updatedText, updatedText.id);
+            updateText("STUB FOR NOW", updatedText.id);  // TODO: FIX UPDATE
             setUpdatePopupOpen(false);
             setSelectedTextForUpdate(null);
           }}
