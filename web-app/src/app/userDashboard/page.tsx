@@ -3,18 +3,31 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Session } from "@/types/sessions";
-import { useReadingContext, ReadingSessionProvider } from "@/contexts/readingSessionsContext";
+import {
+  useReadingContext,
+  ReadingSessionProvider,
+} from "@/contexts/readingSessionsContext";
 import { useUserContext, UserProvider } from "@/contexts/userContext";
 import { SessionStats } from "@/components/SessionStats";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { useAuth } from "@/contexts/authContext";
+import AccessDenied from "@/components/errors/accessDenied";
 
-const DashboardContent = () => {
-  const { recentSessions } = useReadingContext();
-  const { readingGoal, setReadingGoal, retrieveTotalReadingTime } = useUserContext();
-
+const UserDashboardContent = () => {
   const router = useRouter();
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+  const { recentSessions } = useReadingContext();
+  const { readingGoal, setReadingGoal, retrieveTotalReadingTime } =
+    useUserContext();
   const [newGoal, setNewGoal] = useState(readingGoal);
 
   // Mock data for the chart (replace with real data from your context)
@@ -34,7 +47,6 @@ const DashboardContent = () => {
   const progressPercentage = (totalReadingTime / readingGoal) * 100;
 
   const handleNewSessionClick = () => {
-
     // setSelectedCategory(category);
     // Surely if you set the category, you don't need to have the if condition below
     // as it will always be true?
@@ -43,7 +55,6 @@ const DashboardContent = () => {
     // is selected, which might not be desirable.
 
     router.push(`/userSession`);
-
   };
 
   const handleSetGoalClick = () => {
@@ -52,7 +63,7 @@ const DashboardContent = () => {
 
   const handleGoalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const stock_userid = "AyYtqKV2YHoWAKjpvAxL";  //TODO: replace with actual user id once authentication is implemented
+    const stock_userid = "AyYtqKV2YHoWAKjpvAxL"; //TODO: replace with actual user id once authentication is implemented
     setReadingGoal(newGoal, stock_userid);
     setIsGoalModalOpen(false);
   };
@@ -61,10 +72,10 @@ const DashboardContent = () => {
     <div className="min-h-screen p-8 bg-gray-100">
       <h1 className="text-2xl font-bold mb-6">Welcome to the Dashboard</h1>
       <div>
-        <button 
+        <button
           onClick={handleNewSessionClick}
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        > 
+        >
           New Session
         </button>
       </div>
@@ -82,7 +93,8 @@ const DashboardContent = () => {
         </div>
         <div className="mb-4">
           <p className="text-gray-700">
-            Total Reading Time: <span className="font-bold">{totalReadingTime} minutes</span>
+            Total Reading Time:{" "}
+            <span className="font-bold">{totalReadingTime} minutes</span>
           </p>
           <p className="text-gray-700">
             Goal: <span className="font-bold">{readingGoal} minutes</span>
@@ -141,7 +153,10 @@ const DashboardContent = () => {
               onClick={() => setSelectedSession(session)}
             >
               <span>{session.title}</span>
-              <span className="text-gray-500 text-sm">{session.startTime.toDate().toLocaleTimeString()} - {session.duration} minutes</span>
+              <span className="text-gray-500 text-sm">
+                {session.startTime.toDate().toLocaleTimeString()} -{" "}
+                {session.duration} minutes
+              </span>
             </li>
           ))}
         </ul>
@@ -149,24 +164,33 @@ const DashboardContent = () => {
 
       {/* Chart */}
       <div className="mt-8 bg-white shadow-md rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">Reading Performance Over Time</h2>
+        <h2 className="text-xl font-semibold mb-4">
+          Reading Performance Over Time
+        </h2>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={readingProgressData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" />
             <YAxis />
             <Tooltip />
-            <Line type="monotone" dataKey="wpm" stroke="#4A90E2" strokeWidth={2} />
+            <Line
+              type="monotone"
+              dataKey="wpm"
+              stroke="#4A90E2"
+              strokeWidth={2}
+            />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
       {/* Session Details Modal */}
       {selectedSession && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
-          onClick={() => setSelectedSession(null)}>
-          <SessionStats 
-            session={selectedSession} 
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+          onClick={() => setSelectedSession(null)}
+        >
+          <SessionStats
+            session={selectedSession}
             onClose={() => setSelectedSession(null)}
           />
         </div>
@@ -175,14 +199,21 @@ const DashboardContent = () => {
   );
 };
 
-const Dashboard = () => {
+const UserDashboard = () => {
+  const { user } = useAuth();
   return (
-    <UserProvider>
-      <ReadingSessionProvider>
-        <DashboardContent />
-      </ReadingSessionProvider>
-    </UserProvider>
+    <div>
+      {user ? (
+        <UserProvider>
+          <ReadingSessionProvider>
+            <UserDashboardContent />
+          </ReadingSessionProvider>
+        </UserProvider>
+      ) : (
+        <AccessDenied />
+      )}
+    </div>
   );
 };
 
-export default Dashboard;
+export default UserDashboard;
