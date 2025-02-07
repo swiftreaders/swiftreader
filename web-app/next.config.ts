@@ -9,11 +9,7 @@ const nextConfig: NextConfig = {
     return config;
   },
   env: {
-    APP_BASE_URL:
-      process.env.APP_BASE_URL ||
-      (process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : "http://localhost:3000"),
+    APP_BASE_URL: process.env.NEXT_PUBLIC_APP_BASE_URL,
   },
 };
 
