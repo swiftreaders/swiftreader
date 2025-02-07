@@ -16,7 +16,7 @@ const AdminDashboardContent = () => {
   const [newManualText, setNewManualText] = useState(DEFAULT_TEXT);
   const [newGeneratedText, setNewGeneratedText] = useState(DEFAULT_TEXT);
   const [generateTextOptions, setGenerateTextOptions] = useState({
-    category: Category.NATURE,
+    category: Category.SCIENCE,
     difficulty: Difficulty.EASY,
     minLength: 100,
     maxLength: 500,
@@ -55,8 +55,9 @@ const AdminDashboardContent = () => {
       setGeneratedTexts([]); 
   
       // Fetch book metadata
+      console.log("generateTextOptions.category - ", generateTextOptions.category);
       const booksMetadata = await fetchBooks(generateTextOptions.category);
-  
+      console.log("generated book subjects - ", booksMetadata[0].subject);
       const processingPromises = booksMetadata.map(async (book) => {
         try {
           const processedBook = await fetchBookContent(book, generateTextOptions.maxLength);
@@ -88,13 +89,15 @@ const AdminDashboardContent = () => {
 
   const handleApproveText = () => {
     const currentText = generatedTexts[currentIndex];
-
+    console.log("currentText subject:", currentText.subject);
     if (currentText) {
-      addText(new Text(currentText.title, 
+      addText(new Text(
+        currentText.title, 
         currentText.subject, 
         currentText.content, 
         currentText.difficulty, 
-        true));
+        true
+      ));
       setGeneratedTexts((prev) => prev.filter((_, index) => index !== currentIndex));
     }
 

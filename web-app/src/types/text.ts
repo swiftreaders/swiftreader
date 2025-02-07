@@ -53,7 +53,7 @@ export class Text {
     console.log("Text.toJSON: ", this);
     return {
       title: this.title,
-      category: this.category,
+      category: this.category.toString(),
       content: this.content,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,

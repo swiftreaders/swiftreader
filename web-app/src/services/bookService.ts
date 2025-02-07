@@ -73,7 +73,7 @@ export const fetchBooks = async (subject: Category): Promise<Book[]> => {
        },
     });
     const temp_books = response.data.results;
-
+    
     console.log(`fetchBooks: ${temp_books.length} books fetched`, temp_books.map((book: any) => book.title));
 
     const books = temp_books
@@ -83,7 +83,7 @@ export const fetchBooks = async (subject: Category): Promise<Book[]> => {
       id: book.id,
       title: book.title,
       author: book.authors[0]?.name || "Unknown Author",
-      subjects: subject,
+      subject: subject,
       difficulty: Difficulty.EASY, // Placeholder difficulty
       text_link: findTxtUrl(book.formats || {}, book.id) || "NOT_FOUND",
       content: "", // fetch the content later
@@ -110,7 +110,7 @@ const findNaturalExcerpt = (text: string, targetWordCount: number): string => {
   if (sentences.length === 0) return cleaned.split(/\s+/).slice(0, targetWordCount).join(" ");
 
   // Find random starting point
-  let startIdx = Math.floor(Math.random() * Math.max(0, sentences.length - 5));
+  const startIdx = Math.floor(Math.random() * Math.max(0, sentences.length - 5));
   let wordCount = 0;
   const selectedSentences = [];
 
