@@ -1,14 +1,18 @@
 "use client";
 
 import { useState } from "react";
+
 import { useAdminDashboard, AdminDashboardProvider } from "@/contexts/adminDashboardContext";
-import { Category, Difficulty, Text, Question } from "@/types/text";
+import { Category, Difficulty, Text, Question, Genre } from "@/types/text";
 import { Book, fetchBooks, fetchBookContent } from "@/services/bookService";
 import { UpdateTextPopup } from "@/components/UpdateTextPopup";
 import { ExistingTextCard } from "@/components/ExistingTextCard";
+import { useAuth } from "@/contexts/authContext";
+import AccessDenied from "@/components/errors/accessDenied";
+
 
 // Default text instance for initializing forms
-const DEFAULT_TEXT = new Text("", Category.NATURE, "", Difficulty.EASY, false);
+const DEFAULT_TEXT = new Text("", "", Difficulty.EASY, false ,Category.NATURE);
 
 const AdminDashboardContent = () => {
   const { texts, addText, updateText, removeText } = useAdminDashboard();
@@ -22,6 +26,15 @@ const AdminDashboardContent = () => {
     minLength: 100,
     maxLength: 500,
   });
+
+  const [newText, setNewText] = useState({
+    title: "",
+    category: Category.NATURE,
+    genre: Genre.FANTASY,
+    content: "",
+  });
+
+
   const [activeTab, setActiveTab] = useState<"manual" | "generate">("manual");
   const [generatedTexts, setGeneratedTexts] = useState<Book[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -48,10 +61,10 @@ const AdminDashboardContent = () => {
     console.log(
       "newText:",
       newText.title,
-      newText.category,
       newText.content,
       newText.difficulty,
-      newText.isFiction
+      newText.isFiction,
+      newText.isFiction ? newText.genre : newText.category
     );
     addText(newText);
   };
@@ -95,10 +108,10 @@ const AdminDashboardContent = () => {
       addText(
         new Text(
           currentText.title,
-          currentText.subject,
           currentText.content,
           currentText.difficulty,
-          true
+          true,
+          currentText.subject,
         )
       );
       setGeneratedTexts((prev) => prev.filter((_, index) => index !== currentIndex));
@@ -587,10 +600,17 @@ const AdminDashboardContent = () => {
 };
 
 const AdminDashboard = () => {
+  const { user } = useAuth();
   return (
-    <AdminDashboardProvider>
-      <AdminDashboardContent />
-    </AdminDashboardProvider>
+    <div>
+      {user?.isAdmin ? (
+        <AdminDashboardProvider>
+          <AdminDashboardContent />
+        </AdminDashboardProvider>
+      ) : (
+        <AccessDenied />
+      )}
+    </div>
   );
 };
 

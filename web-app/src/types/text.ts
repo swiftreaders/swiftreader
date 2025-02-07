@@ -19,11 +19,20 @@ export interface Question {
   answer: string;
 }
 
+export enum Genre {
+  FANTASY = "fantasy",
+  MYSTERY = "mystery",
+  ROMANCE = "romance",
+  SCIENCE_FICTION = "science fiction",
+  DRAMA = "drama",
+}
+
 /// Text class containing all fields related to the Firestore database texts collection
 export class Text {
   id: string;
   title: string;
-  category: Category;
+  category?: Category; // Optional, only used when isFiction is false
+  genre?: Genre; // Optional, only used when isFiction is true
   content: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -34,11 +43,13 @@ export class Text {
 
   constructor(
     title: string,
-    category: Category,
     content: string,
     difficulty: Difficulty,
     isFiction: boolean,
-    // Default parameters for adding new texts
+    // Use either genre or category depending on isFiction
+    genreOrCategory: Genre | Category,
+    
+    // Default arguments
     id: string = "",
     createdAt: Timestamp = Timestamp.fromMillis(Date.now()),
     updatedAt: Timestamp = createdAt,
@@ -47,7 +58,6 @@ export class Text {
   ) {
     this.id = id;
     this.title = title;
-    this.category = category;
     this.content = content;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
@@ -55,13 +65,18 @@ export class Text {
     this.isFiction = isFiction;
     this.wordLength = wordLength;
     this.questions = questions;
+
+    if (isFiction) {
+      this.genre = genreOrCategory as Genre;
+    } else {
+      this.category = genreOrCategory as Category;
+    }
   }
-  
+
   toJSON() {
     // Exclude questions from the main document since they are stored in a subcollection.
     return {
       title: this.title,
-      category: this.category.toString(),
       content: this.content,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
@@ -69,6 +84,9 @@ export class Text {
       isFiction: this.isFiction,
       wordLength: this.wordLength,
       questions: this.questions,
+      ...(this.isFiction
+        ? { genre: this.genre }
+        : { category: this.category }),
     };
   }
 }

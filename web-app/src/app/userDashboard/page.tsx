@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Session } from "@/types/sessions";
-import { useReadingContext, ReadingSessionProvider } from "@/contexts/readingSessionsContext";
+import {
+  useReadingContext,
+  ReadingSessionProvider,
+} from "@/contexts/readingSessionsContext";
 import { useUserContext, UserProvider } from "@/contexts/userContext";
 import { SessionStats } from "@/components/SessionStats";
 import {
@@ -15,13 +18,18 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useAuth } from "@/contexts/authContext";
+import AccessDenied from "@/components/errors/accessDenied";
 
-const DashboardContent = () => {
-  const { recentSessions } = useReadingContext();
-  const { readingGoal, setReadingGoal } = useUserContext();
+
+const UserDashboardContent = () => {
+
   const router = useRouter();
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+  const { recentSessions } = useReadingContext();
+  const { readingGoal, setReadingGoal, retrieveTotalReadingTime } =
+    useUserContext();
   const [newGoal, setNewGoal] = useState(readingGoal);
 
   // Mock chart data (replace with real data as needed)
@@ -48,7 +56,7 @@ const DashboardContent = () => {
 
   const handleGoalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const stock_userid = "AyYtqKV2YHoWAKjpvAxL"; // Replace with actual user ID as needed
+    const stock_userid = "AyYtqKV2YHoWAKjpvAxL"; //TODO: replace with actual user id once authentication is implemented
     setReadingGoal(newGoal, stock_userid);
     setIsGoalModalOpen(false);
   };
@@ -76,33 +84,33 @@ const DashboardContent = () => {
           </button>
         </div>
 
-        {/* Progress Header */}
-        <div className="mt-8 bg-white shadow-md rounded-lg p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Your Reading Progress</h2>
-            <button
-              onClick={handleSetGoalClick}
-              className="px-4 py-2 bg-green-500 text-white rounded-md transition hover:bg-green-600"
-            >
-              Set Goal
-            </button>
-          </div>
-          <div className="mb-4">
-            <p className="text-gray-700">
-              Total Reading Time:{" "}
-              <span className="font-bold">{totalReadingTime} minutes</span>
-            </p>
-            <p className="text-gray-700">
-              Goal: <span className="font-bold">{readingGoal} minutes</span>
-            </p>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-4">
-            <div
-              className="bg-blue-500 h-4 rounded-full"
-              style={{ width: `${progressPercentage}%` }}
-            ></div>
-          </div>
+      {/* Progress Header */}
+      <div className="mt-8 bg-white shadow-md rounded-lg p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Your Reading Progress</h2>
+          <button
+            onClick={handleSetGoalClick}
+            className="px-4 py-2 bg-green-500 text-white rounded-md transition hover:bg-green-600"
+          >
+            Set Goal
+          </button>
         </div>
+        <div className="mb-4">
+          <p className="text-gray-700">
+            Total Reading Time:{" "}
+            <span className="font-bold">{totalReadingTime} minutes</span>
+          </p>
+          <p className="text-gray-700">
+            Goal: <span className="font-bold">{readingGoal} minutes</span>
+          </p>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-4">
+          <div
+            className="bg-blue-500 h-4 rounded-full"
+            style={{ width: `${progressPercentage}%` }}
+          ></div>
+        </div>
+      </div>
 
         {/* Goal Setting Modal */}
         {isGoalModalOpen && (
@@ -186,14 +194,21 @@ const DashboardContent = () => {
   );
 };
 
-const Dashboard = () => {
+const UserDashboard = () => {
+  const { user } = useAuth();
   return (
-    <UserProvider>
-      <ReadingSessionProvider>
-        <DashboardContent />
-      </ReadingSessionProvider>
-    </UserProvider>
+    <div>
+      {user ? (
+        <UserProvider>
+          <ReadingSessionProvider>
+            <UserDashboardContent />
+          </ReadingSessionProvider>
+        </UserProvider>
+      ) : (
+        <AccessDenied />
+      )}
+    </div>
   );
 };
 
-export default Dashboard;
+export default UserDashboard;

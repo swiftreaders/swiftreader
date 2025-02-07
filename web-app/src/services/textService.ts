@@ -8,11 +8,13 @@ import {
   Timestamp,
   DocumentData,
   getDocs,
-  query, 
-  where
+  query,
+  where,
 } from "firebase/firestore";
-import { app, db } from "@/firebaseConfig";
-import { Category, Difficulty, Text } from "@/types/text";
+
+import { Category, Text } from "@/types/text";
+import { db } from "@/../firebase.config";
+
 
 // The textService object with Firebase CRUD functions
 export const textService = {
@@ -22,16 +24,16 @@ export const textService = {
         const data = docSnapshot.data();
         return new Text(
           data.title,
-          data.category,
           data.content,
           data.difficulty,
           data.isFiction,
+          (data.isFiction ? data.genre : data.category),
           docSnapshot.id,
           data.createdAt,
           data.updatedAt,
           data.wordLength
         );
-      });    
+      });
       onUpdate(texts);
     });
 
@@ -39,10 +41,7 @@ export const textService = {
   },
 
   getTextsByCategory: async (category: Category): Promise<DocumentData[]> => {
-    const q = query(
-      collection(db, "Texts"),
-      where("category", "==", category)
-    );
+    const q = query(collection(db, "Texts"), where("category", "==", category));
     const querySnapshot = await getDocs(q);
     const textsList = querySnapshot.docs.map((doc) => doc.data());
 
@@ -65,8 +64,8 @@ export const textService = {
         for (const question of questions) {
           await addDoc(quizzesCollectionRef, {
             question: question.question,
-            answers: question.choices,       // Map your 'choices' to 'answers'
-            correct_answer: question.answer,   // Map your 'answer' to 'correct_answer'
+            answers: question.choices,       
+            correct_answer: question.answer,   
           });
         }
       }
@@ -133,6 +132,7 @@ export const textService = {
     // Implementation placeholder – return 0 until further logic is added.
     return 0;
   }
+
 };
 
 export default textService;
