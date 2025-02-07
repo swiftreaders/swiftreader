@@ -1,26 +1,52 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAdminDashboard, AdminDashboardProvider } from "@/contexts/adminDashboardContext";
+import {
+  useAdminDashboard,
+  AdminDashboardProvider,
+} from "@/contexts/adminDashboardContext";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/authContext";
+import AccessDenied from "@/components/errors/accessDenied";
 import { User } from "@/types/user";
 import { Session } from "@/types/sessions"; // Assuming correct import
 import { Timestamp } from "firebase/firestore";
 import UserInfoSessionWidget from "@/components/UserInfoSessionWidget"; // Assuming correct import
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 const AdminDashboardContent = () => {
   const { texts, users, removeUser } = useAdminDashboard();
-  const [userMetrics, setUserMetrics] = useState({ totalUsers: 0, newUsers: 0 });
+  const [userMetrics, setUserMetrics] = useState({
+    totalUsers: 0,
+    newUsers: 0,
+  });
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isRemovePopupOpen, setIsRemovePopupOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedUserSessions, setSelectedUserSessions] = useState<Session[]>([]);
+  const [selectedUserSessions, setSelectedUserSessions] = useState<Session[]>(
+    []
+  );
+  const [sortBy, setSortBy] = useState({
+    readingSessions: false,
+    dateJoined: false,
+  });
   const router = useRouter();
 
   useEffect(() => {
     const totalUsers = users.length;
-    const newUsers = users.filter(user => Date.now() - user.joinDate.toMillis() < 2419200000).length;
+    const newUsers = users.filter(
+      (user) => Date.now() - user.joinDate.toMillis() < 2419200000
+    ).length;
     setUserMetrics({ totalUsers, newUsers });
   }, [users]);
 
@@ -107,7 +133,9 @@ const AdminDashboardContent = () => {
           <p className="text-4xl font-bold">{userMetrics.totalUsers}</p>
         </div>
         <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-2">New Users (Last 28 days)</h2>
+          <h2 className="text-lg font-semibold mb-2">
+            New Users (Last 28 days)
+          </h2>
           <p className="text-4xl font-bold">{userMetrics.newUsers}</p>
         </div>
       </div>
@@ -121,7 +149,12 @@ const AdminDashboardContent = () => {
               <XAxis dataKey="month" />
               <YAxis />
               <Tooltip />
-              <Line type="monotone" dataKey="newUsers" stroke="#4A90E2" strokeWidth={2} />
+              <Line
+                type="monotone"
+                dataKey="newUsers"
+                stroke="#4A90E2"
+                strokeWidth={2}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -146,6 +179,10 @@ const AdminDashboardContent = () => {
         <table className="min-w-full table-auto border-collapse border border-gray-200">
           <thead className="bg-gray-100">
             <tr>
+              <th className="border border-gray-300 px-4 py-2 text-left">
+                Username
+              </th>
+              <th className="border border-gray-300 px-4 py-2">Actions</th>
               <th className="border border-gray-300 px-4 py-2 text-left">Username</th>
               <th className="border border-gray-300 px-4 py-2 text-left">Actions</th>
             </tr>
@@ -153,7 +190,9 @@ const AdminDashboardContent = () => {
           <tbody>
             {users.map((user, index) => (
               <tr key={index} className="hover:bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2">{user.name}</td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {user.name}
+                </td>
                 <td className="border border-gray-300 px-4 py-2 text-center">
                   {/* More Info Button */}
                   <button
@@ -256,10 +295,19 @@ const AdminDashboardContent = () => {
   );
 };
 
-const AdminDashboard = () => (
-  <AdminDashboardProvider>
-    <AdminDashboardContent />
-  </AdminDashboardProvider>
-);
+function AdminDashboard() {
+  const { user } = useAuth();
+  return (
+    <>
+      {user?.isAdmin ? (
+        <AdminDashboardProvider>
+          <AdminDashboardContent />
+        </AdminDashboardProvider>
+      ) : (
+        <AccessDenied />
+      )}
+    </>
+  );
+}
 
 export default AdminDashboard;

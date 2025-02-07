@@ -9,10 +9,10 @@ import {
   Timestamp,
   DocumentData,
   getDocs,
-  query, 
-  where
+  query,
+  where,
 } from "firebase/firestore";
-import { app, db } from "@/firebaseConfig";
+import { app, db } from "@/../firebase.config";
 import { Category, Text } from "@/types/text";
 
 // const db = getFirestore(app);
@@ -33,7 +33,7 @@ export const textService = {
           data.updatedAt,
           data.wordLength
         );
-      });    
+      });
       onUpdate(texts);
     });
 
@@ -41,10 +41,7 @@ export const textService = {
   },
 
   getTextsByCategory: async (category: Category): Promise<DocumentData[]> => {
-    const q = query(
-      collection(db, "Texts"),
-      where("category", "==", category)
-    );
+    const q = query(collection(db, "Texts"), where("category", "==", category));
     const querySnapshot = await getDocs(q);
     const textsList = querySnapshot.docs.map((doc) => doc.data());
 
@@ -67,8 +64,12 @@ export const textService = {
   updateText: async (content: string, id: string): Promise<boolean> => {
     try {
       const wordLength = content.split(/\s+/).length;
-      const timestamp = Timestamp.fromMillis(Date.now())
-      await updateDoc(doc(db, "Texts", id), { content: content, wordLength: wordLength, updatedAt: timestamp });
+      const timestamp = Timestamp.fromMillis(Date.now());
+      await updateDoc(doc(db, "Texts", id), {
+        content: content,
+        wordLength: wordLength,
+        updatedAt: timestamp,
+      });
       return true;
     } catch (error) {
       console.error("Error updating text:", error);
@@ -87,10 +88,8 @@ export const textService = {
   },
 
   findAveragePerformanceForText: async (textId: string): Promise<number> => {
-    
     return 0;
-  }
-}
+  },
+};
 
 export default textService;
-

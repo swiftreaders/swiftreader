@@ -15,7 +15,7 @@ import {
     where
 } from "firebase/firestore";
 import { Session } from "@/types/sessions";
-import { app } from "@/firebaseConfig";
+import { app } from "@/../firebase.config";
 import { Category, Text } from "@/types/text";
 
 const db = getFirestore(app);
@@ -39,7 +39,6 @@ const getRecentSessions = (onUpdate: (sessions: Session[]) => void) => {
       
       // Create a new `Session` instance using the constructor
       return new Session(
-        doc.id,
         data.textId,
         data.userId,
         data.title, // Default to "Untitled" if `title` is missing
@@ -48,6 +47,7 @@ const getRecentSessions = (onUpdate: (sessions: Session[]) => void) => {
         data.wpm,
         data.sessionType,
         data.difficulty,
+        doc.id
       );
     });
 
