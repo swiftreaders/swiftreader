@@ -1,4 +1,3 @@
-
 import { Timestamp } from "firebase/firestore";
 
 export enum Difficulty {
@@ -13,11 +12,20 @@ export enum Category {
   TECHNOLOGY = "technology",
 }
 
+export enum Genre {
+  FANTASY = "fantasy",
+  MYSTERY = "mystery",
+  ROMANCE = "romance",
+  SCIENCE_FICTION = "science fiction",
+  DRAMA = "drama",
+}
+
 export class Text {
   id: string;
   title: string;
 
-  category: Category;
+  category?: Category; // Optional, only used when isFiction is false
+  genre?: Genre; // Optional, only used when isFiction is true
   content: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -27,11 +35,12 @@ export class Text {
 
   constructor(
     title: string,
-    category: Category,
     content: string,
     difficulty: Difficulty,
     isFiction: boolean,
-    // Default parameters for adding new texts
+    // Use either genre or category depending on isFiction
+    genreOrCategory: Genre | Category,
+    // Default arguments
     id: string = "",
     createdAt: Timestamp = Timestamp.fromMillis(Date.now()),
     updatedAt: Timestamp = createdAt,
@@ -39,25 +48,32 @@ export class Text {
   ) {
     this.id = id;
     this.title = title;
-    this.category = category;
     this.content = content;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.difficulty = difficulty;
     this.isFiction = isFiction;
-    this.wordLength = wordLength
+    this.wordLength = wordLength;
+
+    if (isFiction) {
+      this.genre = genreOrCategory as Genre;
+    } else {
+      this.category = genreOrCategory as Category;
+    }
   }
-  
+
   toJSON() {
     return {
       title: this.title,
-      category: this.category,
       content: this.content,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
       difficulty: this.difficulty,
       isFiction: this.isFiction,
       wordLength: this.wordLength,
+      ...(this.isFiction
+        ? { genre: this.genre }
+        : { category: this.category }),
     };
   }
 }
