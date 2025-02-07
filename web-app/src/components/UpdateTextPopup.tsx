@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Category, Difficulty, Text, Question } from "@/types/text";
+import { Category, Difficulty, Text, Question, Genre } from "@/types/text";
 
 interface UpdateTextPopupProps {
   text: Text;
@@ -14,7 +14,8 @@ export const UpdateTextPopup = ({
 }: UpdateTextPopupProps) => {
   const [title, setTitle] = useState(text.title);
   const [content, setContent] = useState(text.content);
-  const [category, setCategory] = useState(text.category);
+  const [category, setCategory] = useState<Category | undefined>(text.category);
+  const [genre, setGenre] = useState<Genre | undefined>(text.genre);
   const [difficulty, setDifficulty] = useState(text.difficulty);
   const [isFiction, setIsFiction] = useState(text.isFiction);
   const [questions, setQuestions] = useState(text.questions || []);
@@ -52,7 +53,7 @@ export const UpdateTextPopup = ({
 
   const handleSave = () => {
     // Create an updated Text instance – make sure to preserve the text id.
-    const updatedText = new Text(title, category, content, difficulty, isFiction);
+    const updatedText = new Text(title, content, difficulty, isFiction, genre ?? category ?? Category.NATURE);  // 
     updatedText.questions = questions;
     updatedText.id = text.id; // Preserve the original id
     onSave(updatedText);
