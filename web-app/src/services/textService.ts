@@ -12,7 +12,7 @@ import {
   query, 
   where
 } from "firebase/firestore";
-import { app, db } from "@/firebaseConfig";
+import { app, db } from "@/../firebase.config";
 import { Category, Text } from "@/types/text";
 
 // const db = getFirestore(app);
