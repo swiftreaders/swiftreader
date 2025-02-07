@@ -1,5 +1,4 @@
 import {
-  getFirestore,
   collection,
   doc,
   onSnapshot,
@@ -15,20 +14,19 @@ import {
 import { app, db } from "@/firebaseConfig";
 import { Category, Text } from "@/types/text";
 
-
-
+// The textService object with Firebase CRUD functions
 export const textService = {
   getTexts: (onUpdate: (texts: Text[]) => void) => {
     const unsubscribe = onSnapshot(collection(db, "Texts"), (snapshot) => {
-      const texts = snapshot.docs.map((doc) => {
-        const data = doc.data();
+      const texts = snapshot.docs.map((docSnapshot) => {
+        const data = docSnapshot.data();
         return new Text(
           data.title,
           data.category,
           data.content,
           data.difficulty,
           data.isFiction,
-          doc.id,
+          docSnapshot.id,
           data.createdAt,
           data.updatedAt,
           data.wordLength
@@ -57,7 +55,21 @@ export const textService = {
   addText: async (text: Text): Promise<boolean> => {
     try {
       console.log("Adding text to firestore: ", text.toJSON());
-      await addDoc(collection(db, "Texts"), text.toJSON());
+      // Save the text document (convert to JSON without the questions property)
+      const { questions, ...textData } = text.toJSON();
+      const docRef = await addDoc(collection(db, "Texts"), textData);
+      
+      // If questions exist, add each question to the "Quizzes" subcollection.
+      if (questions && Array.isArray(questions) && questions.length > 0) {
+        const quizzesCollectionRef = collection(doc(db, "Texts", docRef.id), "Quizzes");
+        for (const question of questions) {
+          await addDoc(quizzesCollectionRef, {
+            question: question.question,
+            answers: question.choices,       // Map your 'choices' to 'answers'
+            correct_answer: question.answer,   // Map your 'answer' to 'correct_answer'
+          });
+        }
+      }
       return true;
     } catch (error) {
       console.error("Error adding text:", error);
@@ -68,8 +80,12 @@ export const textService = {
   updateText: async (content: string, id: string): Promise<boolean> => {
     try {
       const wordLength = content.split(/\s+/).length;
-      const timestamp = Timestamp.fromMillis(Date.now())
-      await updateDoc(doc(db, "Texts", id), { content: content, wordLength: wordLength, updatedAt: timestamp });
+      const timestamp = Timestamp.fromMillis(Date.now());
+      await updateDoc(doc(db, "Texts", id), {
+        content: content,
+        wordLength: wordLength,
+        updatedAt: timestamp
+      });
       return true;
     } catch (error) {
       console.error("Error updating text:", error);
@@ -88,14 +104,9 @@ export const textService = {
   },
 
   findAveragePerformanceForText: async (textId: string): Promise<number> => {
-    
+    // Implementation placeholder – return 0 until further logic is added.
     return 0;
   }
-
-
-
-}
-
+};
 
 export default textService;
-

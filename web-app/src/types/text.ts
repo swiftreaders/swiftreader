@@ -1,4 +1,3 @@
-
 import { Timestamp } from "firebase/firestore";
 
 export enum Difficulty {
@@ -14,10 +13,16 @@ export enum Category {
   HISTORY = "history",
 }
 
+export interface Question {
+  question: string;
+  choices: string[];
+  answer: string;
+}
+
+/// Text class containing all fields related to the Firestore database texts collection
 export class Text {
   id: string;
   title: string;
-
   category: Category;
   content: string;
   createdAt: Timestamp;
@@ -25,6 +30,7 @@ export class Text {
   difficulty: Difficulty;
   isFiction: boolean;
   wordLength: number;
+  questions: Question[];
 
   constructor(
     title: string,
@@ -36,7 +42,8 @@ export class Text {
     id: string = "",
     createdAt: Timestamp = Timestamp.fromMillis(Date.now()),
     updatedAt: Timestamp = createdAt,
-    wordLength: number = content.split(" ").length
+    wordLength: number = content.split(" ").length,
+    questions: Question[] = []
   ) {
     this.id = id;
     this.title = title;
@@ -46,11 +53,12 @@ export class Text {
     this.updatedAt = updatedAt;
     this.difficulty = difficulty;
     this.isFiction = isFiction;
-    this.wordLength = wordLength
+    this.wordLength = wordLength;
+    this.questions = questions;
   }
   
   toJSON() {
-    console.log("Text.toJSON: ", this);
+    // Exclude questions from the main document since they are stored in a subcollection.
     return {
       title: this.title,
       category: this.category.toString(),
@@ -60,6 +68,7 @@ export class Text {
       difficulty: this.difficulty,
       isFiction: this.isFiction,
       wordLength: this.wordLength,
+      questions: this.questions,
     };
   }
 }

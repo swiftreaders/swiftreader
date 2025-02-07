@@ -1,6 +1,7 @@
 import { Category, Difficulty } from "@/types/text";
 import axios from "axios";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { Question } from "@/types/text";
 
 const CORS_PROXY = "https://api.allorigins.win/get?url=";
 const GEMINI_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;  
@@ -24,12 +25,6 @@ export interface Excerpt {
   book_id: string;
   excerpt: string;
   questions: Question[];
-}
-
-export interface Question {
-  question: string;
-  choices: string[];
-  answer: string;
 }
 
 interface FilterOptions {
@@ -68,11 +63,16 @@ export const fetchBooks = async (subject: Category): Promise<Book[]> => {
   try {
     console.log("fetchBooks: waiting for list of books fetch");
     const response = await axios.get(GUTENDEX_API, {
-      params: { topic: subject as string, languages: ["en"], mime_type: ["text/plain; charset=us-ascii"],
-        copyright: "false"
-       },
+      params: { 
+      topic: subject as string, 
+      languages: ["en"], 
+      mime_type: ["text/plain; charset=us-ascii"],
+      copyright: "false", 
+      page: Math.floor(Math.random() * 5) + 1
+      },
     });
     const temp_books = response.data.results;
+    console.log(temp_books);
     
     console.log(`fetchBooks: ${temp_books.length} books fetched`, temp_books.map((book: any) => book.title));
 
@@ -174,11 +174,8 @@ s
 
       Original text: ${content.slice(0, 7500)}`;
 
-      // console.log("prompt: ", prompt);
       const result = await model.generateContent(prompt);
       const rawResponse = result.response.text().trim();
-  
-      // console.log("Raw AI Response: ", rawResponse);
   
       // Ensure we strip any unwanted formatting
       const jsonStart = rawResponse.indexOf("{");
@@ -196,7 +193,7 @@ s
   
       return isValid ? response : { excerpt: findNaturalExcerpt(content, wordLimit), questions: [] };
     } catch (error) {
-      console.error("AI filtering failed, using fallback:", error);
+      console.log("AI filtering failed, using fallback:", error);
       return { excerpt: findNaturalExcerpt(content, wordLimit), questions: [] };
     }
 };
