@@ -12,6 +12,7 @@ import { User } from "@/types/user";
 import { Session } from "@/types/sessions"; // Assuming correct import
 import { Timestamp } from "firebase/firestore";
 import UserInfoSessionWidget from "@/components/UserInfoSessionWidget"; // Assuming correct import
+
 import {
   LineChart,
   Line,
@@ -54,6 +55,16 @@ const AdminDashboardContent = () => {
     setSelectedUser(user);
     setIsPopupOpen(true);
   };
+
+  const handleSort = () => {
+    setSortBy((prev) => ({ ...prev, dateJoined: !prev.dateJoined }));
+  };
+
+  const sortedUsers = [...users].sort((a, b) => {
+    return (
+      new Date(a.joinDate.toDate()).getTime() - new Date(b.joinDate.toDate()).getTime()
+    );
+  });
 
   const handleRemoveUserClick = (user: User) => {
     setSelectedUser(user);
@@ -115,131 +126,112 @@ const AdminDashboardContent = () => {
   ];
 
   return (
-    <div className="min-h-screen p-8 bg-gray-100">
-      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
-
-      <div className="mb-6">
-        <button
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
-          onClick={() => router.push("adminDashboard/textManagement")}
-        >
-          Manage Texts
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-2">Total Users</h2>
-          <p className="text-4xl font-bold">{userMetrics.totalUsers}</p>
+    <div className="min-h-screen bg-gray-100">
+      {/* Hero Header */}
+      <header className="bg-gradient-to-r from-blue-600 to-indigo-600 py-8 shadow-lg">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-4xl font-bold text-white">Admin Dashboard</h1>
+          <p className="mt-2 text-lg text-gray-200">
+            Manage users, texts, and performance metrics
+          </p>
         </div>
-        <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-2">
-            New Users (Last 28 days)
-          </h2>
-          <p className="text-4xl font-bold">{userMetrics.newUsers}</p>
-        </div>
-      </div>
+      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">User Growth Trend</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={userTrendData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Line
-                type="monotone"
-                dataKey="newUsers"
-                stroke="#4A90E2"
-                strokeWidth={2}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+      {/* Main Container */}
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <button
+            className="w-full sm:w-auto bg-blue-500 text-white px-6 py-3 rounded-md transition hover:bg-blue-600"
+            onClick={() => router.push("adminDashboard/textManagement")}
+          >
+            Manage Texts
+          </button>
         </div>
 
-        <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">User Performance</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={performanceData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="score" fill="#36A2EB" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Updated User Table */}
-      <div className="bg-white shadow-md rounded-lg p-6">
-        <h2 className="text-lg font-semibold mb-4">User Details</h2>
-        <table className="min-w-full table-auto border-collapse border border-gray-200">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="border border-gray-300 px-4 py-2 text-left">
-                Username
-              </th>
-              <th className="border border-gray-300 px-4 py-2">Actions</th>
-              <th className="border border-gray-300 px-4 py-2 text-left">Username</th>
-              <th className="border border-gray-300 px-4 py-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user, index) => (
-              <tr key={index} className="hover:bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2">
-                  {user.name}
-                </td>
-                <td className="border border-gray-300 px-4 py-2 text-center">
-                  {/* More Info Button */}
-                  <button
-                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition mr-2"
-                    onClick={() => handleManageClick(user)}
-                  >
-                    More Info
-                  </button>
-                  {/* Remove User Button */}
-                  <button
-                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
-                    onClick={() => handleRemoveUserClick(user)}
-                  >
-                    Remove User
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Remove User Confirmation Popup */}
-      {isRemovePopupOpen && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h3 className="text-lg font-semibold mb-4">Confirm Removal</h3>
-            <p className="text-gray-700 mb-6">
-              Are you sure you want to remove <strong>{selectedUser.name}</strong>?
-            </p>
-            <div className="flex justify-end gap-4">
-              <button
-                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
-                onClick={() => setIsRemovePopupOpen(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
-                onClick={() => confirmRemoveUser()}
-              >
-                Remove
-              </button>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white shadow-md rounded-lg p-6">
+            <h2 className="text-lg font-semibold mb-2">Total Users</h2>
+            <p className="text-4xl font-bold">{userMetrics.totalUsers}</p>
+          </div>
+          <div className="bg-white shadow-md rounded-lg p-6">
+            <h2 className="text-lg font-semibold mb-2">New Users (Last 28 days)</h2>
+            <p className="text-4xl font-bold">{userMetrics.newUsers}</p>
           </div>
         </div>
-      )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div className="bg-white shadow-md rounded-lg p-6">
+            <h2 className="text-lg font-semibold mb-4">User Growth Trend</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={userTrendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="newUsers" stroke="#4A90E2" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="bg-white shadow-md rounded-lg p-6">
+            <h2 className="text-lg font-semibold mb-4">User Performance</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={performanceData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="score" fill="#36A2EB" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white shadow-md rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">User Details</h2>
+          <div className="mb-4">
+            <button
+              className="bg-green-500 text-white px-4 py-2 rounded-md transition hover:bg-green-600"
+              onClick={handleSort}
+            >
+              Sort by Date Joined
+            </button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-auto border-collapse border border-gray-200">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="border border-gray-300 px-4 py-2 text-left">Username</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">WPM</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">Join Date</th>
+                  <th className="border border-gray-300 px-4 py-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedUsers.map((user, index) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="border border-gray-300 px-4 py-2">{user.name}</td>
+                    <td className="border border-gray-300 px-4 py-2">{user.wpm}</td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {user.joinDate.toDate().toLocaleDateString()}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2 text-center">
+                      <button
+                        className="bg-blue-500 text-white px-3 py-1 rounded-md transition hover:bg-blue-600"
+                        onClick={() => handleManageClick(user)}
+                      >
+                        Manage
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        
+      </main>
 
       {/* More Info Popup */}
       {isPopupOpen && selectedUser && (
