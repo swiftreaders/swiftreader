@@ -12,7 +12,7 @@ import {
   where
 } from "firebase/firestore";
 import { app, db } from "@/firebaseConfig";
-import { Category, Text } from "@/types/text";
+import { Category, Difficulty, Text } from "@/types/text";
 
 // The textService object with Firebase CRUD functions
 export const textService = {
@@ -77,15 +77,41 @@ export const textService = {
     }
   },
 
-  updateText: async (content: string, id: string): Promise<boolean> => {
+  updateText: async (updatedText: Text): Promise<boolean> => {
     try {
-      const wordLength = content.split(/\s+/).length;
+      const wordLength = updatedText.content.split(/\s+/).length;
       const timestamp = Timestamp.fromMillis(Date.now());
-      await updateDoc(doc(db, "Texts", id), {
-        content: content,
+      await updateDoc(doc(db, "Texts", updatedText.id), {
+        content: updatedText.content,
         wordLength: wordLength,
-        updatedAt: timestamp
+        updatedAt: timestamp,
+        title: updatedText.title,
+        difficulty: updatedText.difficulty,
+        category: updatedText.category,
       });
+      const quizzesRef = collection(db, "Texts", updatedText.id, "Quizzes");
+
+      // Remove any existing questions from the subcollection
+      const existingQuizDocs = await getDocs(quizzesRef);
+      for (const quizDoc of existingQuizDocs.docs) {
+        await deleteDoc(doc(db, "Texts", updatedText.id, "Quizzes", quizDoc.id));
+      }
+
+      // Add the updated questions if available
+      if (
+        updatedText.questions &&
+        Array.isArray(updatedText.questions) &&
+        updatedText.questions.length > 0
+      ) {
+        for (const question of updatedText.questions) {
+          await addDoc(quizzesRef, {
+            question: question.question,
+            answers: question.choices,       // Storing the choices under 'answers'
+            correct_answer: question.answer,   // Storing the correct answer
+          });
+        }
+      }
+      
       return true;
     } catch (error) {
       console.error("Error updating text:", error);

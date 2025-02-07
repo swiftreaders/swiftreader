@@ -575,7 +575,8 @@ const AdminDashboardContent = () => {
             setSelectedTextForUpdate(null);
           }}
           onSave={(updatedText) => {
-            updateText("STUB FOR NOW", updatedText.id);  // TODO: FIX UPDATE
+            console.log("updatedText:", updatedText);
+            updateText(updatedText);  // TODO: FIX UPDATE
             setUpdatePopupOpen(false);
             setSelectedTextForUpdate(null);
           }}
