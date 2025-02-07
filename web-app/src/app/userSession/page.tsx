@@ -12,7 +12,7 @@ const UserSessionContent = () => {
   const [wpm, setWpm] = useState(300);
   const [sessionStarted, setSessionStarted] = useState(false);
   const [outputText, setOutputText] = useState("");
-  const [readingComplete, setReadingComplete] = useState(false);
+  const [readingComplete, setReadingComplete] = useState(true);
 
   const handleToggle = (setting: string) => {
     if (setting === "settingOne") {
@@ -46,7 +46,7 @@ const UserSessionContent = () => {
   };
 
   if (readingComplete) {
-    return <Quiz onComplete={() => alert("Quiz Completed!")} />;
+    return <Quiz textId="xm08CT3qzCHvDtoFmK6d" onComplete={() => alert("Quiz Completed!")} />;
   }
 
   return (

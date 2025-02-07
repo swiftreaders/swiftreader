@@ -20,7 +20,6 @@ import { Category, Text } from "@/types/text";
 // function to get text from json query and return just the text
 
 
-
 export const textService = {
   getTexts: (onUpdate: (texts: Text[]) => void) => {
     const unsubscribe = onSnapshot(collection(db, "Texts"), (snapshot) => {
@@ -93,9 +92,47 @@ export const textService = {
   findAveragePerformanceForText: async (textId: string): Promise<number> => {
     
     return 0;
+  },
+
+  getQuizForText: async (textId: string) => {
+    try {
+      // Get the quiz document (assuming only one quiz per text)
+      const quizzesCollection = collection(db, "Texts", textId, "Quizzes");
+      const quizSnapshot = await getDocs(quizzesCollection);
+
+      if (quizSnapshot.empty) {
+        console.warn("No quiz found for this text.");
+        return null;
+      }
+
+      const quizDoc = quizSnapshot.docs[0]; // Assuming only one quiz per text
+      const quizData = quizDoc.data();
+      const quizId = quizDoc.id;
+
+      // Get all questions under this quiz
+      const questionsCollection = collection(db, "Texts", textId, "Quizzes", quizId, "Questions");
+      const questionsSnapshot = await getDocs(questionsCollection);
+
+      const questions = questionsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        question: doc.data().Question,
+        options: doc.data().Choices,
+        correctAnswer: doc.data().Answer, // Optional if needed for grading
+      }));
+
+      return {
+        quizId,
+        title: quizData.title,
+        description: quizData.description,
+        category: quizData.category,
+        difficulty: quizData.difficulty,
+        questions,
+      };
+    } catch (error) {
+      console.error("Error fetching quiz:", error);
+      return null;
+    }
   }
-
-
 
 }
 
