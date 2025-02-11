@@ -23,6 +23,7 @@ const UserSessionContent = () => {
   const [outputLine, setOutputLine] = useState<string>("");
   const [requested, setRequested] = useState(false);
   const [loading, setLoading] = useState(false);
+  const wpmRef = useRef(wpm);
 
   // Added: Create a ref for the Calibration component
   const calibrationRef = useRef<CalibrationRef>(null);
@@ -59,7 +60,7 @@ const UserSessionContent = () => {
     const words = line.split(" ");
     let total_chars = 0;
     words.forEach(word => { total_chars += word.length });
-    return ((total_chars / 5) / wpm) * 60000;
+    return ((total_chars / 5) / wpmRef.current) * 60000;
   };
 
   const handleStartSession = async () => {
@@ -113,6 +114,10 @@ const UserSessionContent = () => {
     }
   }, [mode]); // Runs when mode updates
 
+  useEffect(() => {
+    wpmRef.current = wpm;
+  }, [wpm]);
+
   const preRead = async (text: Text) => {
     setOutputLine("Reading '" + text.title + "'");
     await sleep(3000);
@@ -159,32 +164,71 @@ const UserSessionContent = () => {
     // Removed: Automatic calibration call has been removed.
     // Instead, calibration will be triggered by a recalibrate button in the UI.
 
+    // tracking line changes
+    let currBoundaryChange = 2;
+    let prevBoundaryChange = 2; // lineChange = [1|2|3], 1 means quadrant 1 to 2, 2 means 2 to 3, 3 means 3 to 4.
+
     // 1. Split content into lines
+
     const lines = splitTextIntoLines(text.content);
     await preRead(text);
-    let currentLineIndex = 0;
+
+    // let currentLineIndex = 0;
   
     // 2. Define a helper to show the next line
-    setOutputLine(lines[currentLineIndex]);
-    const showNextLine = () => {
-      if (currentLineIndex < lines.length) {
-        setOutputLine(lines[currentLineIndex]);
-        currentLineIndex++;
-      } else {
-        // Optionally handle the end of content here (e.g., stop WebGazer, etc.)
-        console.log("All lines have been displayed.");
+    // setOutputLine(lines[currentLineIndex]);
+    // const showNextLine = () => {
+    //   if (currentLineIndex < lines.length) {
+    //     setOutputLine(lines[currentLineIndex]);
+    //     currentLineIndex++;
+    //   } else {
+    //     // Optionally handle the end of content here (e.g., stop WebGazer, etc.)
+    //     console.log("All lines have been displayed.");
+    //   }
+    // };
+
+    // Initialize WebGazer & set the gaze listener
+    // Make sure WebGazer is loaded on `window` (as in your example).
+    (window as any).webgazer.setGazeListener(handleGaze);
+
+    for (const line of lines) {
+      setOutputLine(line);
+      currBoundaryChange = 2;
+      const sleepTime = calculateSleepTime(line);
+      await sleep(sleepTime);
+
+      // Adusts wpm based on previous two boundary changes
+      switch (prevBoundaryChange + currBoundaryChange) {
+        case 6:
+          setWpm(wpmRef.current + 20);
+          break;
+        case 5:
+          setWpm(wpmRef.current + 10);
+          break;
+        case 4:
+          break;
+        case 3:
+          setWpm(Math.max(wpmRef.current - 20, 50));
+          break;
+        case 2:
+          setWpm(Math.max(wpmRef.current - 30, 50));
+          break;
       }
-    };
+
+      // Update the previous boundary change for the next reading
+      prevBoundaryChange = currBoundaryChange;
+    }
   
     // 3. Gaze listener function
     function handleGaze(data: { x: number; y: number } | null) {
+      
       if (!data) return;
+
+      let activeQuarter = 0;
   
       // Calculate which quarter the gaze is in
       const screenWidth = window.innerWidth;
       const quarterWidth = screenWidth / 4;
-      let activeQuarter = 0;
-  
       if (data.x < quarterWidth) {
         activeQuarter = 1;
       } else if (data.x < quarterWidth * 2) {
@@ -195,19 +239,20 @@ const UserSessionContent = () => {
         activeQuarter = 4;
       }
   
-      // If the gaze just entered the 4th quarter (from any other quarter),
-      // show the next line
+      // If the gaze just changed quadrant, record the boundary change
       if (activeQuarter === 4 && previousQuarter !== 4) {
-        showNextLine();
+        currBoundaryChange = Math.max(currBoundaryChange, 3);
+      } else if (activeQuarter === 3 && previousQuarter !== 3) {
+        currBoundaryChange = Math.max(currBoundaryChange, 2);
+      } else if (activeQuarter === 2 && previousQuarter !== 2) {
+        currBoundaryChange = 1;
       }
-  
+      
       // Update the previous quarter for the next reading
       previousQuarter = activeQuarter;
     }
   
-    // 4. Initialize WebGazer & set the gaze listener
-    // Make sure WebGazer is loaded on `window` (as in your example).
-    (window as any).webgazer.setGazeListener(handleGaze);
+
   };
 
   return (
