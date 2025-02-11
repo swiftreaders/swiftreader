@@ -7,9 +7,16 @@ export enum Difficulty {
 }
 
 export enum Category {
-  NATURE = "nature",
   SCIENCE = "science",
+  NATURE = "nature",
   TECHNOLOGY = "technology",
+  HISTORY = "history",
+}
+
+export interface Question {
+  question: string;
+  choices: string[];
+  answer: string;
 }
 
 export enum Genre {
@@ -20,10 +27,10 @@ export enum Genre {
   DRAMA = "drama",
 }
 
+/// Text class containing all fields related to the Firestore database texts collection
 export class Text {
   id: string;
   title: string;
-
   category?: Category; // Optional, only used when isFiction is false
   genre?: Genre; // Optional, only used when isFiction is true
   content: string;
@@ -32,6 +39,7 @@ export class Text {
   difficulty: Difficulty;
   isFiction: boolean;
   wordLength: number;
+  questions: Question[];
 
   constructor(
     title: string,
@@ -40,11 +48,13 @@ export class Text {
     isFiction: boolean,
     // Use either genre or category depending on isFiction
     genreOrCategory: Genre | Category,
+    
     // Default arguments
     id: string = "",
     createdAt: Timestamp = Timestamp.fromMillis(Date.now()),
     updatedAt: Timestamp = createdAt,
-    wordLength: number = content.split(" ").length
+    wordLength: number = content.split(" ").length,
+    questions: Question[] = []
   ) {
     this.id = id;
     this.title = title;
@@ -54,6 +64,7 @@ export class Text {
     this.difficulty = difficulty;
     this.isFiction = isFiction;
     this.wordLength = wordLength;
+    this.questions = questions;
 
     if (isFiction) {
       this.genre = genreOrCategory as Genre;
@@ -63,6 +74,7 @@ export class Text {
   }
 
   toJSON() {
+    // Exclude questions from the main document since they are stored in a subcollection.
     return {
       title: this.title,
       content: this.content,
@@ -71,6 +83,7 @@ export class Text {
       difficulty: this.difficulty,
       isFiction: this.isFiction,
       wordLength: this.wordLength,
+      questions: this.questions,
       ...(this.isFiction
         ? { genre: this.genre }
         : { category: this.category }),

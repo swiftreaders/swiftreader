@@ -1,17 +1,17 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 // import backend functions to perform CRUD operations on the texts
-import { textService } from "@/services/textservice";
+import { textService } from "@/services/textService";
 
 // import necessary types
 import { Text } from "@/types/text";
 import { User } from "@/types/user";
-import { userService } from "@/services/userservice";
+import { userService } from "@/services/userService";
 
 interface AdminDashboardContextType {
   texts: Text[];
   addText: (text: Text) => Promise<boolean>;
-  updateText: (content: string, id: string) => Promise<boolean>;
+  updateText: (updatedText: Text) => Promise<boolean>;
   removeText: (id: string) => Promise<boolean>;
   users: User[];
   removeUser: (id: string) => Promise<boolean>;
@@ -49,8 +49,7 @@ export const AdminDashboardProvider: React.FC<{
 
   const addText = async (text: Text) => textService.addText(text);
 
-  const updateText = async (content: string, id: string) =>
-    textService.updateText(content, id);
+  const updateText = async (updatedText: Text) => textService.updateText(updatedText);
 
   const removeText = async (id: string) => textService.removeText(id);
 

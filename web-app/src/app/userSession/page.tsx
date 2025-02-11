@@ -218,6 +218,11 @@ const UserSessionContent = () => {
       // Update the previous boundary change for the next reading
       prevBoundaryChange = currBoundaryChange;
     }
+
+    // Stop Webgazer
+    (window as any).webgazer.stop();
+    // GO TO Quiz
+
   
     // 3. Gaze listener function
     function handleGaze(data: { x: number; y: number } | null) {
