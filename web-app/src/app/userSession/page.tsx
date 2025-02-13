@@ -1,6 +1,7 @@
 "use client";
 
 import { useReadingContext, ReadingSessionProvider } from "@/contexts/readingSessionsContext";
+import Quiz from "@/components/Quiz";
 import { useState, useEffect, useRef } from "react";
 import Script from "next/script";
 import { Category, Difficulty, Genre, Text } from "@/types/text";
@@ -21,6 +22,8 @@ const UserSessionContent = () => {
   const [wpm, setWpm] = useState(300);
   const [inputValue, setInputValue] = useState("300")
   const [sessionStarted, setSessionStarted] = useState(false);
+  const [outputText, setOutputText] = useState("");
+  const [readingComplete, setReadingComplete] = useState(true);
   const [outputLine, setOutputLine] = useState<string>("");
   const [requested, setRequested] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -299,7 +302,6 @@ const UserSessionContent = () => {
   }, []);
 
   // useEffect(() => {console.log(wpmRef.current, inputValue)}, [wpm, inputValue]);
-
 
   return (
     <>

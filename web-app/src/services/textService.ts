@@ -8,13 +8,12 @@ import {
   Timestamp,
   DocumentData,
   getDocs,
-  query,
-  where,
+  query, 
+  where
 } from "firebase/firestore";
 
 import { Category, Text } from "@/types/text";
 import { db } from "@/../firebase.config";
-
 
 // The textService object with Firebase CRUD functions
 export const textService = {
@@ -24,6 +23,7 @@ export const textService = {
         const data = docSnapshot.data();
         return new Text(
           data.title,
+          data.category,
           data.content,
           data.difficulty,
           data.isFiction,
@@ -33,7 +33,7 @@ export const textService = {
           data.updatedAt,
           data.wordLength
         );
-      });
+      });    
       onUpdate(texts);
     });
 
@@ -41,7 +41,10 @@ export const textService = {
   },
 
   getTextsByCategory: async (category: Category): Promise<DocumentData[]> => {
-    const q = query(collection(db, "Texts"), where("category", "==", category));
+    const q = query(
+      collection(db, "Texts"),
+      where("category", "==", category)
+    );
     const querySnapshot = await getDocs(q);
     const textsList = querySnapshot.docs.map((doc) => doc.data());
 
@@ -129,10 +132,50 @@ export const textService = {
   },
 
   findAveragePerformanceForText: async (textId: string): Promise<number> => {
-    // Implementation placeholder – return 0 until further logic is added.
     return 0;
+  },
+
+  getQuizForText: async (textId: string) => {
+    try {
+      // Get the quiz document (assuming only one quiz per text)
+      const quizzesCollection = collection(db, "Texts", textId, "Quizzes");
+      const quizSnapshot = await getDocs(quizzesCollection);
+
+      if (quizSnapshot.empty) {
+        console.warn("No quiz found for this text.");
+        return null;
+      }
+
+      const quizDoc = quizSnapshot.docs[0]; // Assuming only one quiz per text
+      const quizData = quizDoc.data();
+      const quizId = quizDoc.id;
+
+      // Get all questions under this quiz
+      const questionsCollection = collection(db, "Texts", textId, "Quizzes", quizId, "Questions");
+      const questionsSnapshot = await getDocs(questionsCollection);
+
+      const questions = questionsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        question: doc.data().Question,
+        options: doc.data().Choices,
+        correctAnswer: doc.data().Answer, // Optional if needed for grading
+      }));
+
+      return {
+        quizId,
+        title: quizData.title,
+        description: quizData.description,
+        category: quizData.category,
+        difficulty: quizData.difficulty,
+        questions,
+      };
+    } catch (error) {
+      console.error("Error fetching quiz:", error);
+      return null;
+    }
   }
 
-};
+}
 
 export default textService;
+
