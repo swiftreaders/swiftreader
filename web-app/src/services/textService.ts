@@ -12,28 +12,51 @@ import {
   where
 } from "firebase/firestore";
 
-import { Category, Text } from "@/types/text";
+import { Category, Text, Question } from "@/types/text";
 import { db } from "@/../firebase.config";
+
+
 
 // The textService object with Firebase CRUD functions
 export const textService = {
   getTexts: (onUpdate: (texts: Text[]) => void) => {
-    const unsubscribe = onSnapshot(collection(db, "Texts"), (snapshot) => {
-      const texts = snapshot.docs.map((docSnapshot) => {
-        const data = docSnapshot.data();
-        return new Text(
-          data.title,
-          data.category,
-          data.content,
-          data.difficulty,
-          data.isFiction,
-          (data.isFiction ? data.genre : data.category),
-          docSnapshot.id,
-          data.createdAt,
-          data.updatedAt,
-          data.wordLength
-        );
-      });    
+    const unsubscribe = onSnapshot(collection(db, "Texts"), async (snapshot) => {
+      const texts = await Promise.all(
+        snapshot.docs.map(async (docSnapshot) => {
+          const data = docSnapshot.data();
+    
+          // Fetch quiz questions
+          const quizzesCollection = collection(db, "Texts", docSnapshot.id, "Quizzes");
+          const quizSnapshot = await getDocs(quizzesCollection);
+    
+          let questions: Question[] = [];
+          if (!quizSnapshot.empty) {
+            const quizDoc = quizSnapshot.docs[0]; // Assuming one quiz per text
+            const questionsCollection = collection(db, "Texts", docSnapshot.id, "Quizzes", quizDoc.id, "Questions");
+            const questionsSnapshot = await getDocs(questionsCollection);
+    
+            questions = questionsSnapshot.docs.map((doc) => ({
+              question: doc.data().Question,
+              choices: doc.data().Choices,
+              answer: doc.data().Answer,
+            }));
+          }
+    
+          return new Text(
+            data.title,
+            data.content,
+            data.difficulty,
+            data.isFiction,
+            data.isFiction ? data.genre : data.category,
+            docSnapshot.id,
+            data.createdAt,
+            data.updatedAt,
+            data.wordLength,
+            questions
+          );
+        })
+      );
+    
       onUpdate(texts);
     });
 
