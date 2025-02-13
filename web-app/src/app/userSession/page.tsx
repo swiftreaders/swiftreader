@@ -19,6 +19,7 @@ const UserSessionContent = () => {
   const [fiction, setFiction] = useState(true);
   const [length, setLength] = useState<number | null>(null);
   const [wpm, setWpm] = useState(300);
+  const [inputValue, setInputValue] = useState("300")
   const [sessionStarted, setSessionStarted] = useState(false);
   const [outputLine, setOutputLine] = useState<string>("");
   const [requested, setRequested] = useState(false);
@@ -198,22 +199,25 @@ const UserSessionContent = () => {
       await sleep(sleepTime);
 
       // Adusts wpm based on previous two boundary changes
+      let newWpm = wpmRef.current;
       switch (prevBoundaryChange + currBoundaryChange) {
         case 6:
-          setWpm(wpmRef.current + 20);
+          newWpm = wpmRef.current + 20
           break;
         case 5:
-          setWpm(wpmRef.current + 10);
+          newWpm = wpmRef.current + 10;
           break;
         case 4:
           break;
         case 3:
-          setWpm(Math.max(wpmRef.current - 20, 50));
+          newWpm = Math.max(wpmRef.current - 20, 50);
           break;
         case 2:
-          setWpm(Math.max(wpmRef.current - 30, 50));
+          newWpm = Math.max(wpmRef.current - 30, 50);
           break;
       }
+      setWpm(newWpm);
+      setInputValue(newWpm.toString());
 
       // Update the previous boundary change for the next reading
       prevBoundaryChange = currBoundaryChange;
@@ -256,9 +260,46 @@ const UserSessionContent = () => {
       // Update the previous quarter for the next reading
       previousQuarter = activeQuarter;
     }
-  
-
   };
+
+  // Handle keypresses to alter WPM using arrow keys
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      let newWpm = wpmRef.current;
+      switch (event.key.toLowerCase()) {
+        case "w":
+          newWpm = wpmRef.current + 1;
+          setWpm(newWpm);
+          setInputValue(newWpm.toString());
+          break;
+        case "s":
+          newWpm = Math.max(wpmRef.current - 1, 50);
+          setWpm(newWpm);
+          setInputValue(newWpm.toString());
+          break;
+        case "a":
+          newWpm = Math.max(wpmRef.current - 10, 50);
+          setWpm(newWpm);
+          setInputValue(newWpm.toString());
+          break;
+        case "d":
+          newWpm = wpmRef.current + 10;
+          setWpm(newWpm);
+          setInputValue(newWpm.toString());
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
+    };
+  }, []);
+
+  // useEffect(() => {console.log(wpmRef.current, inputValue)}, [wpm, inputValue]);
+
 
   return (
     <>
@@ -327,6 +368,31 @@ const UserSessionContent = () => {
             <HelpPopup message="Mode 1: Read at a fixed WPM \n
             Mode 2: Use eye-tracking software to dynamically adjust reading speed \n
             Mode 3 (Non-fiction only): Summarise the text for even faster comprehension" />
+          </div>
+
+          {/* WPM Input */}
+          <div className="flex items-center space-x-2">
+            <label htmlFor="wpmInput" className="text-sm font-medium text-gray-700">
+              WPM:
+            </label>
+            <input
+              id="wpmInput"
+              type="number"
+              className="border border-gray-300 rounded px-3 py-2 text-center text-gray-700 focus:outline-none focus:ring focus:ring-blue-300 w-24"
+              value={inputValue}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                setInputValue(event.target.value); // Allow typing freely
+              }}
+              onBlur={() => {
+                const numericValue = parseInt(inputValue, 10);
+                if (isNaN(numericValue) || numericValue < 50) {
+                  setWpm(50);
+                  setInputValue("50"); // Reset input if it's below 50
+                } else {
+                  setWpm(numericValue);
+                }
+              }}            />
+            <HelpPopup message="Use the WASD keys to tune your reading speed during the session" />
           </div>
 
           {/* Fiction Checkbox */}
@@ -421,20 +487,6 @@ const UserSessionContent = () => {
               checked={length === null}
               onChange={(e) => setLength(e.target.checked ? null : 300)}
               className="ml-2"
-            />
-          </div>
-
-          {/* WPM Input */}
-          <div className="flex items-center space-x-2">
-            <label htmlFor="wpmInput" className="text-sm font-medium text-gray-700">
-              WPM:
-            </label>
-            <input
-              id="wpmInput"
-              type="number"
-              className="border border-gray-300 rounded px-3 py-2 text-center text-gray-700 focus:outline-none focus:ring focus:ring-blue-300 w-24"
-              value={wpm}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setWpm(parseInt(event.target.value, 10))}
             />
           </div>
         </div>
