@@ -1,4 +1,5 @@
 import { Timestamp } from "firebase/firestore"
+import { Question } from "./text";
 
 export class Session {
   id: string;
@@ -26,6 +27,9 @@ export class Session {
     difficulty: string,
     // Default argument
     id: string = "",
+    questions: Question[] = [],
+    correct: boolean[] = [],
+    
   ) {
     this.id = id;
     this.textId = textId;

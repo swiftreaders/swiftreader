@@ -13,6 +13,7 @@ import HelpPopup from "./helpPopup"
 
 const UserSessionContent = () => {
   const { text, getText } = useReadingContext();
+  const [textId, setTextId] = useState("");
   const [mode, setMode] = useState(1);
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
@@ -22,8 +23,7 @@ const UserSessionContent = () => {
   const [wpm, setWpm] = useState(300);
   const [inputValue, setInputValue] = useState("300")
   const [sessionStarted, setSessionStarted] = useState(false);
-  const [outputText, setOutputText] = useState("");
-  const [readingComplete, setReadingComplete] = useState(true);
+  const [progressStage, setProgressStage] = useState(1);
   const [outputLine, setOutputLine] = useState<string>("");
   const [requested, setRequested] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -83,6 +83,7 @@ const UserSessionContent = () => {
         alert("No texts found with those constraints");
         setRequested(false);
       } else {
+        setTextId(text.id);
         setSessionStarted(true);
         if (mode == 1) {
           startReadingMode1(text);
@@ -144,6 +145,7 @@ const UserSessionContent = () => {
     }
     const endTime = Timestamp.fromDate(new Date());
     console.log(sessionCompleteMode1(startTime, endTime, text));
+    setProgressStage(2);
     return sessionCompleteMode1(startTime, endTime, text);
   };
 
@@ -229,7 +231,7 @@ const UserSessionContent = () => {
     // Stop Webgazer
     (window as any).webgazer.stop();
     // GO TO Quiz
-
+    setProgressStage(2);
   
     // 3. Gaze listener function
     function handleGaze(data: { x: number; y: number } | null) {
@@ -326,28 +328,41 @@ const UserSessionContent = () => {
         <div className="flex items-center justify-center mb-8">
           <div className="flex items-center space-x-4">
             <div className="flex flex-col items-center">
-              <div className="h-8 w-8 rounded-full bg-blue-500 text-white flex items-center justify-center">
+              <div
+                className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                  progressStage >= 1 ? 'bg-blue-500 text-white' : 'bg-gray-300'
+                }`}
+              >
                 1
               </div>
               <span className="text-sm mt-2">Read</span>
             </div>
             <div className="h-1 w-12 bg-gray-300"></div>
             <div className="flex flex-col items-center">
-              <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+              <div
+                className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                  progressStage >= 2 ? 'bg-blue-500 text-white' : 'bg-gray-300'
+                }`}
+              >
                 2
               </div>
               <span className="text-sm mt-2">Quiz</span>
             </div>
             <div className="h-1 w-12 bg-gray-300"></div>
             <div className="flex flex-col items-center">
-              <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+              <div
+                className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                  progressStage >= 3 ? 'bg-blue-500 text-white' : 'bg-gray-300'
+                }`}
+              >
                 3
               </div>
               <span className="text-sm mt-2">Stats</span>
             </div>
           </div>
         </div>
-
+        {progressStage === 1 ? (
+          <>
         {/* Settings Bar */}
         <div className="flex flex-wrap items-center justify-between w-full bg-white shadow-md p-4 rounded-lg space-y-4 md:space-y-0 md:flex-nowrap">
           {/* Select Mode Dropdown*/}        
@@ -492,27 +507,40 @@ const UserSessionContent = () => {
             />
           </div>
         </div>
-
-        {/* Session Start Box */}
+        </>
+        ) : <></>
+      }
         <div className="w-full flex justify-center">
-          {!requested ? (
-            <button
-              className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition"
-              onClick={handleStartSession}
-            >
-              Start Session
-            </button>
-          ) : loading ? (
-            <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner flex justify-center items-center">
-              <p className="text-xl text-gray-800">Loading...</p>
+          {progressStage === 1 ? (
+            // Session Start Box
+            <>
+              {!requested ? (
+                <button
+                  className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition"
+                  onClick={handleStartSession}
+                >
+                  Start Session
+                </button>
+              ) : loading ? (
+                <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner flex justify-center items-center">
+                  <p className="text-xl text-gray-800">Loading...</p>
+                </div>
+              ) : sessionStarted ? (
+                <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner">
+                  <p className="text-4xl text-gray-800 whitespace-pre-wrap text-center leading-relaxed">
+                    {outputLine}
+                  </p>
+                </div>
+              ) : null}
+            </>
+          ) : progressStage === 2 ? (
+            <Quiz textId={textId} onComplete={()=>{}}/>
+          ) : (
+            // Optionally handle other progressStage values if necessary
+            <div className="w-full flex justify-center">
+              <p className="text-xl text-gray-800">Next stage content goes here...</p>
             </div>
-          ) : sessionStarted ? (
-            <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner">
-              <p className="text-4xl text-gray-800 whitespace-pre-wrap text-center leading-relaxed">
-                {outputLine}
-              </p>
-            </div>
-          ) : null}
+          )}
         </div>
         <WebGazerClient />
         {/* Pass the ref to the Calibration component */}
