@@ -1,5 +1,4 @@
 import {
-  getFirestore,
   collection,
   doc,
   onSnapshot,
@@ -12,31 +11,52 @@ import {
   query, 
   where
 } from "firebase/firestore";
-import { app, db } from "@/../firebase.config";
-import { Category, Text } from "@/types/text";
 
-// const db = getFirestore(app);
-
-// function to get text from json query and return just the text
+import { Category, Text, Question } from "@/types/text";
+import { db } from "@/../firebase.config";
 
 
+
+// The textService object with Firebase CRUD functions
 export const textService = {
   getTexts: (onUpdate: (texts: Text[]) => void) => {
-    const unsubscribe = onSnapshot(collection(db, "Texts"), (snapshot) => {
-      const texts = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return new Text(
-          data.title,
-          data.category,
-          data.content,
-          data.difficulty,
-          data.isFiction,
-          doc.id,
-          data.createdAt,
-          data.updatedAt,
-          data.wordLength
-        );
-      });    
+    const unsubscribe = onSnapshot(collection(db, "Texts"), async (snapshot) => {
+      const texts = await Promise.all(
+        snapshot.docs.map(async (docSnapshot) => {
+          const data = docSnapshot.data();
+    
+          // Fetch quiz questions
+          const quizzesCollection = collection(db, "Texts", docSnapshot.id, "Quizzes");
+          const quizSnapshot = await getDocs(quizzesCollection);
+    
+          let questions: Question[] = [];
+          if (!quizSnapshot.empty) {
+            const quizDoc = quizSnapshot.docs[0]; // Assuming one quiz per text
+            const questionsCollection = collection(db, "Texts", docSnapshot.id, "Quizzes", quizDoc.id, "Questions");
+            const questionsSnapshot = await getDocs(questionsCollection);
+    
+            questions = questionsSnapshot.docs.map((doc) => ({
+              question: doc.data().Question,
+              choices: doc.data().Choices,
+              answer: doc.data().Answer,
+            }));
+          }
+    
+          return new Text(
+            data.title,
+            data.content,
+            data.difficulty,
+            data.isFiction,
+            data.isFiction ? data.genre : data.category,
+            docSnapshot.id,
+            data.createdAt,
+            data.updatedAt,
+            data.wordLength,
+            questions
+          );
+        })
+      );
+    
       onUpdate(texts);
     });
 
@@ -59,7 +79,22 @@ export const textService = {
 
   addText: async (text: Text): Promise<boolean> => {
     try {
-      await addDoc(collection(db, "Texts"), text.toJSON());
+      console.log("Adding text to firestore: ", text.toJSON());
+      // Save the text document (convert to JSON without the questions property)
+      const { questions, ...textData } = text.toJSON();
+      const docRef = await addDoc(collection(db, "Texts"), textData);
+      
+      // If questions exist, add each question to the "Quizzes" subcollection.
+      if (questions && Array.isArray(questions) && questions.length > 0) {
+        const quizzesCollectionRef = collection(doc(db, "Texts", docRef.id), "Quizzes");
+        for (const question of questions) {
+          await addDoc(quizzesCollectionRef, {
+            question: question.question,
+            answers: question.choices,       
+            correct_answer: question.answer,   
+          });
+        }
+      }
       return true;
     } catch (error) {
       console.error("Error adding text:", error);
@@ -67,11 +102,41 @@ export const textService = {
     }
   },
 
-  updateText: async (content: string, id: string): Promise<boolean> => {
+  updateText: async (updatedText: Text): Promise<boolean> => {
     try {
-      const wordLength = content.split(/\s+/).length;
-      const timestamp = Timestamp.fromMillis(Date.now())
-      await updateDoc(doc(db, "Texts", id), { content: content, wordLength: wordLength, updatedAt: timestamp });
+      const wordLength = updatedText.content.split(/\s+/).length;
+      const timestamp = Timestamp.fromMillis(Date.now());
+      await updateDoc(doc(db, "Texts", updatedText.id), {
+        content: updatedText.content,
+        wordLength: wordLength,
+        updatedAt: timestamp,
+        title: updatedText.title,
+        difficulty: updatedText.difficulty,
+        category: updatedText.category,
+      });
+      const quizzesRef = collection(db, "Texts", updatedText.id, "Quizzes");
+
+      // Remove any existing questions from the subcollection
+      const existingQuizDocs = await getDocs(quizzesRef);
+      for (const quizDoc of existingQuizDocs.docs) {
+        await deleteDoc(doc(db, "Texts", updatedText.id, "Quizzes", quizDoc.id));
+      }
+
+      // Add the updated questions if available
+      if (
+        updatedText.questions &&
+        Array.isArray(updatedText.questions) &&
+        updatedText.questions.length > 0
+      ) {
+        for (const question of updatedText.questions) {
+          await addDoc(quizzesRef, {
+            question: question.question,
+            answers: question.choices,       // Storing the choices under 'answers'
+            correct_answer: question.answer,   // Storing the correct answer
+          });
+        }
+      }
+      
       return true;
     } catch (error) {
       console.error("Error updating text:", error);
@@ -90,7 +155,6 @@ export const textService = {
   },
 
   findAveragePerformanceForText: async (textId: string): Promise<number> => {
-    
     return 0;
   },
 
@@ -135,7 +199,6 @@ export const textService = {
   }
 
 }
-
 
 export default textService;
 

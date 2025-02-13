@@ -20,12 +20,14 @@ const UserSessionContent = () => {
   const [fiction, setFiction] = useState(true);
   const [length, setLength] = useState<number | null>(null);
   const [wpm, setWpm] = useState(300);
+  const [inputValue, setInputValue] = useState("300")
   const [sessionStarted, setSessionStarted] = useState(false);
   const [outputText, setOutputText] = useState("");
   const [readingComplete, setReadingComplete] = useState(true);
   const [outputLine, setOutputLine] = useState<string>("");
   const [requested, setRequested] = useState(false);
   const [loading, setLoading] = useState(false);
+  const wpmRef = useRef(wpm);
 
   // Added: Create a ref for the Calibration component
   const calibrationRef = useRef<CalibrationRef>(null);
@@ -62,7 +64,7 @@ const UserSessionContent = () => {
     const words = line.split(" ");
     let total_chars = 0;
     words.forEach(word => { total_chars += word.length });
-    return ((total_chars / 5) / wpm) * 60000;
+    return ((total_chars / 5) / wpmRef.current) * 60000;
   };
 
   const handleStartSession = async () => {
@@ -116,6 +118,10 @@ const UserSessionContent = () => {
     }
   }, [mode]); // Runs when mode updates
 
+  useEffect(() => {
+    wpmRef.current = wpm;
+  }, [wpm]);
+
   const preRead = async (text: Text) => {
     setOutputLine("Reading '" + text.title + "'");
     await sleep(3000);
@@ -162,32 +168,79 @@ const UserSessionContent = () => {
     // Removed: Automatic calibration call has been removed.
     // Instead, calibration will be triggered by a recalibrate button in the UI.
 
+    // tracking line changes
+    let currBoundaryChange = 2;
+    let prevBoundaryChange = 2; // lineChange = [1|2|3], 1 means quadrant 1 to 2, 2 means 2 to 3, 3 means 3 to 4.
+
     // 1. Split content into lines
+
     const lines = splitTextIntoLines(text.content);
     await preRead(text);
-    let currentLineIndex = 0;
+
+    // let currentLineIndex = 0;
   
     // 2. Define a helper to show the next line
-    setOutputLine(lines[currentLineIndex]);
-    const showNextLine = () => {
-      if (currentLineIndex < lines.length) {
-        setOutputLine(lines[currentLineIndex]);
-        currentLineIndex++;
-      } else {
-        // Optionally handle the end of content here (e.g., stop WebGazer, etc.)
-        console.log("All lines have been displayed.");
+    // setOutputLine(lines[currentLineIndex]);
+    // const showNextLine = () => {
+    //   if (currentLineIndex < lines.length) {
+    //     setOutputLine(lines[currentLineIndex]);
+    //     currentLineIndex++;
+    //   } else {
+    //     // Optionally handle the end of content here (e.g., stop WebGazer, etc.)
+    //     console.log("All lines have been displayed.");
+    //   }
+    // };
+
+    // Initialize WebGazer & set the gaze listener
+    // Make sure WebGazer is loaded on `window` (as in your example).
+    (window as any).webgazer.setGazeListener(handleGaze);
+
+    for (const line of lines) {
+      setOutputLine(line);
+      currBoundaryChange = 2;
+      const sleepTime = calculateSleepTime(line);
+      await sleep(sleepTime);
+
+      // Adusts wpm based on previous two boundary changes
+      let newWpm = wpmRef.current;
+      switch (prevBoundaryChange + currBoundaryChange) {
+        case 6:
+          newWpm = wpmRef.current + 20
+          break;
+        case 5:
+          newWpm = wpmRef.current + 10;
+          break;
+        case 4:
+          break;
+        case 3:
+          newWpm = Math.max(wpmRef.current - 20, 50);
+          break;
+        case 2:
+          newWpm = Math.max(wpmRef.current - 30, 50);
+          break;
       }
-    };
+      setWpm(newWpm);
+      setInputValue(newWpm.toString());
+
+      // Update the previous boundary change for the next reading
+      prevBoundaryChange = currBoundaryChange;
+    }
+
+    // Stop Webgazer
+    (window as any).webgazer.stop();
+    // GO TO Quiz
+
   
     // 3. Gaze listener function
     function handleGaze(data: { x: number; y: number } | null) {
+      
       if (!data) return;
+
+      let activeQuarter = 0;
   
       // Calculate which quarter the gaze is in
       const screenWidth = window.innerWidth;
       const quarterWidth = screenWidth / 4;
-      let activeQuarter = 0;
-  
       if (data.x < quarterWidth) {
         activeQuarter = 1;
       } else if (data.x < quarterWidth * 2) {
@@ -198,54 +251,57 @@ const UserSessionContent = () => {
         activeQuarter = 4;
       }
   
-      // If the gaze just entered the 4th quarter (from any other quarter),
-      // show the next line
+      // If the gaze just changed quadrant, record the boundary change
       if (activeQuarter === 4 && previousQuarter !== 4) {
-        showNextLine();
+        currBoundaryChange = Math.max(currBoundaryChange, 3);
+      } else if (activeQuarter === 3 && previousQuarter !== 3) {
+        currBoundaryChange = Math.max(currBoundaryChange, 2);
+      } else if (activeQuarter === 2 && previousQuarter !== 2) {
+        currBoundaryChange = 1;
       }
-  
+      
       // Update the previous quarter for the next reading
       previousQuarter = activeQuarter;
     }
-  
-    // 4. Initialize WebGazer & set the gaze listener
-    // Make sure WebGazer is loaded on `window` (as in your example).
-    (window as any).webgazer.setGazeListener(handleGaze);
   };
 
-  if (readingComplete) {
-    return (
-      <>
-        {/* Progress Circles */}
-        <br></br>
-          <div className="flex items-center justify-center mb-8">
-          <div className="flex items-center space-x-4">
-            <div className="flex flex-col items-center">
-              <div className="h-8 w-8 rounded-full bg-blue-500 text-white flex items-center justify-center">
-                1
-              </div>
-              <span className="text-sm mt-2">Read</span>
-            </div>
-            <div className="h-1 w-12 bg-gray-300"></div>
-            <div className="flex flex-col items-center">
-              <div className="h-8 w-8 rounded-full bg-blue-500 text-white flex items-center justify-center">
-                2
-              </div>
-              <span className="text-sm mt-2">Quiz</span>
-            </div>
-            <div className="h-1 w-12 bg-gray-300"></div>
-            <div className="flex flex-col items-center">
-              <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-                3
-              </div>
-              <span className="text-sm mt-2">Stats</span>
-            </div>
-          </div>
-        </div>
-        <Quiz textId="xm08CT3qzCHvDtoFmK6d" onComplete={() => alert("Quiz Completed!")} />
-      </>
-    );
-  }
+  // Handle keypresses to alter WPM using arrow keys
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      let newWpm = wpmRef.current;
+      switch (event.key.toLowerCase()) {
+        case "w":
+          newWpm = wpmRef.current + 1;
+          setWpm(newWpm);
+          setInputValue(newWpm.toString());
+          break;
+        case "s":
+          newWpm = Math.max(wpmRef.current - 1, 50);
+          setWpm(newWpm);
+          setInputValue(newWpm.toString());
+          break;
+        case "a":
+          newWpm = Math.max(wpmRef.current - 10, 50);
+          setWpm(newWpm);
+          setInputValue(newWpm.toString());
+          break;
+        case "d":
+          newWpm = wpmRef.current + 10;
+          setWpm(newWpm);
+          setInputValue(newWpm.toString());
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
+    };
+  }, []);
+
+  // useEffect(() => {console.log(wpmRef.current, inputValue)}, [wpm, inputValue]);
 
   return (
     <>
@@ -314,6 +370,31 @@ const UserSessionContent = () => {
             <HelpPopup message="Mode 1: Read at a fixed WPM \n
             Mode 2: Use eye-tracking software to dynamically adjust reading speed \n
             Mode 3 (Non-fiction only): Summarise the text for even faster comprehension" />
+          </div>
+
+          {/* WPM Input */}
+          <div className="flex items-center space-x-2">
+            <label htmlFor="wpmInput" className="text-sm font-medium text-gray-700">
+              WPM:
+            </label>
+            <input
+              id="wpmInput"
+              type="number"
+              className="border border-gray-300 rounded px-3 py-2 text-center text-gray-700 focus:outline-none focus:ring focus:ring-blue-300 w-24"
+              value={inputValue}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                setInputValue(event.target.value); // Allow typing freely
+              }}
+              onBlur={() => {
+                const numericValue = parseInt(inputValue, 10);
+                if (isNaN(numericValue) || numericValue < 50) {
+                  setWpm(50);
+                  setInputValue("50"); // Reset input if it's below 50
+                } else {
+                  setWpm(numericValue);
+                }
+              }}            />
+            <HelpPopup message="Use the WASD keys to tune your reading speed during the session" />
           </div>
 
           {/* Fiction Checkbox */}
@@ -408,20 +489,6 @@ const UserSessionContent = () => {
               checked={length === null}
               onChange={(e) => setLength(e.target.checked ? null : 300)}
               className="ml-2"
-            />
-          </div>
-
-          {/* WPM Input */}
-          <div className="flex items-center space-x-2">
-            <label htmlFor="wpmInput" className="text-sm font-medium text-gray-700">
-              WPM:
-            </label>
-            <input
-              id="wpmInput"
-              type="number"
-              className="border border-gray-300 rounded px-3 py-2 text-center text-gray-700 focus:outline-none focus:ring focus:ring-blue-300 w-24"
-              value={wpm}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setWpm(parseInt(event.target.value, 10))}
             />
           </div>
         </div>
