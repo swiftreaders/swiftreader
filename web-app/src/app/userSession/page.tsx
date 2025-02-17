@@ -138,7 +138,7 @@ const UserSessionContent = () => {
     const lines = splitTextIntoLines(text.content);
     await preRead(text);
     const startTime = Timestamp.fromDate(new Date());
-    let wpmReadings: Array<number> = [];
+    const wpmReadings: Array<number> = [];
     const intervalId = setInterval(() => {
       wpmReadings.push(wpmRef.current);
     }, 5000);
@@ -187,7 +187,7 @@ const UserSessionContent = () => {
     // Initialize WebGazer & set the gaze listener
     // Make sure WebGazer is loaded on `window` (as in your example).
     (window as any).webgazer.setGazeListener(handleGaze);
-    let wpmReadings: Array<number> = [];
+    const wpmReadings: Array<number> = [];
     const intervalId = setInterval(() => {
       wpmReadings.push(wpmRef.current);
     }, 5000);
