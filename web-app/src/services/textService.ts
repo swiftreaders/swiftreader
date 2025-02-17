@@ -162,8 +162,15 @@ export const textService = {
   getQuizForText: async (textId: string) => {
     try {
       // Get the quiz document (assuming only one quiz per text)
+      console.log("text id right before fetching: " + textId);
       const quizzesCollection = collection(db, "Texts", textId, "Quizzes");
       const quizSnapshot = await getDocs(quizzesCollection);
+
+      console.log("Quiz snapshot size:", quizSnapshot.size);
+
+      quizSnapshot.forEach(doc => {
+        console.log("Quiz found:", doc.id, doc.data());
+      });
 
       if (quizSnapshot.empty) {
         console.warn("No quiz found for this text.");

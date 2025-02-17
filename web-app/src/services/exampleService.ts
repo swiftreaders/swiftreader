@@ -10,7 +10,9 @@ import {
 import { app } from "../../firebase.config";
 import { Text } from "@/types/text";
 
-const db = getFirestore(app);
+import { db } from "@/../firebase.config";
+
+// const db = getFirestore(app);
 
 const getTexts = (onUpdate: (texts: Text[]) => void) => {
   const unsubscribe = onSnapshot(collection(db, "testItems"), (snapshot) => {

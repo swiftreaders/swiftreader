@@ -16,9 +16,11 @@ import {
 } from "firebase/firestore";
 import { Session } from "@/types/sessions";
 import { app } from "@/../firebase.config";
-import { Category, Text } from "@/types/text";
+import { Category, Text, Result } from "@/types/text";
 
-const db = getFirestore(app);
+import { db } from "@/../firebase.config";
+
+// const db = getFirestore(app);
 
 // get recent sessions (last 10 sessions)
 const getRecentSessions = (onUpdate: (sessions: Session[]) => void) => {
@@ -41,13 +43,14 @@ const getRecentSessions = (onUpdate: (sessions: Session[]) => void) => {
       return new Session(
         data.textId,
         data.userId,
-        data.title, // Default to "Untitled" if `title` is missing
+        data.title,
         data.startTime,
         data.endTime,
         data.wpm,
         data.sessionType,
         data.difficulty,
-        doc.id
+        doc.id,
+        data.results,
       );
     });
 
@@ -91,11 +94,11 @@ const addSession = async (
       console.error("Error adding session:", error);
       throw new Error("Failed to add session");
     }
-  };
+};
 
 // getText(constraints) - gets a random one
 const getText = async (constraints: { [key: string]: any }): Promise<Text | null> => {
-    try {
+  try {
       // Build the Firestore query with constraints
       const textsCollection = collection(db, "Texts");
       let q = query(textsCollection);
@@ -143,13 +146,60 @@ const getText = async (constraints: { [key: string]: any }): Promise<Text | null
       console.error("Error fetching text:", error);
       throw new Error("Failed to fetch a random text");
     }
-  };
+};
+
+const storeQuizResults = async (session: Session): Promise<boolean> => {
+  try {
+    // Extract relevant properties from the session object
+    const { 
+      id, 
+      textId, 
+      userId, 
+      title, 
+      startTime, 
+      endTime: sessionEndTime, 
+      duration, 
+      wpm, 
+      average_wpm, 
+      sessionType, 
+      difficulty, 
+      text_average_performance, 
+      results 
+    } = session;
+
+    // Set the current time as the end time for the session
+    const endTime = Timestamp.fromMillis(Date.now());
+
+    // Create a new session document with a random ID
+    const newSessionData = {
+      userId,
+      startTime,
+      sessionType,
+      textId,
+      title,
+      difficulty,
+      results,        // Assuming results is an array of Result objects
+      endTime,        // Set the end time when the quiz is finished
+      wpm,            // Words per minute data
+    };
+
+    // Add the new session to Firestore (auto-generated ID by Firestore)
+    const sessionRef = await addDoc(collection(db, "ReadingSessions"), newSessionData);
+
+    console.log("Quiz session stored successfully with ID:", sessionRef.id);
+    return true;
+  } catch (error) {
+    console.error("Error storing quiz results:", error);
+    return false;
+  }
+};
 
 
 export const sessionService = {
     getRecentSessions,
     addSession,
-    getText
+    getText,
+    storeQuizResults
 }
 
 export default sessionService;

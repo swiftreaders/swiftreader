@@ -28,6 +28,7 @@ const UserSessionContent = () => {
   const [requested, setRequested] = useState(false);
   const [loading, setLoading] = useState(false);
   const [readingDone, setReadingDone] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
   const wpmRef = useRef(wpm);
 
   // Added: Create a ref for the Calibration component
@@ -79,7 +80,6 @@ const UserSessionContent = () => {
   // Modified: Added an eslint disable comment to ignore missing dependencies warning
   useEffect(() => {
     if (requested && !loading) {
-      console.log(text);
       if (text == null) {
         alert("No texts found with those constraints");
         setRequested(false);
@@ -89,7 +89,6 @@ const UserSessionContent = () => {
         if (mode == 1) {
           startReadingMode1(text);
         } else if (mode == 2) {
-          console.log("reading mode 2");
           startReadingMode2(text);
         }
       }
@@ -135,35 +134,25 @@ const UserSessionContent = () => {
     await sleep(1000);
   };
 
-  const startReadingMode1 = async (text: Text): Promise<Session> => {
+  const startReadingMode1 = async (text: Text) => {
     const lines = splitTextIntoLines(text.content);
     await preRead(text);
     const startTime = Timestamp.fromDate(new Date());
+    let wpmReadings: Array<number> = [];
+    const intervalId = setInterval(() => {
+      wpmReadings.push(wpmRef.current);
+    }, 5000);
     for (const line of lines) {
       setOutputLine(line);
       const sleepTime = calculateSleepTime(line);
       await sleep(sleepTime);
     }
+    clearInterval(intervalId); // Stop measuring WPM once the loop finishes
+    console.log(wpmReadings);
     const endTime = Timestamp.fromDate(new Date());
-    console.log(sessionCompleteMode1(startTime, endTime, text));
     setReadingDone(true);
     setOutputLine("Reading complete!")
-    return sessionCompleteMode1(startTime, endTime, text);
-  };
-
-  const sessionCompleteMode1 = (startTime: Timestamp, endTime: Timestamp, text: Text): Session => {
-    // TODO: Pass in our own userId
-    const stubUserId = "Ss4hOp2vmTZkbV2H0w68";
-    return new Session(
-      text.id, 
-      stubUserId, 
-      text.title, 
-      startTime, 
-      endTime, 
-      new Array(Math.floor((endTime.toMillis() - startTime.toMillis()) / 5000)).fill(wpm),
-      1,
-      text.difficulty
-    );
+    finishReading(text, startTime, endTime, wpmReadings);
   };
 
   let previousQuarter = 0;
@@ -198,7 +187,11 @@ const UserSessionContent = () => {
     // Initialize WebGazer & set the gaze listener
     // Make sure WebGazer is loaded on `window` (as in your example).
     (window as any).webgazer.setGazeListener(handleGaze);
-
+    let wpmReadings: Array<number> = [];
+    const intervalId = setInterval(() => {
+      wpmReadings.push(wpmRef.current);
+    }, 5000);
+    const startTime = Timestamp.fromDate(new Date());
     for (const line of lines) {
       setOutputLine(line);
       currBoundaryChange = 2;
@@ -229,12 +222,16 @@ const UserSessionContent = () => {
       // Update the previous boundary change for the next reading
       prevBoundaryChange = currBoundaryChange;
     }
+    clearInterval(intervalId); // Stop measuring WPM once the loop finishes
+    const endTime = Timestamp.fromDate(new Date());
+    console.log(wpmReadings);
 
     // Stop Webgazer
     (window as any).webgazer.stop();
     // GO TO Quiz
     setReadingDone(true);
     setOutputLine("Reading complete!")
+    finishReading(text, startTime, endTime, wpmReadings);
   
     // 3. Gaze listener function
     function handleGaze(data: { x: number; y: number } | null) {
@@ -269,6 +266,23 @@ const UserSessionContent = () => {
       previousQuarter = activeQuarter;
     }
   };
+
+  const finishReading = (text: Text, startTime: Timestamp, endTime: Timestamp, wpm: Array<number>) => {
+    const stubUserId = "Ss4hOp2vmTZkbV2H0w68";
+    // TODO Fix this
+    const session = new Session(
+      text.id,
+      stubUserId,
+      text.title,
+      startTime,
+      endTime,
+      wpm,
+      mode,
+      text.difficulty,
+    )
+    setSession(session);
+    console.log(session);
+  }
 
   // Handle keypresses to alter WPM using arrow keys
   useEffect(() => {
@@ -536,12 +550,12 @@ const UserSessionContent = () => {
                 </div>
               ) : null}
             </>
-          ) : progressStage === 2 ? (
-            <Quiz textId={textId} onComplete={() => {}} />
+          ) : progressStage === 2 && session != null ? (
+            <Quiz textId={textId} session={session} />
           ) : (
             // Optionally handle other progressStage values if necessary
             <div className="w-full flex justify-center">
-              <p className="text-xl text-gray-800">Next stage content goes here...</p>
+              <p className="text-xl text-gray-800">Stats page goes here</p>
             </div>
           )}
           

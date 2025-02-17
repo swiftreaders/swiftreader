@@ -15,7 +15,9 @@ import {
 import { app } from "@/../firebase.config";
 import { User } from "@/types/user";
 
-const db = getFirestore(app);
+import { db } from "@/../firebase.config";
+
+// const db = getFirestore(app);
 
 export const userService = {
   getUsers: (onUpdate: (users: User[]) => void) => {
