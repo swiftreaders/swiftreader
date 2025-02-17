@@ -64,4 +64,10 @@ export class Session {
     this.difficulty = difficulty;
     this.text_average_performance = 0;
   }
+
+  getComprenhensionScore(): number {
+    return this.results.reduce((acc: number, result: Result) => {
+      return result.givenAnswer === result.correctAnswer ? acc + 1 : acc;
+    }, 0);
+  }
 }

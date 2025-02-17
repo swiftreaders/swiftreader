@@ -125,4 +125,15 @@ export const userService = {
       throw error; // Re-throw the error for handling upstream
     }
   },
+
+  toggleAdmin: async (id: string, val: boolean): Promise<boolean> => {
+    try {
+      await updateDoc(doc(db, "Users", id), { isAdmin: val });
+      return true;
+    } catch (error) {
+      console.error("Error making user admin:", error);
+      return false;
+    }
+  }
+
 };
