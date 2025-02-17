@@ -10,9 +10,11 @@ import { Timestamp } from "firebase/firestore";
 import WebGazerClient from "./WebGazerClient"; // We'll keep a separate file
 import Calibration, { CalibrationRef } from "./Calibration"; // Modified import to include ref type
 import HelpPopup from "./helpPopup" 
+import { AuthProvider, useAuth } from "@/contexts/authContext";
 
 const UserSessionContent = () => {
   const { text, getText } = useReadingContext();
+  const { user } = useAuth()
   const [textId, setTextId] = useState("");
   const [mode, setMode] = useState(1);
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
@@ -268,11 +270,9 @@ const UserSessionContent = () => {
   };
 
   const finishReading = (text: Text, startTime: Timestamp, endTime: Timestamp, wpm: Array<number>) => {
-    const stubUserId = "Ss4hOp2vmTZkbV2H0w68";
-    // TODO Fix this
     const session = new Session(
       text.id,
-      stubUserId,
+      user ? user.id : "",
       text.title,
       startTime,
       endTime,
@@ -551,7 +551,7 @@ const UserSessionContent = () => {
               ) : null}
             </>
           ) : progressStage === 2 && session != null ? (
-            <Quiz textId={textId} session={session} />
+            <Quiz textId={textId} session={session} onContinue={() => setProgressStage(3)}/>
           ) : (
             // Optionally handle other progressStage values if necessary
             <div className="w-full flex justify-center">
@@ -583,7 +583,9 @@ const UserSessionContent = () => {
 const UserSession = () => {
   return (
     <ReadingSessionProvider>
-      <UserSessionContent />
+      <AuthProvider>
+        <UserSessionContent />
+      </AuthProvider>
     </ReadingSessionProvider>
   );
 };
