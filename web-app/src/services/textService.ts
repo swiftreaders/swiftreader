@@ -155,6 +155,7 @@ export const textService = {
   },
 
   findAveragePerformanceForText: async (textId: string): Promise<number> => {
+    // Implementation placeholder – return 0 until further logic is added.
     return 0;
   },
 
