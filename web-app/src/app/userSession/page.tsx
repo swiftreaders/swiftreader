@@ -9,12 +9,12 @@ import { Session } from "@/types/sessions";
 import { Timestamp } from "firebase/firestore";
 import WebGazerClient from "./WebGazerClient"; // We'll keep a separate file
 import Calibration, { CalibrationRef } from "./Calibration"; // Modified import to include ref type
-import HelpPopup from "./helpPopup" 
+import HelpPopup from "../../components/helpPopup" 
 import { AuthProvider, useAuth } from "@/contexts/authContext";
 
 const UserSessionContent = () => {
   const { text, getText } = useReadingContext();
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth();
   const [textId, setTextId] = useState("");
   const [mode, setMode] = useState(1);
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
@@ -150,10 +150,9 @@ const UserSessionContent = () => {
       await sleep(sleepTime);
     }
     clearInterval(intervalId); // Stop measuring WPM once the loop finishes
-    console.log(wpmReadings);
     const endTime = Timestamp.fromDate(new Date());
     setReadingDone(true);
-    setOutputLine("Reading complete!")
+    setOutputLine("Reading complete!");
     finishReading(text, startTime, endTime, wpmReadings);
   };
 
@@ -226,10 +225,9 @@ const UserSessionContent = () => {
     }
     clearInterval(intervalId); // Stop measuring WPM once the loop finishes
     const endTime = Timestamp.fromDate(new Date());
-    console.log(wpmReadings);
 
     // Stop Webgazer
-    (window as any).webgazer.stop();
+    // (window as any).webgazer.stop();
     // GO TO Quiz
     setReadingDone(true);
     setOutputLine("Reading complete!")
@@ -270,6 +268,7 @@ const UserSessionContent = () => {
   };
 
   const finishReading = (text: Text, startTime: Timestamp, endTime: Timestamp, wpm: Array<number>) => {
+    console.log(user);
     const session = new Session(
       text.id,
       user ? user.id : "",
@@ -583,9 +582,7 @@ const UserSessionContent = () => {
 const UserSession = () => {
   return (
     <ReadingSessionProvider>
-      <AuthProvider>
-        <UserSessionContent />
-      </AuthProvider>
+      <UserSessionContent />
     </ReadingSessionProvider>
   );
 };
