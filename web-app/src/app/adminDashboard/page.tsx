@@ -145,7 +145,7 @@ const AdminDashboardContent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-work-sans">
       {/* Hero Header */}
       <header className="bg-gradient-to-r from-indigo-600 to-blue-500 py-6 shadow">
         <div className="container mx-auto px-4 text-center">
@@ -159,6 +159,25 @@ const AdminDashboardContent = () => {
       {/* Main Container */}
       <main className="container mx-auto px-4 py-6">
         {/* Top Action Bar & Metrics Summary */}
+        {/* Top Action Bar & Metrics Summary */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+          <button
+            className="bg-blue-600 text-white px-5 py-2 rounded-md hover:bg-blue-700 transition"
+            onClick={() => router.push("adminDashboard/textManagement")}
+          >
+            Manage Texts
+          </button>
+          <div className="flex gap-4 mt-4 sm:mt-0">
+            <div className="bg-white shadow p-4 rounded-md">
+              <h2 className="text-sm text-gray-500">Total Users</h2>
+              <p className="text-xl font-semibold">{userMetrics.totalUsers}</p>
+            </div>
+            <div className="bg-white shadow p-4 rounded-md">
+              <h2 className="text-sm text-gray-500">New Users (28d)</h2>
+              <p className="text-xl font-semibold">{userMetrics.newUsers}</p>
+            </div>
+          </div>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Column 1: User Growth Trend */}
         <div className="bg-white shadow rounded-lg p-6">

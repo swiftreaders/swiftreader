@@ -544,7 +544,7 @@ const AdminDashboardContent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-work-sans">
       {/* Hero Header */}
       <header className="bg-gradient-to-r from-blue-600 to-indigo-600 py-8 shadow-lg">
         <div className="container mx-auto px-4 text-center">
