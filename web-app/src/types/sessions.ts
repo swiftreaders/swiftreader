@@ -1,4 +1,5 @@
 import { Timestamp } from "firebase/firestore"
+import { Question, Result } from "./text";
 
 export class Session {
   id: string;
@@ -15,6 +16,8 @@ export class Session {
   difficulty: string;  // easy, medium, hard
   text_average_performance: number;
 
+  results: Result[]
+
   constructor(
     textId: string,
     userId: string,
@@ -26,6 +29,8 @@ export class Session {
     difficulty: string,
     // Default argument
     id: string = "",
+    results: Result[] = [],
+    
   ) {
     this.id = id;
     this.textId = textId;
@@ -33,6 +38,7 @@ export class Session {
     this.title = title;
     this.startTime = startTime;
     this.endTime = endTime;
+    this.results = results;
 
     // Helper function to retrieve milliseconds regardless of type.
     const getMillis = (t: Timestamp | Date): number => {

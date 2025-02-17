@@ -1,6 +1,7 @@
 "use client";
 
 import { useReadingContext, ReadingSessionProvider } from "@/contexts/readingSessionsContext";
+import Quiz from "@/components/Quiz";
 import { useState, useEffect, useRef } from "react";
 import Script from "next/script";
 import { Category, Difficulty, Genre, Text } from "@/types/text";
@@ -12,6 +13,7 @@ import HelpPopup from "./helpPopup"
 
 const UserSessionContent = () => {
   const { text, getText } = useReadingContext();
+  const [textId, setTextId] = useState("");
   const [mode, setMode] = useState(1);
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
@@ -19,10 +21,15 @@ const UserSessionContent = () => {
   const [fiction, setFiction] = useState(true);
   const [length, setLength] = useState<number | null>(null);
   const [wpm, setWpm] = useState(300);
+  const [inputValue, setInputValue] = useState("300")
   const [sessionStarted, setSessionStarted] = useState(false);
+  const [progressStage, setProgressStage] = useState(1);
   const [outputLine, setOutputLine] = useState<string>("");
   const [requested, setRequested] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [readingDone, setReadingDone] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const wpmRef = useRef(wpm);
 
   // Added: Create a ref for the Calibration component
   const calibrationRef = useRef<CalibrationRef>(null);
@@ -59,7 +66,7 @@ const UserSessionContent = () => {
     const words = line.split(" ");
     let total_chars = 0;
     words.forEach(word => { total_chars += word.length });
-    return ((total_chars / 5) / wpm) * 60000;
+    return ((total_chars / 5) / wpmRef.current) * 60000;
   };
 
   const handleStartSession = async () => {
@@ -73,16 +80,15 @@ const UserSessionContent = () => {
   // Modified: Added an eslint disable comment to ignore missing dependencies warning
   useEffect(() => {
     if (requested && !loading) {
-      console.log(text);
       if (text == null) {
         alert("No texts found with those constraints");
         setRequested(false);
       } else {
+        setTextId(text.id);
         setSessionStarted(true);
         if (mode == 1) {
           startReadingMode1(text);
         } else if (mode == 2) {
-          console.log("reading mode 2");
           startReadingMode2(text);
         }
       }
@@ -113,6 +119,10 @@ const UserSessionContent = () => {
     }
   }, [mode]); // Runs when mode updates
 
+  useEffect(() => {
+    wpmRef.current = wpm;
+  }, [wpm]);
+
   const preRead = async (text: Text) => {
     setOutputLine("Reading '" + text.title + "'");
     await sleep(3000);
@@ -124,33 +134,25 @@ const UserSessionContent = () => {
     await sleep(1000);
   };
 
-  const startReadingMode1 = async (text: Text): Promise<Session> => {
+  const startReadingMode1 = async (text: Text) => {
     const lines = splitTextIntoLines(text.content);
     await preRead(text);
     const startTime = Timestamp.fromDate(new Date());
+    const wpmReadings: Array<number> = [];
+    const intervalId = setInterval(() => {
+      wpmReadings.push(wpmRef.current);
+    }, 5000);
     for (const line of lines) {
       setOutputLine(line);
       const sleepTime = calculateSleepTime(line);
       await sleep(sleepTime);
     }
+    clearInterval(intervalId); // Stop measuring WPM once the loop finishes
+    console.log(wpmReadings);
     const endTime = Timestamp.fromDate(new Date());
-    console.log(sessionCompleteMode1(startTime, endTime, text));
-    return sessionCompleteMode1(startTime, endTime, text);
-  };
-
-  const sessionCompleteMode1 = (startTime: Timestamp, endTime: Timestamp, text: Text): Session => {
-    // TODO: Pass in our own userId
-    const stubUserId = "Ss4hOp2vmTZkbV2H0w68";
-    return new Session(
-      text.id, 
-      stubUserId, 
-      text.title, 
-      startTime, 
-      endTime, 
-      new Array(Math.floor((endTime.toMillis() - startTime.toMillis()) / 5000)).fill(wpm),
-      1,
-      text.difficulty
-    );
+    setReadingDone(true);
+    setOutputLine("Reading complete!")
+    finishReading(text, startTime, endTime, wpmReadings);
   };
 
   let previousQuarter = 0;
@@ -159,32 +161,88 @@ const UserSessionContent = () => {
     // Removed: Automatic calibration call has been removed.
     // Instead, calibration will be triggered by a recalibrate button in the UI.
 
+    // tracking line changes
+    let currBoundaryChange = 2;
+    let prevBoundaryChange = 2; // lineChange = [1|2|3], 1 means quadrant 1 to 2, 2 means 2 to 3, 3 means 3 to 4.
+
     // 1. Split content into lines
+
     const lines = splitTextIntoLines(text.content);
     await preRead(text);
-    let currentLineIndex = 0;
+
+    // let currentLineIndex = 0;
   
     // 2. Define a helper to show the next line
-    setOutputLine(lines[currentLineIndex]);
-    const showNextLine = () => {
-      if (currentLineIndex < lines.length) {
-        setOutputLine(lines[currentLineIndex]);
-        currentLineIndex++;
-      } else {
-        // Optionally handle the end of content here (e.g., stop WebGazer, etc.)
-        console.log("All lines have been displayed.");
+    // setOutputLine(lines[currentLineIndex]);
+    // const showNextLine = () => {
+    //   if (currentLineIndex < lines.length) {
+    //     setOutputLine(lines[currentLineIndex]);
+    //     currentLineIndex++;
+    //   } else {
+    //     // Optionally handle the end of content here (e.g., stop WebGazer, etc.)
+    //     console.log("All lines have been displayed.");
+    //   }
+    // };
+
+    // Initialize WebGazer & set the gaze listener
+    // Make sure WebGazer is loaded on `window` (as in your example).
+    (window as any).webgazer.setGazeListener(handleGaze);
+    const wpmReadings: Array<number> = [];
+    const intervalId = setInterval(() => {
+      wpmReadings.push(wpmRef.current);
+    }, 5000);
+    const startTime = Timestamp.fromDate(new Date());
+    for (const line of lines) {
+      setOutputLine(line);
+      currBoundaryChange = 2;
+      const sleepTime = calculateSleepTime(line);
+      await sleep(sleepTime);
+
+      // Adusts wpm based on previous two boundary changes
+      let newWpm = wpmRef.current;
+      switch (prevBoundaryChange + currBoundaryChange) {
+        case 6:
+          newWpm = wpmRef.current + 20
+          break;
+        case 5:
+          newWpm = wpmRef.current + 10;
+          break;
+        case 4:
+          break;
+        case 3:
+          newWpm = Math.max(wpmRef.current - 20, 50);
+          break;
+        case 2:
+          newWpm = Math.max(wpmRef.current - 30, 50);
+          break;
       }
-    };
+      setWpm(newWpm);
+      setInputValue(newWpm.toString());
+
+      // Update the previous boundary change for the next reading
+      prevBoundaryChange = currBoundaryChange;
+    }
+    clearInterval(intervalId); // Stop measuring WPM once the loop finishes
+    const endTime = Timestamp.fromDate(new Date());
+    console.log(wpmReadings);
+
+    // Stop Webgazer
+    (window as any).webgazer.stop();
+    // GO TO Quiz
+    setReadingDone(true);
+    setOutputLine("Reading complete!")
+    finishReading(text, startTime, endTime, wpmReadings);
   
     // 3. Gaze listener function
     function handleGaze(data: { x: number; y: number } | null) {
+      
       if (!data) return;
+
+      let activeQuarter = 0;
   
       // Calculate which quarter the gaze is in
       const screenWidth = window.innerWidth;
       const quarterWidth = screenWidth / 4;
-      let activeQuarter = 0;
-  
       if (data.x < quarterWidth) {
         activeQuarter = 1;
       } else if (data.x < quarterWidth * 2) {
@@ -195,20 +253,74 @@ const UserSessionContent = () => {
         activeQuarter = 4;
       }
   
-      // If the gaze just entered the 4th quarter (from any other quarter),
-      // show the next line
+      // If the gaze just changed quadrant, record the boundary change
       if (activeQuarter === 4 && previousQuarter !== 4) {
-        showNextLine();
+        currBoundaryChange = Math.max(currBoundaryChange, 3);
+      } else if (activeQuarter === 3 && previousQuarter !== 3) {
+        currBoundaryChange = Math.max(currBoundaryChange, 2);
+      } else if (activeQuarter === 2 && previousQuarter !== 2) {
+        currBoundaryChange = 1;
       }
-  
+      
       // Update the previous quarter for the next reading
       previousQuarter = activeQuarter;
     }
-  
-    // 4. Initialize WebGazer & set the gaze listener
-    // Make sure WebGazer is loaded on `window` (as in your example).
-    (window as any).webgazer.setGazeListener(handleGaze);
   };
+
+  const finishReading = (text: Text, startTime: Timestamp, endTime: Timestamp, wpm: Array<number>) => {
+    const stubUserId = "Ss4hOp2vmTZkbV2H0w68";
+    // TODO Fix this
+    const session = new Session(
+      text.id,
+      stubUserId,
+      text.title,
+      startTime,
+      endTime,
+      wpm,
+      mode,
+      text.difficulty,
+    )
+    setSession(session);
+    console.log(session);
+  }
+
+  // Handle keypresses to alter WPM using arrow keys
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      let newWpm = wpmRef.current;
+      switch (event.key.toLowerCase()) {
+        case "w":
+          newWpm = wpmRef.current + 1;
+          setWpm(newWpm);
+          setInputValue(newWpm.toString());
+          break;
+        case "s":
+          newWpm = Math.max(wpmRef.current - 1, 50);
+          setWpm(newWpm);
+          setInputValue(newWpm.toString());
+          break;
+        case "a":
+          newWpm = Math.max(wpmRef.current - 10, 50);
+          setWpm(newWpm);
+          setInputValue(newWpm.toString());
+          break;
+        case "d":
+          newWpm = wpmRef.current + 10;
+          setWpm(newWpm);
+          setInputValue(newWpm.toString());
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
+    };
+  }, []);
+
+  // useEffect(() => {console.log(wpmRef.current, inputValue)}, [wpm, inputValue]);
 
   return (
     <>
@@ -233,28 +345,41 @@ const UserSessionContent = () => {
         <div className="flex items-center justify-center mb-8">
           <div className="flex items-center space-x-4">
             <div className="flex flex-col items-center">
-              <div className="h-8 w-8 rounded-full bg-blue-500 text-white flex items-center justify-center">
+              <div
+                className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                  progressStage >= 1 ? 'bg-blue-500 text-white' : 'bg-gray-300'
+                }`}
+              >
                 1
               </div>
               <span className="text-sm mt-2">Read</span>
             </div>
             <div className="h-1 w-12 bg-gray-300"></div>
             <div className="flex flex-col items-center">
-              <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+              <div
+                className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                  progressStage >= 2 ? 'bg-blue-500 text-white' : 'bg-gray-300'
+                }`}
+              >
                 2
               </div>
               <span className="text-sm mt-2">Quiz</span>
             </div>
             <div className="h-1 w-12 bg-gray-300"></div>
             <div className="flex flex-col items-center">
-              <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+              <div
+                className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                  progressStage >= 3 ? 'bg-blue-500 text-white' : 'bg-gray-300'
+                }`}
+              >
                 3
               </div>
               <span className="text-sm mt-2">Stats</span>
             </div>
           </div>
         </div>
-
+        {progressStage === 1 ? (
+          <>
         {/* Settings Bar */}
         <div className="flex flex-wrap items-center justify-between w-full bg-white shadow-md p-4 rounded-lg space-y-4 md:space-y-0 md:flex-nowrap">
           {/* Select Mode Dropdown*/}        
@@ -277,6 +402,31 @@ const UserSessionContent = () => {
             <HelpPopup message="Mode 1: Read at a fixed WPM \n
             Mode 2: Use eye-tracking software to dynamically adjust reading speed \n
             Mode 3 (Non-fiction only): Summarise the text for even faster comprehension" />
+          </div>
+
+          {/* WPM Input */}
+          <div className="flex items-center space-x-2">
+            <label htmlFor="wpmInput" className="text-sm font-medium text-gray-700">
+              WPM:
+            </label>
+            <input
+              id="wpmInput"
+              type="number"
+              className="border border-gray-300 rounded px-3 py-2 text-center text-gray-700 focus:outline-none focus:ring focus:ring-blue-300 w-24"
+              value={inputValue}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                setInputValue(event.target.value); // Allow typing freely
+              }}
+              onBlur={() => {
+                const numericValue = parseInt(inputValue, 10);
+                if (isNaN(numericValue) || numericValue < 50) {
+                  setWpm(50);
+                  setInputValue("50"); // Reset input if it's below 50
+                } else {
+                  setWpm(numericValue);
+                }
+              }}            />
+            <HelpPopup message="Use the WASD keys to tune your reading speed during the session" />
           </div>
 
           {/* Fiction Checkbox */}
@@ -373,46 +523,58 @@ const UserSessionContent = () => {
               className="ml-2"
             />
           </div>
-
-          {/* WPM Input */}
-          <div className="flex items-center space-x-2">
-            <label htmlFor="wpmInput" className="text-sm font-medium text-gray-700">
-              WPM:
-            </label>
-            <input
-              id="wpmInput"
-              type="number"
-              className="border border-gray-300 rounded px-3 py-2 text-center text-gray-700 focus:outline-none focus:ring focus:ring-blue-300 w-24"
-              value={wpm}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setWpm(parseInt(event.target.value, 10))}
-            />
+        </div>
+        </>
+        ) : <></>
+      }
+        <div className="w-full flex justify-center flex-col items-center">
+          {progressStage === 1 ? (
+            // Session Start Box
+            <>
+              {!requested ? (
+                <button
+                  className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition"
+                  onClick={handleStartSession}
+                >
+                  Start Session
+                </button>
+              ) : loading ? (
+                <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner flex justify-center items-center">
+                  <p className="text-xl text-gray-800">Loading...</p>
+                </div>
+              ) : sessionStarted ? (
+                <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner">
+                  <p className="text-4xl text-gray-800 whitespace-pre-wrap text-center leading-relaxed">
+                    {outputLine}
+                  </p>
+                </div>
+              ) : null}
+            </>
+          ) : progressStage === 2 && session != null ? (
+            <Quiz textId={textId} session={session} />
+          ) : (
+            // Optionally handle other progressStage values if necessary
+            <div className="w-full flex justify-center">
+              <p className="text-xl text-gray-800">Stats page goes here</p>
+            </div>
+          )}
+          
+          <div className="mt-4">
+            {readingDone ? (
+              <button
+                className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition"
+                onClick={() => { setReadingDone(false); setProgressStage(2); }}
+              >
+                Proceed
+              </button>
+            ) : null}
           </div>
         </div>
 
-        {/* Session Start Box */}
-        <div className="w-full flex justify-center">
-          {!requested ? (
-            <button
-              className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition"
-              onClick={handleStartSession}
-            >
-              Start Session
-            </button>
-          ) : loading ? (
-            <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner flex justify-center items-center">
-              <p className="text-xl text-gray-800">Loading...</p>
-            </div>
-          ) : sessionStarted ? (
-            <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner">
-              <p className="text-4xl text-gray-800 whitespace-pre-wrap text-center leading-relaxed">
-                {outputLine}
-              </p>
-            </div>
-          ) : null}
-        </div>
         <WebGazerClient />
         {/* Pass the ref to the Calibration component */}
         <Calibration ref={calibrationRef} />
+
       </div>
     </>
   );

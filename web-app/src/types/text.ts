@@ -19,6 +19,12 @@ export interface Question {
   answer: string;
 }
 
+export interface Result {
+  question: string;
+  givenAnswer: string;
+  correctAnswer: string;
+}
+
 export enum Genre {
   FANTASY = "fantasy",
   MYSTERY = "mystery",
