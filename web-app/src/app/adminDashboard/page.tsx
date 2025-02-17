@@ -52,8 +52,9 @@ const AdminDashboardContent = () => {
     setUserMetrics({ totalUsers, newUsers });
   }, [users]);
 
-  const handleManageClick = (user: User) => {
+  const handleManageClick = async (user: User) => {
     setSelectedUser(user);
+    setSelectedUserSessions(await userService.getUserReadingSessions(user.id));
     setIsPopupOpen(true);
   };
 
@@ -237,7 +238,7 @@ const AdminDashboardContent = () => {
       {/* More Info Popup */}
       <UserInfoModal
         user={selectedUser}
-        sessions={[]}
+        sessions={selectedUserSessions}
         isOpen={isPopupOpen}
         onClose={() => setIsPopupOpen(false)}
       />;
