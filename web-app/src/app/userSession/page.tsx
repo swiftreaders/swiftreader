@@ -27,6 +27,7 @@ const UserSessionContent = () => {
   const [outputLine, setOutputLine] = useState<string>("");
   const [requested, setRequested] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [readingDone, setReadingDone] = useState(false);
   const wpmRef = useRef(wpm);
 
   // Added: Create a ref for the Calibration component
@@ -145,7 +146,8 @@ const UserSessionContent = () => {
     }
     const endTime = Timestamp.fromDate(new Date());
     console.log(sessionCompleteMode1(startTime, endTime, text));
-    setProgressStage(2);
+    setReadingDone(true);
+    setOutputLine("Reading complete!")
     return sessionCompleteMode1(startTime, endTime, text);
   };
 
@@ -231,7 +233,8 @@ const UserSessionContent = () => {
     // Stop Webgazer
     (window as any).webgazer.stop();
     // GO TO Quiz
-    setProgressStage(2);
+    setReadingDone(true);
+    setOutputLine("Reading complete!")
   
     // 3. Gaze listener function
     function handleGaze(data: { x: number; y: number } | null) {
@@ -510,7 +513,7 @@ const UserSessionContent = () => {
         </>
         ) : <></>
       }
-        <div className="w-full flex justify-center">
+        <div className="w-full flex justify-center flex-col items-center">
           {progressStage === 1 ? (
             // Session Start Box
             <>
@@ -534,17 +537,30 @@ const UserSessionContent = () => {
               ) : null}
             </>
           ) : progressStage === 2 ? (
-            <Quiz textId={textId} onComplete={()=>{}}/>
+            <Quiz textId={textId} onComplete={() => {}} />
           ) : (
             // Optionally handle other progressStage values if necessary
             <div className="w-full flex justify-center">
               <p className="text-xl text-gray-800">Next stage content goes here...</p>
             </div>
           )}
+          
+          <div className="mt-4">
+            {readingDone ? (
+              <button
+                className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition"
+                onClick={() => { setReadingDone(false); setProgressStage(2); }}
+              >
+                Proceed
+              </button>
+            ) : null}
+          </div>
         </div>
+
         <WebGazerClient />
         {/* Pass the ref to the Calibration component */}
         <Calibration ref={calibrationRef} />
+
       </div>
     </>
   );
