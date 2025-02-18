@@ -1,4 +1,4 @@
-import { Category, Difficulty } from "@/types/text";
+import { Category, Difficulty, Genre } from "@/types/text";
 import axios from "axios";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Question } from "@/types/text";
@@ -14,11 +14,12 @@ export interface Book {
   id: string;
   title: string;
   author: string;
-  subject: Category;
+  subject: Genre;
   difficulty: Difficulty;
   content: string;
   text_link: string;
   questions: Question[];  
+  isValid: boolean;
 }
 
 export interface Excerpt {
@@ -59,12 +60,12 @@ const findTxtUrl = (data: { [key: string]: string }, id: string): string => {
 };
 
 /// Fetch books from the Gutendex API
-export const fetchBooks = async (subject: Category): Promise<Book[]> => {
+export const fetchBooks = async (genre: Genre): Promise<Book[]> => {
   try {
     console.log("fetchBooks: waiting for list of books fetch");
     const response = await axios.get(GUTENDEX_API, {
       params: { 
-      topic: subject as string, 
+      topic: genre as string, 
       languages: ["en"], 
       mime_type: ["text/plain; charset=us-ascii"],
       copyright: "false", 
@@ -83,7 +84,7 @@ export const fetchBooks = async (subject: Category): Promise<Book[]> => {
       id: book.id,
       title: book.title,
       author: book.authors[0]?.name || "Unknown Author",
-      subject: subject,
+      subject: genre,
       difficulty: Difficulty.EASY, // Placeholder difficulty
       text_link: findTxtUrl(book.formats || {}, book.id) || "NOT_FOUND",
       content: "", // fetch the content later
@@ -130,117 +131,167 @@ const findNaturalExcerpt = (text: string, targetWordCount: number): string => {
   return selectedSentences.join(" ");
 };
 
-const filterTextUsingAI = async (content: string, wordLimit: number): Promise<{ excerpt: string, questions: any[] }> => {
+const filterTextUsingAI = async (content: string, wordLimit: number): Promise<{ excerpt: string, questions: any[], isValid: boolean }> => {
   try {
     const gemini = new GoogleGenerativeAI(GEMINI_KEY ?? "");
     const model = gemini.getGenerativeModel({ model: "gemini-1.5-flash" });
     
     const prompt = `
-      Identify and extract ONE continuous, meaningful excerpt from the following text that:
-      1. Forms a coherent narrative or complete thought.
-      2. Is between ${wordLimit * 0.8} and ${wordLimit} words.
-      3. Maintains proper sentence structure.
-      4. Avoids abrupt beginnings/endings.
-      5. Where possible, do not choose text from the preface or author's notes.
-s
-      Additionally, generate at least 3 multiple-choice questions based on the excerpt:
-      1. Each question should be derived solely from the content of the text.
-      2. Each question should have 4 answer choices.
-      3. The correct answer should be clear and unambiguous.
+      Analyze the following text and perform these tasks:
+      1. Extract ONE continuous, meaningful excerpt that:
+         - Forms a coherent narrative/complete thought
+         - Contains around ${wordLimit * 0.8}-${wordLimit} words and ends in a sentence terminator
+         - Has proper sentence structure and punctuation
+         - Avoids footnotes, headers, and non-content text
+         - Has natural beginning/ending (no mid-sentence starts/ends)
+      2. Remove ALL underscores and replace with spaces
+      3. Remove ANY [?] placeholders or unclear references
+      4. Generate 3 multiple-choice questions based ONLY on the excerpt 
+      5. return true for the isValid field IF AND ONLY IF the excerpt meets the following criteria:
+         - Readable and grammatically correct
+         - No missing words or placeholder markers
+         - Logical flow of ideas
+         - text must be in english
+         - the text is NOT a play or a poem
 
-      Return the result in a format with the following structure without any additional text:
+      Return JSON format with strict structure:
       \`\`\`json
       {
-        "excerpt": "Your extracted text here",
+        "excerpt": "Cleaned text without underscores or [?]",
+        "isValid": true/false,
         "questions": [
           {
-            "question": "First question here",
-            "choices": ["Option A", "Option B", "Option C", "Option D"],
-            "answer": "Correct answer here"
-          },
-          {
-            "question": "Second question here",
-            "choices": ["Option A", "Option B", "Option C", "Option D"],
-            "answer": "Correct answer here"
-          },
-          {
-            "question": "Third question here",
-            "choices": ["Option A", "Option B", "Option C", "Option D"],
-            "answer": "Correct answer here"
+            "question": "...",
+            "choices": ["...", "...", "...", "..."],
+            "answer": "..."
           }
         ]
       }
-      \`\`\`  
+      \`\`\`
 
-      Original text: ${content.slice(0, 7500)}`;
+      Text to analyze: ${content.slice(0, 7500)}`;
 
-      const result = await model.generateContent(prompt);
-      const rawResponse = result.response.text().trim();
-  
-      // Ensure we strip any unwanted formatting
-      const jsonStart = rawResponse.indexOf("{");
-      const jsonEnd = rawResponse.lastIndexOf("}");
-      const cleanJson = rawResponse.slice(jsonStart, jsonEnd + 1);
-  
-      const response = JSON.parse(cleanJson);
-  
-      console.log("Parsed Content: ", response);
-  
-      // Verify AI response quality
-      const isValid = response.excerpt && 
-                      typeof response.excerpt === "string" && 
-                      response.excerpt.split(/\s+/).length >= wordLimit * 0.8;
-  
-      return isValid ? response : { excerpt: findNaturalExcerpt(content, wordLimit), questions: [] };
-    } catch (error) {
-      console.log("AI filtering failed, using fallback:", error);
-      return { excerpt: findNaturalExcerpt(content, wordLimit), questions: [] };
+    const prompt2 = `
+    Task: Analyze the given text and return a structured JSON response following these steps:
+
+    Extract a meaningful excerpt that:
+    Forms a coherent narrative or complete thought
+    Contains ${wordLimit * 0.8}-${wordLimit} words, ending at a sentence terminator
+    Has proper sentence structure and punctuation
+    Excludes footnotes, headers, and non-content text
+    Begins and ends naturally (no mid-sentence truncation)
+    Clean the text by:
+    Replacing all underscores (_) with spaces
+    Removing [?] placeholders and unclear references
+    Generate 3 multiple-choice questions based only on the extracted excerpt
+    Validate the excerpt, setting "isValid": true only if the text:
+    Is readable, grammatically correct, and logically structured
+    Has no missing words or placeholders
+    Is in English
+    Is NOT a play or poem
+    
+    Response Format (Strict JSON)
+    {
+      "excerpt": "Cleaned text without underscores or [?]",
+      "isValid": true/false,
+      "questions": [
+        {
+          "question": "...",
+          "choices": ["...", "...", "...", "..."],
+          "answer": "..."
+        }
+      ]
     }
+    Text to analyze: ${content.slice(0, 7500)}`;
+
+    const result = await model.generateContent(prompt2);
+    const rawResponse = result.response.text().trim();
+    console.log("AI response:", rawResponse);
+    
+    // Extract JSON response
+    const jsonStart = rawResponse.indexOf("{");
+    const jsonEnd = rawResponse.lastIndexOf("}");
+    const cleanJson = rawResponse.slice(jsonStart, jsonEnd + 1);
+    console.log("Cleaned JSON:", cleanJson);
+    const response = JSON.parse(cleanJson);
+
+    // Clean and validate response
+    const cleanedExcerpt = response.excerpt
+      .replace(/_/g, " ")
+      .replace(/\[\?\]/g, "")
+      .trim();
+
+    const wordCount = cleanedExcerpt.split(/\s+/).length;
+    const structureValid = cleanedExcerpt.match(/[.!?]$/) && 
+      cleanedExcerpt.split(/\s+/).length >= wordLimit * 0.8;
+
+    const finalValidity = response.isValid && structureValid && 
+      !/[\[\]{}]/.test(cleanedExcerpt) && // Check for remaining special chars
+      wordCount <= wordLimit * 1.2 &&
+      !/gutendex/i.test(cleanedExcerpt); 
+
+    return {
+      excerpt: cleanedExcerpt,
+      questions: finalValidity ? response.questions : [],
+      isValid: finalValidity
+    };
+
+  } catch (error) {
+    console.log("AI filtering failed:", error);
+    return { 
+      excerpt: findNaturalExcerpt(content, wordLimit),
+      questions: [],
+      isValid: false 
+    };
+  }
 };
 
-// Updated fetchBookContent
+
+// Update fetchBookContent
 export const fetchBookContent = async (book: Book, wordLimit: number): Promise<Book> => {
   try {
     if (book.text_link === "NOT_FOUND") {
       return { 
         ...book, 
         content: "CONTENT_UNAVAILABLE", 
-        difficulty: Difficulty.EASY, 
-        questions: [] 
+        difficulty: Difficulty.EASY,
+        questions: [],
+        isValid: false
       };
     }
 
     const response = await axios.get(`${CORS_PROXY}${encodeURIComponent(book.text_link)}`);
     const fullText = response.data.contents || "";
 
-    // Get AI-generated excerpt & questions
+    // Get AI-processed content
     const aiResponse = await filterTextUsingAI(fullText, wordLimit);
+    console.log("questions:", aiResponse.questions);
 
-    // Ensure AI response is valid
-    const finalExcerpt = aiResponse.excerpt && aiResponse.excerpt.length > 0 
-      ? aiResponse.excerpt 
-      : findNaturalExcerpt(fullText, wordLimit);
-
-    // Ensure word limit
-    const trimmedExcerpt = finalExcerpt.split(/\s+/)
+    // Final cleaning and validation
+    const finalExcerpt = aiResponse.excerpt
+      .split(/\s+/)
       .slice(0, wordLimit)
-      .join(" ");
+      .join(" ")
+      .replace(/(\s[.,!?])/g, "$1") // Ensure proper punctuation spacing
+      .trim();
 
-    const difficulty = classifyDifficulty(trimmedExcerpt);
+    const difficulty = classifyDifficulty(finalExcerpt);
     
     return { 
       ...book, 
-      content: trimmedExcerpt,
+      content: finalExcerpt,
       difficulty,
-      questions: aiResponse.questions || [] 
+      questions: aiResponse.questions,
+      isValid: aiResponse.isValid
     };
   } catch (error) {
     console.error(`Error processing ${book.title}:`, error);
     return { 
       ...book, 
       content: "CONTENT_UNAVAILABLE", 
-      difficulty: Difficulty.EASY, 
-      questions: []  
+      difficulty: Difficulty.EASY,
+      questions: [],
+      isValid: false
     };
   }
 };
@@ -249,26 +300,24 @@ export const fetchBookContent = async (book: Book, wordLimit: number): Promise<B
 /// Filter books based on criteria
 const filterBooks = (books: Book[], filters: FilterOptions): Book[] => {
   return books.filter((book) => {
-    if (book.content === "CONTENT_UNAVAILABLE") return false;
+    // Ensure valid, available content meets criteria
+    const contentValid = book.isValid && 
+      book.content !== "CONTENT_UNAVAILABLE" &&
+      book.content.split(" ").length >= (filters.wordCount?.min || 1);
 
-    const meetsDifficulty =
-      !filters.difficulty || book.difficulty === filters.difficulty;
-    const meetsWordCount =
-      !filters.wordCount ||
-      (book.content.split(" ").length >= filters.wordCount.min &&
-        book.content.split(" ").length <= filters.wordCount.max);
+    const meetsDifficulty = !filters.difficulty || 
+      book.difficulty === filters.difficulty;
 
-    console.log("filterBooks: ", meetsDifficulty, meetsWordCount);
-    return meetsDifficulty && meetsWordCount;
+    return contentValid && meetsDifficulty;
   });
 };
 
 /// Service to retrieve texts from Gutendex
 export const getTexts = async (
-  subject: Category,
+  genre: Genre,
   filters: FilterOptions
 ): Promise<Book[]> => {
-  const books = await fetchBooks(subject);
+  const books = await fetchBooks(genre);
   console.log("bookService.ts - getTexts:", books.map((book) => book.title));
 
   // Ensure word limit fallback exists
