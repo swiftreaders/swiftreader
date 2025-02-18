@@ -21,7 +21,7 @@ const AdminDashboardContent = () => {
   const [newManualText, setNewManualText] = useState(DEFAULT_TEXT);
   const [newGeneratedText, setNewGeneratedText] = useState(DEFAULT_TEXT);
   const [generateTextOptions, setGenerateTextOptions] = useState({
-    category: Category.SCIENCE,
+    genre: Genre.FANTASY,
     difficulty: Difficulty.EASY,
     minLength: 100,
     maxLength: 500,
@@ -73,8 +73,8 @@ const AdminDashboardContent = () => {
     try {
       setIsLoading(true);
       setGeneratedTexts([]);
-      console.log("generateTextOptions.category - ", generateTextOptions.category);
-      const booksMetadata = await fetchBooks(generateTextOptions.category);
+      console.log("generateTextOptions.genre - ", generateTextOptions.genre);
+      const booksMetadata = await fetchBooks(generateTextOptions.genre);
       console.log("generated book subjects - ", booksMetadata[0].subject);
       const processingPromises = booksMetadata.map(async (book) => {
         try {
@@ -281,20 +281,20 @@ const AdminDashboardContent = () => {
             <div className="flex flex-wrap gap-4">
               {/* Category Filter */}
               <div className="flex-1 min-w-[150px]">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Genre</label>
                 <select
-                  value={generateTextOptions.category}
+                  value={generateTextOptions.genre}
                   onChange={(e) =>
                     setGenerateTextOptions({
                       ...generateTextOptions,
-                      category: e.target.value as Category,
+                      genre: e.target.value as Genre,
                     })
                   }
                   className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
                 >
-                  {Object.values(Category).map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  {Object.values(Genre).map((gen) => (
+                    <option key={gen} value={gen}>
+                      {gen.charAt(0).toUpperCase() + gen.slice(1)}
                     </option>
                   ))}
                 </select>
@@ -544,7 +544,7 @@ const AdminDashboardContent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-work-sans">
       {/* Hero Header */}
       <header className="bg-gradient-to-r from-blue-600 to-indigo-600 py-8 shadow-lg">
         <div className="container mx-auto px-4 text-center">
