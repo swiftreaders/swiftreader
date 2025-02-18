@@ -11,6 +11,9 @@ import AccessDenied from "@/components/errors/accessDenied";
 import { User } from "@/types/user";
 import { Session } from "@/types/sessions";
 import { Timestamp } from "firebase/firestore";
+import UserInfoModal from "@/components/UserInfoAdminModal";
+import { userService } from "@/services/userService";
+import UserTable from "@/components/UserTable";
 import {
   LineChart,
   Line,
@@ -22,7 +25,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import UserTable from "@/components/UserTable";
+
 
 const AdminDashboardContent = () => {
   const { texts, users, removeUser } = useAdminDashboard();
@@ -48,8 +51,9 @@ const AdminDashboardContent = () => {
     setUserMetrics({ totalUsers, newUsers });
   }, [users]);
 
-  const handleManageClick = (user: User) => {
+  const handleManageClick = async (user: User) => {
     setSelectedUser(user);
+    setSelectedUserSessions(await userService.getUserReadingSessions(user.id));
     setIsPopupOpen(true);
   };
 
@@ -254,60 +258,13 @@ const AdminDashboardContent = () => {
         <UserTable users={users} handleManageClick={handleManageClick} />
       </main>
 
-      {/* User Sessions Popup */}
-      {isPopupOpen && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-5xl h-5/6 overflow-y-auto flex flex-col gap-4">
-            <h2 className="text-lg font-semibold mb-4">Past Sessions for {selectedUser.name}</h2>
-            <div className="flex flex-col lg:flex-row gap-6">
-              <div className="lg:w-1/3 flex flex-col gap-4">
-                <h3 className="text-md font-medium mb-2">Past Sessions</h3>
-                <div className="flex flex-col gap-4">
-                  {dummySessions.map((session) => (
-                    <div key={session.id} className="bg-gray-100 shadow rounded-lg p-4">
-                      <div className="flex justify-between items-center mb-4">
-                        <span className="text-sm text-gray-600 font-medium">
-                          Session {session.id}
-                        </span>
-                        <span className="text-sm text-gray-600">{session.difficulty}</span>
-                      </div>
-                      <div className="text-lg font-semibold text-center text-blue-600">
-                        {session.wpm} WPM
-                      </div>
-                      <div className="text-center text-gray-700 text-sm">
-                        Comprehension Score: {session.comprehensionScore}
-                      </div>
-                      <div className="mt-2 text-xs text-gray-500 text-center">
-                        {session.sessionDate.toDate().toLocaleString()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="lg:w-2/3">
-                <h3 className="text-md font-medium mb-4">WPM Progress</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart
-                    data={dummySessions.map((s, i) => ({ session: `S${i + 1}`, wpm: s.wpm }))}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="session" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="wpm" stroke="#4A90E2" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-            <button
-              className="self-end bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
-              onClick={() => setIsPopupOpen(false)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      {/* More Info Popup */}
+      <UserInfoModal
+        user={selectedUser}
+        sessions={selectedUserSessions}
+        isOpen={isPopupOpen}
+        onClose={() => setIsPopupOpen(false)}
+      />;
     </div>
   );
 };

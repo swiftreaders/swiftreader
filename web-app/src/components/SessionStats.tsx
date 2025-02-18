@@ -1,58 +1,15 @@
 // components/SessionStats.tsx
 "use client";
 
-import { Chart, LinearScale, CategoryScale, LineController, LineElement, PointElement } from 'chart.js';
-import { useEffect, useRef } from 'react';
-import { Session } from '@/types/sessions';
-
-// Register Chart.js components once
-Chart.register(LinearScale, CategoryScale, LineController, LineElement, PointElement);
+import { Session } from "@/types/sessions";
+import { SessionChart } from "./SessionChart";
 
 interface SessionStatsProps {
   session: Session;
-  onClose?: () => void; // Optional close handler for popup usage
+  onClose?: () => void;
 }
 
 export const SessionStats = ({ session, onClose }: SessionStatsProps) => {
-  const chartRef = useRef<Chart | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  useEffect(() => {
-    if (canvasRef.current) {
-      // Destroy existing chart
-      if (chartRef.current) {
-        chartRef.current.destroy();
-      }
-
-      const ctx = canvasRef.current.getContext('2d');
-      if (ctx) {
-        chartRef.current = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: session.wpm.map((_, i) => `${(i + 1) * 5}s`),
-            datasets: [{
-              label: 'Words Per Minute',
-              data: session.wpm,
-              borderColor: 'rgb(59, 130, 246)',
-              tension: 0.1
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: { beginAtZero: true, title: { display: true, text: 'WPM' } },
-              x: { title: { display: true, text: 'Time Intervals (5 seconds)' } }
-            }
-          }
-        });
-      }
-    }
-
-    return () => {
-      chartRef.current?.destroy();
-    };
-  }, [session]);
-
   return (
     <div className="bg-white p-6 rounded-lg max-w-4xl w-full mx-4">
       {/* Header */}
@@ -65,7 +22,7 @@ export const SessionStats = ({ session, onClose }: SessionStatsProps) => {
       <div className="grid grid-cols-3 gap-6">
         {/* Chart Section */}
         <div className="col-span-2">
-          <canvas ref={canvasRef}></canvas>
+          <SessionChart wpmData={session.wpm} />
         </div>
 
         {/* Statistics Section */}
@@ -82,8 +39,6 @@ export const SessionStats = ({ session, onClose }: SessionStatsProps) => {
         </div>
       </div>
 
-      {/* Questions and Results here */}
-
       {/* Close Button */}
       {onClose && (
         <button
@@ -99,7 +54,8 @@ export const SessionStats = ({ session, onClose }: SessionStatsProps) => {
 
 const StatItem = ({ label, value }: { label: string; value: string }) => (
   <p>
-    <span className="font-medium">{label}:</span><br />
+    <span className="font-medium">{label}:</span>
+    <br />
     {value}
   </p>
 );
