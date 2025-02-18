@@ -123,7 +123,7 @@ const Quiz = ({ textId, session, onContinue }: { textId: string; session: Sessio
       ) : (
         <button
           className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition mt-4"
-          onClick={ onContinue } // Placeholder for any other action after quiz
+          onClick={ onContinue }
         >
           Continue to Stats
         </button>

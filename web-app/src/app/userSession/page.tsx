@@ -14,7 +14,7 @@ import { AuthProvider, useAuth } from "@/contexts/authContext";
 
 const UserSessionContent = () => {
   const { text, getText } = useReadingContext();
-  const { user, refreshUser } = useAuth();
+  const { user } = useAuth();
   const [textId, setTextId] = useState("");
   const [mode, setMode] = useState(1);
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
@@ -225,7 +225,6 @@ const UserSessionContent = () => {
     }
     clearInterval(intervalId); // Stop measuring WPM once the loop finishes
     const endTime = Timestamp.fromDate(new Date());
-
     // Stop Webgazer
     // (window as any).webgazer.stop();
     // GO TO Quiz
