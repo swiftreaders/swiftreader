@@ -5,7 +5,7 @@ import { Question } from "@/types/text";
 import { Result } from "@/types/text";
 import { Session } from "@/types/sessions";
 
-const Quiz = ({ textId, session }: { textId: string; session: Session }) => {
+const Quiz = ({ textId, session, onContinue }: { textId: string; session: Session; onContinue: () => void }) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(true);
@@ -123,7 +123,7 @@ const Quiz = ({ textId, session }: { textId: string; session: Session }) => {
       ) : (
         <button
           className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition mt-4"
-          onClick={() => {}} // Placeholder for any other action after quiz
+          onClick={ onContinue }
         >
           Continue to Stats
         </button>

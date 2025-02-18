@@ -23,12 +23,11 @@ import { db } from "@/../firebase.config";
 // const db = getFirestore(app);
 
 // get recent sessions (last 10 sessions)
-const getRecentSessions = (onUpdate: (sessions: Session[]) => void) => {
-  const stubUserId = "Ss4hOp2vmTZkbV2H0w68";
+const getRecentSessions = (onUpdate: (sessions: Session[]) => void, userId: string) => {
   // Query the `ReadingSessions` collection for the last 10 sessions for the stubbed user
   const recentSessionsQuery = query(
     collection(db, "ReadingSessions"),
-    where("userId", "==", stubUserId), // Filter by userId
+    where("userId", "==", userId), // Filter by userId
     orderBy("startTime", "desc"),     // Order by `startTime` in descending order
     limit(10)                         // Limit to 10 results
   );
@@ -53,7 +52,7 @@ const getRecentSessions = (onUpdate: (sessions: Session[]) => void) => {
         data.results,
       );
     });
-
+    console.log(sessions);
     // Invoke the callback with the list of `Session` objects
     onUpdate(sessions);
   });
