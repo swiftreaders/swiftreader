@@ -88,7 +88,7 @@ const Home: React.FC = () => {
           <p className="text-center mb-6 max-w-2xl mx-auto">
             Our platform offers personalized training, detailed progress tracking,
             and a community of fellow learners dedicated to mastering speed reading
-            techniques. Whether you're looking to gain an edge in your career or simply
+            techniques. Whether you&apos;re looking to gain an edge in your career or simply
             enjoy reading more books, SwiftReader has you covered.
           </p>
           <div className="text-center">
