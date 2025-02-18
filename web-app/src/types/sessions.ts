@@ -57,11 +57,23 @@ export class Session {
 
     // Ensure wpm is an array; if not, default to an empty array.
     this.wpm = Array.isArray(wpm) ? wpm : [];
+
     // Calculate average_wpm only if there are values in the array.
     this.average_wpm = this.wpm.length ? this.wpm.reduce((a, b) => a + b, 0) / this.wpm.length : 0;
 
     this.sessionType = sessionType;
     this.difficulty = difficulty;
     this.text_average_performance = 0;
+  }
+
+  // Corrected method definition
+  getComprehensionScore(): number {
+    return this.results.reduce((acc: number, result: Result) => {
+      return result.givenAnswer === result.correctAnswer ? acc + 1 : acc;
+    }, 0);
+  }
+
+  getAverageWpm(): number { 
+    return this.average_wpm;
   }
 }
