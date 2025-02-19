@@ -79,11 +79,15 @@ const AdminDashboardContent = () => {
       console.log("generated book subjects - ", booksMetadata[0].subject);
       const processingPromises = booksMetadata.map(async (book) => {
         try {
-          const processedBook = await fetchBookContent(book, generateTextOptions.maxLength);
+          const processedBook = await fetchBookContent(book,generateTextOptions.minLength, generateTextOptions.maxLength);
+
           const meetsDifficulty = processedBook.difficulty === generateTextOptions.difficulty;
           const wordCount = processedBook.content.split(/\s+/).length;
           const meetsWordCount = wordCount >= generateTextOptions.minLength;
-          if (meetsDifficulty && meetsWordCount) {
+          const isValidText = processedBook.isValid;
+
+
+          if (isValidText) {
             setGeneratedTexts((prev) => [...prev, processedBook]);
           }
         } catch (error) {

@@ -136,52 +136,17 @@ const findNaturalExcerpt = (text: string, targetWordCount: number): string => {
   return selectedSentences.join(" ");
 };
 
-const filterTextUsingAI = async (content: string, wordLimit: number): Promise<{ excerpt: string, questions: any[], isValid: boolean }> => {
+const filterTextUsingAI = async (content: string, minWords: number, maxWords: number): Promise<{ excerpt: string, questions: any[], isValid: boolean }> => {
   try {
     const gemini = new GoogleGenerativeAI(GEMINI_KEY ?? "");
     const model = gemini.getGenerativeModel({ model: "gemini-1.5-flash" });
-    
+
     const prompt = `
-      Analyze the following text and perform these tasks:
-      1. Extract ONE continuous, meaningful excerpt that:
-         - Forms a coherent narrative/complete thought
-         - Contains around ${wordLimit * 0.8}-${wordLimit} words and ends in a sentence terminator
-         - Has proper sentence structure and punctuation
-         - Avoids footnotes, headers, and non-content text
-         - Has natural beginning/ending (no mid-sentence starts/ends)
-      2. Remove ALL underscores and replace with spaces
-      3. Remove ANY [?] placeholders or unclear references
-      4. Generate 4 multiple-choice questions based ONLY on the excerpt
-      5. return true for the isValid field IF AND ONLY IF the excerpt meets the following criteria:
-         - Readable and grammatically correct
-         - No missing words or placeholder markers
-         - Logical flow of ideas
-         - text must be in english
-         - the text is NOT a play or a poem
-
-      Return JSON format with strict structure:
-      \`\`\`json
-      {
-        "excerpt": "Cleaned text without underscores or [?]",
-        "isValid": true/false,
-        "questions": [
-          {
-            "question": "...",
-            "choices": ["...", "...", "...", "..."],
-            "answer": "..."
-          }
-        ]
-      }
-      \`\`\`
-
-      Text to analyze: ${content.slice(0, 7500)}`;
-
-    const newPrompt = `
     Task: Analyze the given text and return a structured JSON response following these steps:
 
     Extract a meaningful excerpt that it:
       Forms a coherent narrative or complete thought,
-      Contains ${wordLimit * 0.8}-${wordLimit} words, ending at a sentence terminator
+      Has over ${minWords} words and STRICTLY under ${maxWords} words
       Has proper sentence structure and punctuation,
       Excludes footnotes, headers, and non-content text,
       Has a natural beginning and ending - if you have to cut a sentence off at the end, 
@@ -220,9 +185,9 @@ const filterTextUsingAI = async (content: string, wordLimit: number): Promise<{ 
       \`\`\`
     Text to analyze: ${content.slice(0, 7500)}`;
 
-    const result = await model.generateContent(newPrompt);
+    const result = await model.generateContent(prompt);
     const rawResponse = result.response.text().trim();
-    console.log("AI response:", rawResponse);
+    //console.log("AI response:", rawResponse);
     
     // Extract JSON response
     const jsonStart = rawResponse.indexOf("{");
@@ -242,13 +207,13 @@ const filterTextUsingAI = async (content: string, wordLimit: number): Promise<{ 
     console.log("cleanedExcerpt:", cleanedExcerpt);
 
     const wordCount = cleanedExcerpt.split(/\s+/).length;
-    const structureValid =  cleanedExcerpt.split(/\s+/).length >= wordLimit * 0;
+    const structureValid =  cleanedExcerpt.split(/\s+/).length >= maxWords * 0;
 
     // console.log("structureValid:", structureValid);
 
     const finalValidity = response.isValid && structureValid && 
       !/[\[\]{}]/.test(cleanedExcerpt) && // Check for remaining special chars
-      wordCount <= wordLimit * 1.9 &&
+      wordCount <= maxWords * 1.9 &&
       !/gutendex/i.test(cleanedExcerpt); 
     // console.log("questions after cleaning:", response.questions);
     
@@ -261,7 +226,7 @@ const filterTextUsingAI = async (content: string, wordLimit: number): Promise<{ 
   } catch (error) {
     console.log("AI filtering failed:", error);
     return { 
-      excerpt: findNaturalExcerpt(content, wordLimit),
+      excerpt: findNaturalExcerpt(content, maxWords),
       questions: [],
       isValid: false 
     };
@@ -270,7 +235,7 @@ const filterTextUsingAI = async (content: string, wordLimit: number): Promise<{ 
 
 
 // Update fetchBookContent
-export const fetchBookContent = async (book: Book, wordLimit: number): Promise<Book> => {
+export const fetchBookContent = async (book: Book, minWords: number, maxWords: number): Promise<Book> => {
   try {
     if (book.text_link === "NOT_FOUND") {
       return { 
@@ -287,13 +252,13 @@ export const fetchBookContent = async (book: Book, wordLimit: number): Promise<B
 
     // Get AI-processed content
     // console.log("fullText:", fullText.slice(1000, 2000));
-    const aiResponse = await filterTextUsingAI(fullText, wordLimit);
+    const aiResponse = await filterTextUsingAI(fullText, minWords, maxWords);
     console.log("questions:", aiResponse.questions);
 
     // Final cleaning and validation
     const finalExcerpt = aiResponse.excerpt
       .split(/\s+/)
-      .slice(0, wordLimit)
+      .slice(0, maxWords)
       .join(" ")
       .replace(/(\s[.,!?])/g, "$1") // Ensure proper punctuation spacing
       .trim();
