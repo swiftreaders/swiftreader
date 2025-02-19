@@ -20,7 +20,7 @@ export interface Book {
   text_link: string;
   questions: Question[];  
   isValid: boolean;
-  isAI: boolean;
+  isAI: boolean; 
 }
 
 // export interface Excerpt {

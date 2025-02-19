@@ -15,6 +15,7 @@ import {
 
 import { Category, Text, Question } from "@/types/text";
 import { db } from "@/../firebase.config";
+import { Book } from "./bookService";
 
 
 
@@ -83,16 +84,27 @@ export const textService = {
       console.log("Adding text to firestore: ", text.toJSON());
       // Save the text document (convert to JSON without the questions property)
       const { questions, ...textData } = text.toJSON();
+      console.log("questions:", questions);
+      console.log("textData:", textData);
       const docRef = await addDoc(collection(db, "Texts"), textData);
       
-      // If questions exist, add each question to the "Quizzes" subcollection.
+      // If questions exist, create a new quiz document and add questions as a subcollection
       if (questions && Array.isArray(questions) && questions.length > 0) {
-        const quizzesCollectionRef = collection(doc(db, "Texts", docRef.id), "Quizzes");
+        // Create a new quiz document in the "Quizzes" subcollection
+        const quizzesRef = collection(db, "Texts", docRef.id, "Quizzes");
+        const newQuizRef = await addDoc(quizzesRef, {
+          createdAt: new Date() // Store metadata if needed
+        });
+        console.log("New quiz document created with ID:", newQuizRef.id);
+        
+        // Add questions as a subcollection under the new quiz document
+        const questionsRef = collection(db, "Texts", docRef.id, "Quizzes", newQuizRef.id, "Questions");
         for (const question of questions) {
-          await addDoc(quizzesCollectionRef, {
-            question: question.question,
-            answers: question.choices,       
-            correct_answer: question.answer,   
+          console.log("Adding question:", question);
+          await addDoc(questionsRef, {
+            Question: question.question,
+            Choices: question.choices,       // Storing the choices under 'Choices'
+            Answer: question.answer,           // Storing the correct answer
           });
         }
       }
@@ -102,6 +114,15 @@ export const textService = {
       return false;
     }
   },
+  
+
+  // addBook: async (book: Book): Promise<boolean> => {
+  //   try {
+      
+  //   }
+
+  //   return false;
+  // },
 
   updateText: async (updatedText: Text): Promise<boolean> => {
     try {
