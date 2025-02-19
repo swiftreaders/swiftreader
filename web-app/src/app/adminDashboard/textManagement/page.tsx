@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-
 import { useAdminDashboard, AdminDashboardProvider } from "@/contexts/adminDashboardContext";
 import { Category, Difficulty, Text, Question, Genre } from "@/types/text";
 import { Book, fetchBooks, fetchBookContent } from "@/services/bookService";
@@ -9,7 +8,6 @@ import { UpdateTextPopup } from "@/components/UpdateTextPopup";
 import { ExistingTextCard } from "@/components/ExistingTextCard";
 import { useAuth } from "@/contexts/authContext";
 import AccessDenied from "@/components/errors/accessDenied";
-
 
 // Default text instance for initializing forms
 const DEFAULT_TEXT = new Text("", "", Difficulty.EASY, false ,Category.NATURE);
@@ -19,8 +17,9 @@ const AdminDashboardContent = () => {
 
   // State for new text entries
   const [newManualText, setNewManualText] = useState(DEFAULT_TEXT);
-  const [newGeneratedText, setNewGeneratedText] = useState(DEFAULT_TEXT);
-  const [generateTextOptions, setGenerateTextOptions] = useState({
+  const [newFoundText, setNewFoundText] = useState(DEFAULT_TEXT);
+  const [newAIText, setNewAIText] = useState(DEFAULT_TEXT);
+  const [findTextOptions, setFindTextOptions] = useState({
     genre: Genre.FANTASY,
     difficulty: Difficulty.EASY,
     minLength: 100,
@@ -34,11 +33,10 @@ const AdminDashboardContent = () => {
     content: "",
   });
 
-
-  const [activeTab, setActiveTab] = useState<"manual" | "generate">("manual");
-  const [generatedTexts, setGeneratedTexts] = useState<Book[]>([]);
+  const [activeTab, setActiveTab] = useState<"manual" | "find">("manual");
+  const [foundTexts, setFoundTexts] = useState<Book[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const currentText = generatedTexts[currentIndex];
+  const currentText = foundTexts[currentIndex];
   const [isLoading, setIsLoading] = useState(false);
 
   // State for update popup
@@ -51,8 +49,8 @@ const AdminDashboardContent = () => {
       newText = newManualText;
       setNewManualText(DEFAULT_TEXT);
     } else {
-      newText = newGeneratedText;
-      setNewGeneratedText(DEFAULT_TEXT);
+      newText = newFoundText;
+      setNewFoundText(DEFAULT_TEXT);
     }
     if (!newText.title || !newText.content) {
       alert("Title and content are required!");
@@ -69,26 +67,22 @@ const AdminDashboardContent = () => {
     addText(newText);
   };
 
-  const handleGenerateText = async () => {
+  const handleFindText = async () => {
     try {
       setIsLoading(true);
-      setGeneratedTexts([]);
-      console.log("generateTextOptions.genre - ", generateTextOptions.genre);
+      setFoundTexts([]);
+      console.log("findTextOptions.genre - ", findTextOptions.genre);
       const knownTitles = texts.map((text) => text.title);
-      const booksMetadata = await fetchBooks(generateTextOptions.genre);
-      console.log("generated book subjects - ", booksMetadata[0].subject);
+      const booksMetadata = await fetchBooks(findTextOptions.genre);
+      console.log("found book subjects - ", booksMetadata[0].subject);
       const processingPromises = booksMetadata.map(async (book) => {
         try {
-          const processedBook = await fetchBookContent(book,generateTextOptions.minLength, generateTextOptions.maxLength);
+          const processedBook = await fetchBookContent(book, findTextOptions.minLength, findTextOptions.maxLength);
 
-          const meetsDifficulty = processedBook.difficulty === generateTextOptions.difficulty;
-          const wordCount = processedBook.content.split(/\s+/).length;
-          const meetsWordCount = wordCount >= generateTextOptions.minLength;
           const isValidText = processedBook.isValid;
 
-
           if (isValidText) {
-            setGeneratedTexts((prev) => [...prev, processedBook]);
+            setFoundTexts((prev) => [...prev, processedBook]);
           }
         } catch (error) {
           console.error("Error processing book:", error);
@@ -107,7 +101,7 @@ const AdminDashboardContent = () => {
   };
 
   const handleApproveText = () => {
-    const currentText = generatedTexts[currentIndex];
+    const currentText = foundTexts[currentIndex];
     console.log("currentText subject:", currentText.subject);
     if (currentText) {
       addText(
@@ -119,20 +113,20 @@ const AdminDashboardContent = () => {
           currentText.subject,
         )
       );
-      setGeneratedTexts((prev) => prev.filter((_, index) => index !== currentIndex));
+      setFoundTexts((prev) => prev.filter((_, index) => index !== currentIndex));
     }
   };
 
   const handleRejectText = () => {
-    setGeneratedTexts((prev) => prev.filter((_, index) => index !== currentIndex));
+    setFoundTexts((prev) => prev.filter((_, index) => index !== currentIndex));
   };
 
   const handleNextText = () => {
-    setCurrentIndex((prev) => (prev + 1) % generatedTexts.length);
+    setCurrentIndex((prev) => (prev + 1) % foundTexts.length);
   };
 
   const handlePreviousText = () => {
-    setCurrentIndex((prev) => (prev - 1 + generatedTexts.length) % generatedTexts.length);
+    setCurrentIndex((prev) => (prev - 1 + foundTexts.length) % foundTexts.length);
   };
 
   const handleQuestionChange = (
@@ -140,7 +134,7 @@ const AdminDashboardContent = () => {
     field: keyof Question,
     value: string
   ) => {
-    setGeneratedTexts((prev) => {
+    setFoundTexts((prev) => {
       const updated = [...prev];
       const current = updated[currentIndex];
       const updatedQuestions = [...(current.questions || [])];
@@ -161,7 +155,7 @@ const AdminDashboardContent = () => {
   };
 
   const removeQuestion = (questionIndex: number) => {
-    setGeneratedTexts((prev) => {
+    setFoundTexts((prev) => {
       const updated = [...prev];
       const current = updated[currentIndex];
       const updatedQuestions = [...(current.questions || [])];
@@ -172,7 +166,7 @@ const AdminDashboardContent = () => {
   };
 
   const addQuestion = () => {
-    setGeneratedTexts((prev) => {
+    setFoundTexts((prev) => {
       const updated = [...prev];
       const current = updated[currentIndex];
       const updatedQuestions = [...(current.questions || [])];
@@ -198,14 +192,14 @@ const AdminDashboardContent = () => {
             Manual
           </button>
           <button
-            onClick={() => setActiveTab("generate")}
+            onClick={() => setActiveTab("find")}
             className={`flex-1 py-2 rounded-md transition-all duration-200 ${
-              activeTab === "generate"
+              activeTab === "find"
                 ? "bg-blue-600 text-white"
                 : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             }`}
           >
-            Generate
+            Find
           </button>
         </div>
 
@@ -288,10 +282,10 @@ const AdminDashboardContent = () => {
               <div className="flex-1 min-w-[150px]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Genre</label>
                 <select
-                  value={generateTextOptions.genre}
+                  value={findTextOptions.genre}
                   onChange={(e) =>
-                    setGenerateTextOptions({
-                      ...generateTextOptions,
+                    setFindTextOptions({
+                      ...findTextOptions,
                       genre: e.target.value as Genre,
                     })
                   }
@@ -311,10 +305,10 @@ const AdminDashboardContent = () => {
                   <input
                     type="number"
                     placeholder="Min"
-                    value={generateTextOptions.minLength}
+                    value={findTextOptions.minLength}
                     onChange={(e) =>
-                      setGenerateTextOptions({
-                        ...generateTextOptions,
+                      setFindTextOptions({
+                        ...findTextOptions,
                         minLength: parseInt(e.target.value, 10),
                       })
                     }
@@ -323,10 +317,10 @@ const AdminDashboardContent = () => {
                   <input
                     type="number"
                     placeholder="Max"
-                    value={generateTextOptions.maxLength}
+                    value={findTextOptions.maxLength}
                     onChange={(e) =>
-                      setGenerateTextOptions({
-                        ...generateTextOptions,
+                      setFindTextOptions({
+                        ...findTextOptions,
                         maxLength: parseInt(e.target.value, 10),
                       })
                     }
@@ -337,7 +331,7 @@ const AdminDashboardContent = () => {
             </div>
             <div>
               <button
-                onClick={handleGenerateText}
+                onClick={handleFindText}
                 disabled={isLoading}
                 className="w-full py-3 bg-green-600 text-white rounded-md transition-all duration-200 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -363,22 +357,22 @@ const AdminDashboardContent = () => {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
-                    Generating...
+                    Finding...
                   </span>
                 ) : (
-                  "Generate Text"
+                  "Find Text"
                 )}
               </button>
             </div>
 
-            {/* Generated Texts Navigation */}
+            {/* Found Texts Navigation */}
             {currentText && (
               <div className="bg-gray-50 p-6 rounded-lg shadow-lg">
                 <input
                   type="text"
                   value={currentText.title}
                   onChange={(e) =>
-                    setGeneratedTexts((prev) => {
+                    setFoundTexts((prev) => {
                       const updated = [...prev];
                       updated[currentIndex] = {
                         ...updated[currentIndex],
@@ -392,7 +386,7 @@ const AdminDashboardContent = () => {
                 <textarea
                   value={currentText.content}
                   onChange={(e) =>
-                    setGeneratedTexts((prev) => {
+                    setFoundTexts((prev) => {
                       const updated = [...prev];
                       updated[currentIndex] = {
                         ...updated[currentIndex],
@@ -421,7 +415,7 @@ const AdminDashboardContent = () => {
                     value={currentText.difficulty}
                     onChange={(e) => {
                       const newDifficulty = e.target.value as Difficulty;
-                      setGeneratedTexts((prev) => {
+                      setFoundTexts((prev) => {
                         const updated = [...prev];
                         updated[currentIndex] = {
                           ...updated[currentIndex],
