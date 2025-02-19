@@ -20,19 +20,20 @@ export interface Book {
   text_link: string;
   questions: Question[];  
   isValid: boolean;
+  isAI: boolean;
 }
 
-export interface Excerpt {
-  book_id: string;
-  excerpt: string;
-  questions: Question[];
-}
+// export interface Excerpt {
+//   book_id: string;
+//   excerpt: string;
+//   questions: Question[];
+// }
 
-interface FilterOptions {
-  difficulty?: "easy" | "medium" | "hard";
-  subjects?: string[];
-  wordCount?: { min: number; max: number };
-}
+// interface FilterOptions {
+//   difficulty?: "easy" | "medium" | "hard";
+//   subjects?: string[];
+//   wordCount?: { min: number; max: number };
+// }
 
 /// Helper function to classify text difficulty
 // const classifyDifficulty = (text: string): Difficulty => {
@@ -163,6 +164,9 @@ const filterTextUsingAI = async (content: string, minWords: number, maxWords: nu
       Each question has a very obvious answer which is not subjective,
       Each question has 4 choices,
       Only one choice is correct.
+      Ensure the 4 choices in the JSON are comma-separated and in each 
+      choice there are NO COMMAS. If a comma must be used in an option, 
+      it is replaced with a dash (-).
 
     Validate the excerpt, setting "isValid": true only if the text:
       Is part of the main text of a book and is NOT a preface or disclaimer,
@@ -252,7 +256,8 @@ export const fetchBookContent = async (book: Book, minWords: number, maxWords: n
         content: "CONTENT_UNAVAILABLE", 
         difficulty: Difficulty.EASY,
         questions: [],
-        isValid: false
+        isValid: false, 
+        isAI: false
       };
     }
 
@@ -279,7 +284,8 @@ export const fetchBookContent = async (book: Book, minWords: number, maxWords: n
       content: finalExcerpt,
       difficulty,
       questions: aiResponse.questions,
-      isValid: aiResponse.isValid
+      isValid: aiResponse.isValid, 
+      isAI: false
     };
   } catch (error) {
     console.error(`Error processing ${book.title}:`, error);
@@ -288,7 +294,8 @@ export const fetchBookContent = async (book: Book, minWords: number, maxWords: n
       content: "CONTENT_UNAVAILABLE", 
       difficulty: Difficulty.EASY,
       questions: [],
-      isValid: false
+      isValid: false,
+      isAI: false
     };
   }
 };

@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Question } from "@/types/text";
+import { Question, Difficulty, Genre, Category } from "@/types/text";
 
 const GEMINI_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
@@ -9,10 +9,26 @@ export interface AIResponse {
   isValid: boolean;
 }
 
+export interface GenText {
+    id: string;
+    title: string;
+    author: string;
+    difficulty: Difficulty;
+    content: string;
+    text_link: string;
+    questions: Question[];
+    isValid: boolean;
+    isAI: boolean;
+    genre?: Genre; // Only if fiction
+    category?: Category; // Only if non-fiction
+  }
+  
+
 /// Generate text using Gemini
 export const generateTextUsingAI = async (
   prompt: string,
-  wordLimit: number
+  minWordLimit: number,
+  maxWordLimit: number
 ): Promise<AIResponse> => {
   try {
     const gemini = new GoogleGenerativeAI(GEMINI_KEY ?? "");
@@ -21,7 +37,7 @@ export const generateTextUsingAI = async (
     const fullPrompt = `
       Generate a coherent passage of text based on the following theme:
       "${prompt}"
-      - The passage must be ${wordLimit * 0.8}-${wordLimit} words long.
+      - The passage must be between ${minWordLimit} and ${maxWordLimit} words.
       - The passage should form a complete, meaningful narrative or idea.
       - It must have a natural start and end (no mid-sentence truncations).
       - The text must be in English and easy to read.

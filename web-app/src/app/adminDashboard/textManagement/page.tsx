@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useAdminDashboard, AdminDashboardProvider } from "@/contexts/adminDashboardContext";
 import { Category, Difficulty, Text, Question, Genre } from "@/types/text";
 import { Book, fetchBooks, fetchBookContent } from "@/services/bookService";
+import { GenText } from "@/services/generateService";
+import { generateTextUsingAI } from "@/services/generateService";
 import { UpdateTextPopup } from "@/components/UpdateTextPopup";
 import { ExistingTextCard } from "@/components/ExistingTextCard";
 import { useAuth } from "@/contexts/authContext";
@@ -17,31 +19,50 @@ const AdminDashboardContent = () => {
 
   // State for new text entries
   const [newManualText, setNewManualText] = useState(DEFAULT_TEXT);
+
   const [newFoundText, setNewFoundText] = useState(DEFAULT_TEXT);
-  const [newAIText, setNewAIText] = useState(DEFAULT_TEXT);
   const [findTextOptions, setFindTextOptions] = useState({
     genre: Genre.FANTASY,
     difficulty: Difficulty.EASY,
     minLength: 100,
     maxLength: 500,
   });
-
-  const [newText, setNewText] = useState({
-    title: "",
-    category: Category.NATURE,
-    genre: Genre.FANTASY,
-    content: "",
+  const [newGeneratedText, setNewGeneratedText] = useState(DEFAULT_TEXT);
+  const [generateTextOptions, setGenerateTextOptions] = useState<{
+    genre?: Genre;
+    category?: Category;
+    difficulty: Difficulty;
+    minLength: number;
+    maxLength: number;
+  }>({
+    genre: Genre.FANTASY, // Default to a fiction genre
+    difficulty: Difficulty.EASY,
+    minLength: 100,
+    maxLength: 500,
   });
+  
+  
+  
 
-  const [activeTab, setActiveTab] = useState<"manual" | "find">("manual");
+  // const [newText, setNewText] = useState({
+  //   title: "",
+  //   category: Category.NATURE,
+  //   genre: Genre.FANTASY,
+  //   content: "",
+  // });
+
+  const [activeTab, setActiveTab] = useState<"manual" | "find" | "generate">("manual");
   const [foundTexts, setFoundTexts] = useState<Book[]>([]);
+  const [generatedTexts, setGeneratedTexts] = useState<GenText[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const currentText = foundTexts[currentIndex];
+  const currentText = activeTab === "find" ? foundTexts[currentIndex] : generatedTexts[currentIndex];
   const [isLoading, setIsLoading] = useState(false);
 
   // State for update popup
   const [updatePopupOpen, setUpdatePopupOpen] = useState(false);
   const [selectedTextForUpdate, setSelectedTextForUpdate] = useState<Text | null>(null);
+
+
 
   const handleAddText = () => {
     let newText: Text | null = null;
@@ -175,6 +196,7 @@ const AdminDashboardContent = () => {
       return updated;
     });
   };
+
 
   const renderTextManagementSection = () => {
     return (
