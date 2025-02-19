@@ -250,9 +250,9 @@ const AdminDashboardContent = () => {
     });
   };
 
+  /* ===================== components ===================== */
 
-/* ===================== components ===================== */
-
+  
   const renderManualTextSection = () => {
     return (
       <div className="space-y-4">
@@ -275,18 +275,24 @@ const AdminDashboardContent = () => {
           rows={6}
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Conditional Dropdown for Category/Genre */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {newManualText.isFiction ? "Genre" : "Category"}
+            </label>
             <select
-              value={newManualText.category}
+              value={newManualText.isFiction ? newManualText.genre : newManualText.category}
               onChange={(e) =>
-                setNewManualText({ ...newManualText, category: e.target.value as Category } as Text)
+                setNewManualText({
+                  ...newManualText,
+                  [newManualText.isFiction ? "genre" : "category"]: e.target.value,
+                } as Text)
               }
               className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
             >
-              {Object.values(Category).map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              {(newManualText.isFiction ? Object.values(Genre) : Object.values(Category)).map((value) => (
+                <option key={value} value={value}>
+                  {value.charAt(0).toUpperCase() + value.slice(1)}
                 </option>
               ))}
             </select>
@@ -319,7 +325,7 @@ const AdminDashboardContent = () => {
           />
           <span className="text-gray-700">Is Fiction?</span>
         </div>
-
+  
         {/* Questions Section */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -331,7 +337,7 @@ const AdminDashboardContent = () => {
               + Add Question
             </button>
           </div>
-
+  
           {manualTextQuestions.length > 0 ? (
             <div className="space-y-2">
               {manualTextQuestions.map((question, index) => (
@@ -350,7 +356,7 @@ const AdminDashboardContent = () => {
             </div>
           )}
         </div>
-
+  
         <button
           onClick={handleAddText}
           className="w-full mt-4 py-3 bg-blue-600 text-white rounded-md transition-all duration-200 hover:bg-blue-700"
