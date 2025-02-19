@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Category, Difficulty, Text, Question, Genre } from "@/types/text";
+import { QuestionCard } from "./QuestionCard";
 
 interface UpdateTextPopupProps {
   text: Text;
@@ -151,42 +152,13 @@ export const UpdateTextPopup = ({
             <h3 className="text-xl font-semibold text-gray-800 mb-3">Questions</h3>
             {questions.length > 0 ? (
               questions.map((q, index) => (
-                <div key={index} className="mb-4 p-4 border rounded-md bg-gray-50">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Question:</label>
-                  <input
-                    type="text"
-                    value={q.question}
-                    onChange={(e) => {
-                      console.log(index)
-                      handleQuestionChange(index, "question", e.target.value) 
-                    }}
-                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-2"
-                  />
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Choices (comma-separated):</label>
-                  <input
-                    type="text"
-                    value={q.choices.join(", ")}
-                    onChange={(e) =>
-                      handleQuestionChange(index, "choices", e.target.value)
-                    }
-                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-2"
-                  />
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Answer:</label>
-                  <input
-                    type="text"
-                    value={q.answer}
-                    onChange={(e) =>
-                      handleQuestionChange(index, "answer", e.target.value)
-                    }
-                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  />
-                  <button
-                    onClick={() => removeQuestion(index)}
-                    className="mt-2 text-red-500 text-sm hover:underline"
-                  >
-                    Remove
-                  </button>
-                </div>
+                <QuestionCard
+                  key={index}
+                  question={q}
+                  index={index}
+                  handleQuestionChange={handleQuestionChange}
+                  handleRemoveQuestion={removeQuestion}
+                />
               ))
             ) : (
               <p className="text-sm text-gray-500">No questions available.</p>

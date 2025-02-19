@@ -5,13 +5,12 @@ import { useAdminDashboard, AdminDashboardProvider } from "@/contexts/adminDashb
 import { Category, Difficulty, Text, Question, Genre } from "@/types/text";
 import { Book, fetchBooks, fetchBookContent } from "@/services/bookService";
 import { GenText } from "@/services/generateService";
-import { generateTextUsingAI } from "@/services/generateService";
 import { UpdateTextPopup } from "@/components/UpdateTextPopup";
 import { ExistingTextCard } from "@/components/ExistingTextCard";
 import { useAuth } from "@/contexts/authContext";
 import AccessDenied from "@/components/errors/accessDenied";
 import { Timestamp } from "firebase/firestore";
-
+import { QuestionCard } from "@/components/QuestionCard";
 
 // Default text instance for initializing forms
 const DEFAULT_TEXT = new Text("", "", Difficulty.EASY, false ,Category.NATURE);
@@ -195,6 +194,20 @@ const AdminDashboardContent = () => {
     });
   };
 
+  const updateFoundText = (field: string, value: any) => {
+    setFoundTexts(prev => {
+      const updated = [...prev];
+      updated[currentTextIndex] = {
+        ...updated[currentTextIndex],
+        [field]: value
+      };
+      return updated;
+    });
+  };
+
+
+/* ===================== components ===================== */
+
   const renderManualTextSection = () => {
     return (
       <div className="space-y-4">
@@ -273,156 +286,106 @@ const AdminDashboardContent = () => {
 
   const renderNavigateFoundTextsSection = () => {
     return (
-        <div className="bg-gray-50 p-6 rounded-lg shadow-lg">
-          <input
-            type="text"
-            value={currentText.title}
-            onChange={(e) =>
-              setFoundTexts((prev) => {
-                const updated = [...prev];
-                updated[currentTextIndex] = {
-                  ...updated[currentTextIndex],
-                  title: e.target.value,
-                };
-                return updated;
-              })
-            }
-            className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4"
-          />
-          <textarea
-            value={currentText.content}
-            onChange={(e) =>
-              setFoundTexts((prev) => {
-                const updated = [...prev];
-                updated[currentTextIndex] = {
-                  ...updated[currentTextIndex],
-                  content: e.target.value,
-                };
-                return updated;
-              })
-            }
-            className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 h-64 mb-4"
-          />
-
-          {/* Display Word Count and Questions Produced */}
-          <div className="mb-6">
-            <p className="text-sm text-gray-600">
-              <strong>Word Count:</strong>{" "}
-              {currentText.content
-                ? currentText.content.trim().split(/\s+/).length
-                : 0}
-            </p>
-          </div>
-
-          {/* Option to Alter Difficulty */}
-          <div className="mb-6">
-            <label className="block mb-2 text-sm font-medium text-gray-700">Difficulty</label>
-            <select
-              value={currentText.difficulty}
-              onChange={(e) => {
-                const newDifficulty = e.target.value as Difficulty;
-                setFoundTexts((prev) => {
-                  const updated = [...prev];
-                  updated[currentTextIndex] = {
-                    ...updated[currentTextIndex],
-                    difficulty: newDifficulty,
-                  };
-                  return updated;
-                });
-              }}
-              className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-            >
-              {Object.values(Difficulty).map((diff) => (
-                <option key={diff} value={diff}>
-                  {diff.charAt(0).toUpperCase() + diff.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* QUESTION ADJUSTMENT SECTION */}
-          <div className="mb-6">
-            <h3 className="text-xl font-semibold text-gray-800 mb-3">Adjust Questions</h3>
-            {currentText.questions && currentText.questions.length > 0 ? (
-              currentText.questions.map((q, i) => (
-                <div key={i} className="mb-4 p-4 border rounded-md bg-white">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Question:</label>
-                  <input
-                    type="text"
-                    value={q.question}
-                    onChange={(e) =>
-                      handleQuestionChange(i, "question", e.target.value)
-                    }
-                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-2"
-                  />
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Choices (comma-separated):</label>
-                  <input
-                    type="text"
-                    value={q.choices.join(", ")}
-                    onChange={(e) =>
-                      handleQuestionChange(i, "choices", e.target.value)
-                    }
-                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-2"
-                  />
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Answer:</label>
-                  <input
-                    type="text"
-                    value={q.answer}
-                    onChange={(e) =>
-                      handleQuestionChange(i, "answer", e.target.value)
-                    }
-                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  />
-                  <button
-                    onClick={() => removeQuestion(i)}
-                    className="mt-2 text-red-500 text-sm hover:underline"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-gray-500">No questions available.</p>
-            )}
-            <button
-              onClick={addQuestion}
-              className="mt-2 py-2 px-4 bg-blue-600 text-white rounded-md transition-all duration-200 hover:bg-blue-700"
-            >
-              Add Question
-            </button>
-          </div>
-
-          <div className="flex flex-wrap justify-between gap-4">
+      <div className="bg-white p-6 rounded-xl shadow-2xl border border-gray-100">
+        {/* Header with Navigation */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex gap-2">
             <button
               onClick={handlePreviousText}
-              className="flex-1 py-3 bg-gray-600 text-white rounded-md transition-all duration-200 hover:bg-gray-700"
+              className="px-4 py-2 bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200 transition-colors"
             >
-              Previous
+              ← Previous
             </button>
-            <div className="flex flex-1 gap-4">
-              <button
-                onClick={handleApproveText}
-                className="flex-1 py-3 bg-blue-600 text-white rounded-md transition-all duration-200 hover:bg-blue-700"
-              >
-                Approve
-              </button>
-              <button
-                onClick={handleRejectText}
-                className="flex-1 py-3 bg-red-600 text-white rounded-md transition-all duration-200 hover:bg-red-700"
-              >
-                Reject
-              </button>
-            </div>
+            <span className="px-4 py-2 bg-gray-100 rounded-lg text-gray-600">
+              {currentTextIndex + 1} / {foundTexts.length}
+            </span>
             <button
               onClick={handleNextText}
-              className="flex-1 py-3 bg-gray-600 text-white rounded-md transition-all duration-200 hover:bg-gray-700"
+              className="px-4 py-2 bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200 transition-colors"
             >
-              Next
+              Next →
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleApproveText}
+              className="px-4 py-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
+            >
+              👍 Approve
+            </button>
+            <button
+              onClick={handleRejectText}
+              className="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+            >
+              👎 Reject
             </button>
           </div>
         </div>
-    )
-  }
+  
+        {/* Text Content Card */}
+        <div className="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-200">
+          <input
+            type="text"
+            value={currentText.title}
+            onChange={(e) => updateFoundText('title', e.target.value)}
+            className="w-full text-2xl font-bold mb-4 bg-transparent focus:outline-none border-b-2 border-transparent focus:border-indigo-500"
+          />
+          <textarea
+            value={currentText.content}
+            onChange={(e) => updateFoundText('content', e.target.value)}
+            className="w-full h-64 bg-transparent focus:outline-none resize-none font-serif text-gray-700 leading-relaxed"
+          />
+          <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
+            <span>📝 {currentText.content.trim().split(/\s+/).length} words</span>
+            <div className="flex items-center gap-2">
+              <span>Difficulty:</span>
+              <select
+                value={currentText.difficulty}
+                onChange={(e) => updateFoundText('difficulty', e.target.value)}
+                className="bg-white px-3 py-1 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                {Object.values(Difficulty).map((diff) => (
+                  <option key={diff} value={diff}>
+                    {diff}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+  
+        {/* Questions Section */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-gray-800">📚 Questions</h3>
+            <button
+              onClick={addQuestion}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              + Add Question
+            </button>
+          </div>
+  
+          {currentText.questions?.length > 0 ? (
+          <div className="grid gap-2">
+            {currentText.questions.map((q, i) => (
+              <QuestionCard
+                key={i}
+                question={q}
+                index={i}
+                handleQuestionChange={handleQuestionChange}
+                handleRemoveQuestion={removeQuestion}/>
+            ))}
+          </div>
+                ) : (
+          <div className="p-6 text-center bg-gray-50 rounded-lg border border-dashed border-gray-300">
+            <p className="text-gray-500 text-sm">No questions yet. Add one to get started!</p>
+          </div>
+        )}
+        </div>
+      </div>
+    );
+  };
 
 
 
