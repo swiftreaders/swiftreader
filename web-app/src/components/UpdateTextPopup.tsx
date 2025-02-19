@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Category, Difficulty, Text, Question, Genre } from "@/types/text";
+import { QuestionCard } from "./QuestionCard";
 
 interface UpdateTextPopupProps {
   text: Text;
@@ -55,9 +56,20 @@ export const UpdateTextPopup = ({
     // Create an updated Text instance – make sure to preserve the text id.
     const updatedText = new Text(title, content, difficulty, isFiction, genre ?? category ?? Category.NATURE);  // 
     updatedText.questions = questions;
+    console.log(questions);
     updatedText.id = text.id; // Preserve the original id
     onSave(updatedText);
   };
+  
+  useEffect(() => {
+    if (isFiction) {
+      setCategory(undefined);
+      // setGenre(Genre.FANTASY);
+    } else {
+      // setCategory(Category.NATURE);
+      setGenre(undefined);
+    }
+  }, [isFiction]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -76,7 +88,7 @@ export const UpdateTextPopup = ({
                 className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
             </div>
-            <div>
+            { !isFiction ? (<div>
               <label className="block text-sm font-medium text-gray-700">Category</label>
               <select
                 value={category}
@@ -89,7 +101,21 @@ export const UpdateTextPopup = ({
                   </option>
                 ))}
               </select>
-            </div>
+            </div>) : (<div>
+              <label className="block text-sm font-medium text-gray-700">Genre</label>
+              <select
+                value={genre}
+                onChange={(e) => setGenre(e.target.value as Genre)}
+                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                {Object.values(Genre).map((genre) => (
+                  <option key={genre} value={genre}>
+                    {genre.charAt(0).toUpperCase() + genre.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>)
+            }
             <div>
               <label className="block text-sm font-medium text-gray-700">Difficulty</label>
               <select
@@ -126,41 +152,13 @@ export const UpdateTextPopup = ({
             <h3 className="text-xl font-semibold text-gray-800 mb-3">Questions</h3>
             {questions.length > 0 ? (
               questions.map((q, index) => (
-                <div key={index} className="mb-4 p-4 border rounded-md bg-gray-50">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Question:</label>
-                  <input
-                    type="text"
-                    value={q.question}
-                    onChange={(e) =>
-                      handleQuestionChange(index, "question", e.target.value)
-                    }
-                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-2"
-                  />
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Choices (comma-separated):</label>
-                  <input
-                    type="text"
-                    value={q.choices.join(", ")}
-                    onChange={(e) =>
-                      handleQuestionChange(index, "choices", e.target.value)
-                    }
-                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-2"
-                  />
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Answer:</label>
-                  <input
-                    type="text"
-                    value={q.answer}
-                    onChange={(e) =>
-                      handleQuestionChange(index, "answer", e.target.value)
-                    }
-                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  />
-                  <button
-                    onClick={() => removeQuestion(index)}
-                    className="mt-2 text-red-500 text-sm hover:underline"
-                  >
-                    Remove
-                  </button>
-                </div>
+                <QuestionCard
+                  key={index}
+                  question={q}
+                  index={index}
+                  handleQuestionChange={handleQuestionChange}
+                  handleRemoveQuestion={removeQuestion}
+                />
               ))
             ) : (
               <p className="text-sm text-gray-500">No questions available.</p>
