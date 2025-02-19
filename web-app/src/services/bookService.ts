@@ -61,7 +61,7 @@ const findTxtUrl = (data: { [format: string]: string }, id: string, title: strin
 };
 
 /// Fetch books from the Gutendex API
-export const fetchBooks = async (genre: Genre, existingTexts: String[]): Promise<Book[]> => {
+export const fetchBooks = async (genre: Genre, existingTexts: string[]): Promise<Book[]> => {
   try {
     console.log("fetchBooks: waiting for list of books fetch");
     const response = await axios.get(GUTENDEX_API, {
