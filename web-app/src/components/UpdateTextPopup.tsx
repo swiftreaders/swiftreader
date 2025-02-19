@@ -1,4 +1,4 @@
-import { use, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Category, Difficulty, Text, Question, Genre } from "@/types/text";
 
 interface UpdateTextPopupProps {

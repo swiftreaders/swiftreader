@@ -271,103 +271,160 @@ const AdminDashboardContent = () => {
     )
   }
 
-  const renderFindTextSection = () => {
+  const renderNavigateFoundTextsSection = () => {
     return (
-      <div className="space-y-6">
-        <label className="text-gray-600 text-sm">This section helps you find books from Gutendex's open book library</label>
-        <div className="flex flex-wrap gap-4">
-          {/* Category Filter */}
-          <div className="flex-1 min-w-[150px]">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Genre</label>
+        <div className="bg-gray-50 p-6 rounded-lg shadow-lg">
+          <input
+            type="text"
+            value={currentText.title}
+            onChange={(e) =>
+              setFoundTexts((prev) => {
+                const updated = [...prev];
+                updated[currentTextIndex] = {
+                  ...updated[currentTextIndex],
+                  title: e.target.value,
+                };
+                return updated;
+              })
+            }
+            className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4"
+          />
+          <textarea
+            value={currentText.content}
+            onChange={(e) =>
+              setFoundTexts((prev) => {
+                const updated = [...prev];
+                updated[currentTextIndex] = {
+                  ...updated[currentTextIndex],
+                  content: e.target.value,
+                };
+                return updated;
+              })
+            }
+            className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 h-64 mb-4"
+          />
+
+          {/* Display Word Count and Questions Produced */}
+          <div className="mb-6">
+            <p className="text-sm text-gray-600">
+              <strong>Word Count:</strong>{" "}
+              {currentText.content
+                ? currentText.content.trim().split(/\s+/).length
+                : 0}
+            </p>
+          </div>
+
+          {/* Option to Alter Difficulty */}
+          <div className="mb-6">
+            <label className="block mb-2 text-sm font-medium text-gray-700">Difficulty</label>
             <select
-              value={findTextOptions.genre}
-              onChange={(e) =>
-                setFindTextOptions({
-                  ...findTextOptions,
-                  genre: e.target.value as Genre,
-                })
-              }
+              value={currentText.difficulty}
+              onChange={(e) => {
+                const newDifficulty = e.target.value as Difficulty;
+                setFoundTexts((prev) => {
+                  const updated = [...prev];
+                  updated[currentTextIndex] = {
+                    ...updated[currentTextIndex],
+                    difficulty: newDifficulty,
+                  };
+                  return updated;
+                });
+              }}
               className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
             >
-              {Object.values(Genre).map((gen) => (
-                <option key={gen} value={gen}>
-                  {gen.charAt(0).toUpperCase() + gen.slice(1)}
+              {Object.values(Difficulty).map((diff) => (
+                <option key={diff} value={diff}>
+                  {diff.charAt(0).toUpperCase() + diff.slice(1)}
                 </option>
               ))}
             </select>
           </div>
-          {/* Word Range Filters */}
-          <div className="flex-1 min-w-[150px]">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Word Range</label>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                placeholder="Min"
-                value={findTextOptions.minLength}
-                onChange={(e) =>
-                  setFindTextOptions({
-                    ...findTextOptions,
-                    minLength: parseInt(e.target.value, 10),
-                  })
-                }
-                className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
-              <input
-                type="number"
-                placeholder="Max"
-                value={findTextOptions.maxLength}
-                onChange={(e) =>
-                  setFindTextOptions({
-                    ...findTextOptions,
-                    maxLength: parseInt(e.target.value, 10),
-                  })
-                }
-                className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
+
+          {/* QUESTION ADJUSTMENT SECTION */}
+          <div className="mb-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-3">Adjust Questions</h3>
+            {currentText.questions && currentText.questions.length > 0 ? (
+              currentText.questions.map((q, i) => (
+                <div key={i} className="mb-4 p-4 border rounded-md bg-white">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Question:</label>
+                  <input
+                    type="text"
+                    value={q.question}
+                    onChange={(e) =>
+                      handleQuestionChange(i, "question", e.target.value)
+                    }
+                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-2"
+                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Choices (comma-separated):</label>
+                  <input
+                    type="text"
+                    value={q.choices.join(", ")}
+                    onChange={(e) =>
+                      handleQuestionChange(i, "choices", e.target.value)
+                    }
+                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-2"
+                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Answer:</label>
+                  <input
+                    type="text"
+                    value={q.answer}
+                    onChange={(e) =>
+                      handleQuestionChange(i, "answer", e.target.value)
+                    }
+                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                  <button
+                    onClick={() => removeQuestion(i)}
+                    className="mt-2 text-red-500 text-sm hover:underline"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-gray-500">No questions available.</p>
+            )}
+            <button
+              onClick={addQuestion}
+              className="mt-2 py-2 px-4 bg-blue-600 text-white rounded-md transition-all duration-200 hover:bg-blue-700"
+            >
+              Add Question
+            </button>
+          </div>
+
+          <div className="flex flex-wrap justify-between gap-4">
+            <button
+              onClick={handlePreviousText}
+              className="flex-1 py-3 bg-gray-600 text-white rounded-md transition-all duration-200 hover:bg-gray-700"
+            >
+              Previous
+            </button>
+            <div className="flex flex-1 gap-4">
+              <button
+                onClick={handleApproveText}
+                className="flex-1 py-3 bg-blue-600 text-white rounded-md transition-all duration-200 hover:bg-blue-700"
+              >
+                Approve
+              </button>
+              <button
+                onClick={handleRejectText}
+                className="flex-1 py-3 bg-red-600 text-white rounded-md transition-all duration-200 hover:bg-red-700"
+              >
+                Reject
+              </button>
             </div>
+            <button
+              onClick={handleNextText}
+              className="flex-1 py-3 bg-gray-600 text-white rounded-md transition-all duration-200 hover:bg-gray-700"
+            >
+              Next
+            </button>
           </div>
         </div>
-        <div>
-          <button
-            onClick={handleFindText}
-            disabled={isLoading}
-            className="w-full py-3 bg-green-600 text-white rounded-md transition-all duration-200 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <span className="flex items-center justify-center">
-                <svg
-                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Finding...
-              </span>
-            ) : (
-              "Find Text"
-            )}
-          </button>
-        </div>
-      </div>
-    );
-  };
+    )
+  }
 
-  // const renderGeneratedTextSection() = () => {
-  //   return ()}
+
 
   const renderTextManagementSection = () => {
     return (
@@ -401,7 +458,7 @@ const AdminDashboardContent = () => {
         ) : (
           <div className="space-y-6">
             <label className="text-gray-600 text-sm">
-              To search for a book from Gutendex's open book library, select your preferred genre and specify the desired word count range. Once you click "Find Text", the system will fetch matching book metadata and process the content so you can review and approve the text.
+              This feature enables you to search for books from Gutendex&apos;s open book library, select your preferred genre and specify the desired word count range. Once you click &quot;Find Text&quot;, the system will fetch matching book metadata and process the content so you can review and approve the text.
             </label>
             <div className="flex flex-wrap gap-4">
               {/* Genre Filter */}
@@ -492,156 +549,7 @@ const AdminDashboardContent = () => {
             </div>
 
             {/* Found Texts Navigation */}
-            {currentText && (
-              <div className="bg-gray-50 p-6 rounded-lg shadow-lg">
-                <input
-                  type="text"
-                  value={currentText.title}
-                  onChange={(e) =>
-                    setFoundTexts((prev) => {
-                      const updated = [...prev];
-                      updated[currentTextIndex] = {
-                        ...updated[currentTextIndex],
-                        title: e.target.value,
-                      };
-                      return updated;
-                    })
-                  }
-                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4"
-                />
-                <textarea
-                  value={currentText.content}
-                  onChange={(e) =>
-                    setFoundTexts((prev) => {
-                      const updated = [...prev];
-                      updated[currentTextIndex] = {
-                        ...updated[currentTextIndex],
-                        content: e.target.value,
-                      };
-                      return updated;
-                    })
-                  }
-                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 h-64 mb-4"
-                />
-
-                {/* Display Word Count and Questions Produced */}
-                <div className="mb-6">
-                  <p className="text-sm text-gray-600">
-                    <strong>Word Count:</strong>{" "}
-                    {currentText.content
-                      ? currentText.content.trim().split(/\s+/).length
-                      : 0}
-                  </p>
-                </div>
-
-                {/* Option to Alter Difficulty */}
-                <div className="mb-6">
-                  <label className="block mb-2 text-sm font-medium text-gray-700">Difficulty</label>
-                  <select
-                    value={currentText.difficulty}
-                    onChange={(e) => {
-                      const newDifficulty = e.target.value as Difficulty;
-                      setFoundTexts((prev) => {
-                        const updated = [...prev];
-                        updated[currentTextIndex] = {
-                          ...updated[currentTextIndex],
-                          difficulty: newDifficulty,
-                        };
-                        return updated;
-                      });
-                    }}
-                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  >
-                    {Object.values(Difficulty).map((diff) => (
-                      <option key={diff} value={diff}>
-                        {diff.charAt(0).toUpperCase() + diff.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* QUESTION ADJUSTMENT SECTION */}
-                <div className="mb-6">
-                  <h3 className="text-xl font-semibold text-gray-800 mb-3">Adjust Questions</h3>
-                  {currentText.questions && currentText.questions.length > 0 ? (
-                    currentText.questions.map((q, i) => (
-                      <div key={i} className="mb-4 p-4 border rounded-md bg-white">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Question:</label>
-                        <input
-                          type="text"
-                          value={q.question}
-                          onChange={(e) =>
-                            handleQuestionChange(i, "question", e.target.value)
-                          }
-                          className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-2"
-                        />
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Choices (comma-separated):</label>
-                        <input
-                          type="text"
-                          value={q.choices.join(", ")}
-                          onChange={(e) =>
-                            handleQuestionChange(i, "choices", e.target.value)
-                          }
-                          className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-2"
-                        />
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Answer:</label>
-                        <input
-                          type="text"
-                          value={q.answer}
-                          onChange={(e) =>
-                            handleQuestionChange(i, "answer", e.target.value)
-                          }
-                          className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                        />
-                        <button
-                          onClick={() => removeQuestion(i)}
-                          className="mt-2 text-red-500 text-sm hover:underline"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-500">No questions available.</p>
-                  )}
-                  <button
-                    onClick={addQuestion}
-                    className="mt-2 py-2 px-4 bg-blue-600 text-white rounded-md transition-all duration-200 hover:bg-blue-700"
-                  >
-                    Add Question
-                  </button>
-                </div>
-
-                <div className="flex flex-wrap justify-between gap-4">
-                  <button
-                    onClick={handlePreviousText}
-                    className="flex-1 py-3 bg-gray-600 text-white rounded-md transition-all duration-200 hover:bg-gray-700"
-                  >
-                    Previous
-                  </button>
-                  <div className="flex flex-1 gap-4">
-                    <button
-                      onClick={handleApproveText}
-                      className="flex-1 py-3 bg-blue-600 text-white rounded-md transition-all duration-200 hover:bg-blue-700"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      onClick={handleRejectText}
-                      className="flex-1 py-3 bg-red-600 text-white rounded-md transition-all duration-200 hover:bg-red-700"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                  <button
-                    onClick={handleNextText}
-                    className="flex-1 py-3 bg-gray-600 text-white rounded-md transition-all duration-200 hover:bg-gray-700"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            )}
+            {currentText && renderNavigateFoundTextsSection()}
           </div>
         )}
       </section>
@@ -672,6 +580,7 @@ const AdminDashboardContent = () => {
                 text={text}
                 onUpdate={() => {
                   setSelectedTextForUpdate(text);
+                  console.log(text.toJSON())  //TODO: questions not coming in when viewing an approved text
                   setUpdatePopupOpen(true);
                 }}
                 onRemove={() => {
