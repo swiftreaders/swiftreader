@@ -5,6 +5,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  deleteField,
   Timestamp,
   DocumentData,
   getDocs,
@@ -106,36 +107,49 @@ export const textService = {
     try {
       const wordLength = updatedText.content.split(/\s+/).length;
       const timestamp = Timestamp.fromMillis(Date.now());
+      console.log(updatedText);
       await updateDoc(doc(db, "Texts", updatedText.id), {
         content: updatedText.content,
         wordLength: wordLength,
         updatedAt: timestamp,
         title: updatedText.title,
         difficulty: updatedText.difficulty,
-        category: updatedText.category,
+        isFiction: updatedText.isFiction,
+        genre: updatedText.isFiction ? updatedText.genre : deleteField(),
+        category: updatedText.isFiction ? deleteField() : updatedText.category,
       });
       const quizzesRef = collection(db, "Texts", updatedText.id, "Quizzes");
 
-      // Remove any existing questions from the subcollection
+      // Remove any existing quizzes
       const existingQuizDocs = await getDocs(quizzesRef);
       for (const quizDoc of existingQuizDocs.docs) {
         await deleteDoc(doc(db, "Texts", updatedText.id, "Quizzes", quizDoc.id));
       }
-
-      // Add the updated questions if available
+      
+      // Add a new quiz document
+      const newQuizRef = await addDoc(quizzesRef, {
+        createdAt: new Date() // You can store metadata if needed
+      });
+      
+      console.log("New quiz document created with ID:", newQuizRef.id);
+      
+      // Add questions as a subcollection under the new quiz document
       if (
         updatedText.questions &&
         Array.isArray(updatedText.questions) &&
         updatedText.questions.length > 0
       ) {
+        const questionsRef = collection(db, "Texts", updatedText.id, "Quizzes", newQuizRef.id, "Questions");
+      
         for (const question of updatedText.questions) {
-          await addDoc(quizzesRef, {
-            question: question.question,
-            answers: question.choices,       // Storing the choices under 'answers'
-            correct_answer: question.answer,   // Storing the correct answer
+          console.log("Adding question:", question);
+          await addDoc(questionsRef, {
+            Question: question.question,
+            Choices: question.choices,       // Storing the choices under 'answers'
+            Answer: question.answer, // Storing the correct answer
           });
         }
-      }
+      }      
       
       return true;
     } catch (error) {
