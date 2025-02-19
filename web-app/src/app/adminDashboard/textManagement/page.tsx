@@ -74,6 +74,7 @@ const AdminDashboardContent = () => {
       setIsLoading(true);
       setGeneratedTexts([]);
       console.log("generateTextOptions.genre - ", generateTextOptions.genre);
+      const knownTitles = texts.map((text) => text.title);
       const booksMetadata = await fetchBooks(generateTextOptions.genre);
       console.log("generated book subjects - ", booksMetadata[0].subject);
       const processingPromises = booksMetadata.map(async (book) => {

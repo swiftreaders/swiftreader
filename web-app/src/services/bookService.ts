@@ -46,13 +46,13 @@ const classifyDifficulty = (text: string): Difficulty => {
   return Difficulty.HARD;
 };
 
-const findTxtUrl = (data: { [key: string]: string }, id: string): string => {
-  for (const [key, value] of Object.entries(data)) {
-    console.log("key:", key, "value:", value);
-    if (value.endsWith(".txt")) {
-      console.log("found txt url:", value);
-      return value;
-    } else if (value.endsWith(".txt.utf-8")) {
+const findTxtUrl = (data: { [format: string]: string }, id: string, title: string): string => {
+  for (const [format, url] of Object.entries(data)) {
+    console.log("book:", title, "format:", format, "url:", url);
+    if (url.endsWith(".txt")) {
+      console.log("found txt url:", url);
+      return url;
+    } else if (url.endsWith(".txt.utf-8")) {
       return `https://www.gutenberg.org/cache/epub/${id}/pg${id}.txt`;
     }
   }
@@ -69,16 +69,21 @@ export const fetchBooks = async (genre: Genre): Promise<Book[]> => {
       languages: ["en"], 
       mime_type: ["text/plain; charset=us-ascii"],
       copyright: "false", 
-      page: Math.floor(Math.random() * 5) + 1
+      page: Math.floor(Math.random() * 10) + 1
       },
     });
-    const temp_books = response.data.results;
+
+    // Manually filter for english books as some were still non-english
+    const temp_books = response.data.results.filter(
+      (book: any) => Array.isArray(book.languages) && book.languages.includes("en")
+    );
+
     console.log(temp_books);
     
     console.log(`fetchBooks: ${temp_books.length} books fetched`, temp_books.map((book: any) => book.title));
 
     const books = temp_books
-    .sort(() => Math.random() - 0.5)
+    .sort(() => Math.random())
     .slice(0, 5)
     .map((book: any) => ({
       id: book.id,
@@ -86,7 +91,7 @@ export const fetchBooks = async (genre: Genre): Promise<Book[]> => {
       author: book.authors[0]?.name || "Unknown Author",
       subject: genre,
       difficulty: Difficulty.EASY, // Placeholder difficulty
-      text_link: findTxtUrl(book.formats || {}, book.id) || "NOT_FOUND",
+      text_link: findTxtUrl(book.formats || {}, book.id, book.title) || "NOT_FOUND",
       content: "", // fetch the content later
     }));
 
@@ -146,7 +151,7 @@ const filterTextUsingAI = async (content: string, wordLimit: number): Promise<{ 
          - Has natural beginning/ending (no mid-sentence starts/ends)
       2. Remove ALL underscores and replace with spaces
       3. Remove ANY [?] placeholders or unclear references
-      4. Generate 3 multiple-choice questions based ONLY on the excerpt 
+      4. Generate 4 multiple-choice questions based ONLY on the excerpt
       5. return true for the isValid field IF AND ONLY IF the excerpt meets the following criteria:
          - Readable and grammatically correct
          - No missing words or placeholder markers
@@ -171,40 +176,51 @@ const filterTextUsingAI = async (content: string, wordLimit: number): Promise<{ 
 
       Text to analyze: ${content.slice(0, 7500)}`;
 
-    const prompt2 = `
+    const newPrompt = `
     Task: Analyze the given text and return a structured JSON response following these steps:
 
-    Extract a meaningful excerpt that:
-    Forms a coherent narrative or complete thought
-    Contains ${wordLimit * 0.8}-${wordLimit} words, ending at a sentence terminator
-    Has proper sentence structure and punctuation
-    Excludes footnotes, headers, and non-content text
-    Begins and ends naturally (no mid-sentence truncation)
+    Extract a meaningful excerpt that it:
+      Forms a coherent narrative or complete thought,
+      Contains ${wordLimit * 0.8}-${wordLimit} words, ending at a sentence terminator
+      Has proper sentence structure and punctuation,
+      Excludes footnotes, headers, and non-content text,
+      Has a natural beginning and ending - if you have to cut a sentence off at the end, 
+      in order to maintain the word count, do so at a natural stopping point. Also, 
+      if you absolutely must, you can edit a few words at the end to make it a natural stopping point, 
+      but ensure to do so without drastically changing the meaning of the text.
+
     Clean the text by:
-    Replacing all underscores (_) with spaces
-    Removing [?] placeholders and unclear references
-    Generate 3 multiple-choice questions based only on the extracted excerpt
+      Replacing all underscores (_) with spaces,
+      Removing [?] placeholders and unclear references.
+
+    Generate 4 multiple-choice questions such that: 
+      Each question is based ONLY on the excerpt, 
+      Each question has a very obvious answer which is not subjective,
+      Each question has 4 choices,
+      Only one choice is correct.
+
     Validate the excerpt, setting "isValid": true only if the text:
-    Is readable, grammatically correct, and logically structured
-    Has no missing words or placeholders
-    Is in English
-    Is NOT a play or poem
+      Is part of the main text of a book and is NOT a preface or disclaimer,
+      Is in English,
+      Is NOT a play or poem.
     
-    Response Format (Strict JSON)
-    {
-      "excerpt": "Cleaned text without underscores or [?]",
-      "isValid": true/false,
-      "questions": [
-        {
-          "question": "...",
-          "choices": ["...", "...", "...", "..."],
-          "answer": "..."
-        }
-      ]
-    }
+    Return JSON format with strict structure:
+      \`\`\`json
+      {
+        "excerpt": "Cleaned text without underscores or [?]",
+        "isValid": true/false,
+        "questions": [
+          {
+            "question": "...",
+            "choices": ["...", "...", "...", "..."],
+            "answer": "..."
+          }
+        ]
+      }
+      \`\`\`
     Text to analyze: ${content.slice(0, 7500)}`;
 
-    const result = await model.generateContent(prompt2);
+    const result = await model.generateContent(newPrompt);
     const rawResponse = result.response.text().trim();
     console.log("AI response:", rawResponse);
     
@@ -213,23 +229,29 @@ const filterTextUsingAI = async (content: string, wordLimit: number): Promise<{ 
     const jsonEnd = rawResponse.lastIndexOf("}");
     const cleanJson = rawResponse.slice(jsonStart, jsonEnd + 1);
     console.log("Cleaned JSON:", cleanJson);
-    const response = JSON.parse(cleanJson);
 
+    const response = JSON.parse(cleanJson);
+    console.log("response:", response);
+    
     // Clean and validate response
     const cleanedExcerpt = response.excerpt
       .replace(/_/g, " ")
       .replace(/\[\?\]/g, "")
       .trim();
+    
+    console.log("cleanedExcerpt:", cleanedExcerpt);
 
     const wordCount = cleanedExcerpt.split(/\s+/).length;
-    const structureValid = cleanedExcerpt.match(/[.!?]$/) && 
-      cleanedExcerpt.split(/\s+/).length >= wordLimit * 0.8;
+    const structureValid =  cleanedExcerpt.split(/\s+/).length >= wordLimit * 0;
+
+    // console.log("structureValid:", structureValid);
 
     const finalValidity = response.isValid && structureValid && 
       !/[\[\]{}]/.test(cleanedExcerpt) && // Check for remaining special chars
-      wordCount <= wordLimit * 1.2 &&
+      wordCount <= wordLimit * 1.9 &&
       !/gutendex/i.test(cleanedExcerpt); 
-
+    // console.log("questions after cleaning:", response.questions);
+    
     return {
       excerpt: cleanedExcerpt,
       questions: finalValidity ? response.questions : [],
@@ -264,6 +286,7 @@ export const fetchBookContent = async (book: Book, wordLimit: number): Promise<B
     const fullText = response.data.contents || "";
 
     // Get AI-processed content
+    // console.log("fullText:", fullText.slice(1000, 2000));
     const aiResponse = await filterTextUsingAI(fullText, wordLimit);
     console.log("questions:", aiResponse.questions);
 
