@@ -61,7 +61,7 @@ const findTxtUrl = (data: { [format: string]: string }, id: string, title: strin
 };
 
 /// Fetch books from the Gutendex API
-export const fetchBooks = async (genre: Genre): Promise<Book[]> => {
+export const fetchBooks = async (genre: Genre, existingTexts: String[]): Promise<Book[]> => {
   try {
     console.log("fetchBooks: waiting for list of books fetch");
     const response = await axios.get(GUTENDEX_API, {
@@ -85,7 +85,6 @@ export const fetchBooks = async (genre: Genre): Promise<Book[]> => {
 
     const books = temp_books
     .sort(() => Math.random())
-    .slice(0, 5)
     .map((book: any) => ({
       id: book.id,
       title: book.title,
@@ -94,7 +93,9 @@ export const fetchBooks = async (genre: Genre): Promise<Book[]> => {
       difficulty: Difficulty.EASY, // Placeholder difficulty
       text_link: findTxtUrl(book.formats || {}, book.id, book.title) || "NOT_FOUND",
       content: "", // fetch the content later
-    }));
+    }))
+    .filter((book: any) => !existingTexts.includes(book.title))
+    .slice(0, 5);
 
     console.log("books: ",books);
     

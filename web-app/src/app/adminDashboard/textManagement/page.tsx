@@ -129,7 +129,7 @@ const AdminDashboardContent = () => {
       setFoundTexts([]);
       console.log("findTextOptions.genre - ", findTextOptions.genre);
       const knownTitles = texts.map((text) => text.title);
-      const booksMetadata = await fetchBooks(findTextOptions.genre);
+      const booksMetadata = await fetchBooks(findTextOptions.genre, texts.map((text) => text.title));
       console.log("found book subjects - ", booksMetadata[0].subject);
       const processingPromises = booksMetadata.map(async (book) => {
         try {
