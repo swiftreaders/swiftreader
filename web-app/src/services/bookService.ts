@@ -35,16 +35,16 @@ interface FilterOptions {
 }
 
 /// Helper function to classify text difficulty
-const classifyDifficulty = (text: string): Difficulty => {
-  const wordCount = text.split(" ").length;
-  const averageWordLength = text
-    .split(" ")
-    .reduce((acc, word) => acc + word.length, 0) / wordCount;
+// const classifyDifficulty = (text: string): Difficulty => {
+//   const wordCount = text.split(" ").length;
+//   const averageWordLength = text
+//     .split(" ")
+//     .reduce((acc, word) => acc + word.length, 0) / wordCount;
 
-  if (averageWordLength < 5) return Difficulty.EASY;
-  if (averageWordLength < 7) return Difficulty.MEDIUM;
-  return Difficulty.HARD;
-};
+//   if (averageWordLength < 5) return Difficulty.EASY;
+//   if (averageWordLength < 7) return Difficulty.MEDIUM;
+//   return Difficulty.HARD;
+// };
 
 const findTxtUrl = (data: { [format: string]: string }, id: string, title: string): string => {
   for (const [format, url] of Object.entries(data)) {
@@ -104,39 +104,39 @@ export const fetchBooks = async (genre: Genre): Promise<Book[]> => {
   }
 };
 
-const findNaturalExcerpt = (text: string, targetWordCount: number): string => {
-  const cleaned = text
-    .replace(/(\r\n|\n|\r)/gm, " ") // Remove newlines
-    .replace(/\s+/g, " ") // Collapse whitespace
-    .replace(/\[\d+\]/g, "") // Remove footnotes
-    .trim();
+// const findNaturalExcerpt = (text: string, targetWordCount: number): string => {
+//   const cleaned = text
+//     .replace(/(\r\n|\n|\r)/gm, " ") // Remove newlines
+//     .replace(/\s+/g, " ") // Collapse whitespace
+//     .replace(/\[\d+\]/g, "") // Remove footnotes
+//     .trim();
 
-  // Find sentence boundaries
-  const sentences = cleaned.match(/[^.!?]+[.!?]+/g) || [];
-  if (sentences.length === 0) return cleaned.split(/\s+/).slice(0, targetWordCount).join(" ");
+//   // Find sentence boundaries
+//   const sentences = cleaned.match(/[^.!?]+[.!?]+/g) || [];
+//   if (sentences.length === 0) return cleaned.split(/\s+/).slice(0, targetWordCount).join(" ");
 
-  // Find random starting point
-  const startIdx = Math.floor(Math.random() * Math.max(0, sentences.length - 5));
-  let wordCount = 0;
-  const selectedSentences = [];
+//   // Find random starting point
+//   const startIdx = Math.floor(Math.random() * Math.max(0, sentences.length - 5));
+//   let wordCount = 0;
+//   const selectedSentences = [];
 
-  // Collect sentences until we reach target length
-  for (let i = startIdx; i < sentences.length; i++) {
-    const words = sentences[i].split(/\s+/).length;
-    if (wordCount + words > targetWordCount) break;
-    selectedSentences.push(sentences[i]);
-    wordCount += words;
-  }
+//   // Collect sentences until we reach target length
+//   for (let i = startIdx; i < sentences.length; i++) {
+//     const words = sentences[i].split(/\s+/).length;
+//     if (wordCount + words > targetWordCount) break;
+//     selectedSentences.push(sentences[i]);
+//     wordCount += words;
+//   }
 
-  // Fallback if no sentences were selected
-  if (selectedSentences.length === 0) {
-    return cleaned.split(/\s+/).slice(0, targetWordCount).join(" ");
-  }
+//   // Fallback if no sentences were selected
+//   if (selectedSentences.length === 0) {
+//     return cleaned.split(/\s+/).slice(0, targetWordCount).join(" ");
+//   }
 
-  return selectedSentences.join(" ");
-};
+//   return selectedSentences.join(" ");
+// };
 
-const filterTextUsingAI = async (content: string, minWords: number, maxWords: number): Promise<{ excerpt: string, questions: any[], isValid: boolean }> => {
+const filterTextUsingAI = async (content: string, minWords: number, maxWords: number): Promise<{ excerpt: string, questions: any[], isValid: boolean, difficulty: Difficulty }> => {
   try {
     const gemini = new GoogleGenerativeAI(GEMINI_KEY ?? "");
     const model = gemini.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -144,7 +144,7 @@ const filterTextUsingAI = async (content: string, minWords: number, maxWords: nu
     const prompt = `
     Task: Analyze the given text and return a structured JSON response following these steps:
 
-    Extract a meaningful excerpt that it:
+    Extract a meaningful excerpt such that it:
       Forms a coherent narrative or complete thought,
       Has over ${minWords} words and STRICTLY under ${maxWords} words
       Has proper sentence structure and punctuation,
@@ -169,11 +169,17 @@ const filterTextUsingAI = async (content: string, minWords: number, maxWords: nu
       Is in English,
       Is NOT a play or poem.
     
+    Determine the difficulty level of the text using the following guidelines:
+      Easy: Simple language, short sentences, and common words,
+      Medium: Moderate language complexity, longer sentences, and some uncommon words,
+      Hard: Complex language, long sentences, and many uncommon words.
+    
     Return JSON format with strict structure:
       \`\`\`json
       {
         "excerpt": "Cleaned text without underscores or [?]",
         "isValid": true/false,
+        "difficulty": "easy/medium/hard",
         "questions": [
           {
             "question": "...",
@@ -183,7 +189,7 @@ const filterTextUsingAI = async (content: string, minWords: number, maxWords: nu
         ]
       }
       \`\`\`
-    Text to analyze: ${content.slice(0, 7500)}`;
+    Text to analyze: ${content.slice(0, 10000)}`;
 
     const result = await model.generateContent(prompt);
     const rawResponse = result.response.text().trim();
@@ -220,15 +226,18 @@ const filterTextUsingAI = async (content: string, minWords: number, maxWords: nu
     return {
       excerpt: cleanedExcerpt,
       questions: finalValidity ? response.questions : [],
-      isValid: finalValidity
+      isValid: finalValidity, 
+      difficulty: response.difficulty
     };
 
   } catch (error) {
     console.log("AI filtering failed:", error);
     return { 
-      excerpt: findNaturalExcerpt(content, maxWords),
+      // excerpt: findNaturalExcerpt(content, maxWords),
+      excerpt: "",
       questions: [],
-      isValid: false 
+      isValid: false, 
+      difficulty: Difficulty.EASY
     };
   }
 };
@@ -263,7 +272,7 @@ export const fetchBookContent = async (book: Book, minWords: number, maxWords: n
       .replace(/(\s[.,!?])/g, "$1") // Ensure proper punctuation spacing
       .trim();
 
-    const difficulty = classifyDifficulty(finalExcerpt);
+    const difficulty = aiResponse.difficulty;
     
     return { 
       ...book, 
@@ -284,37 +293,41 @@ export const fetchBookContent = async (book: Book, minWords: number, maxWords: n
   }
 };
 
+//todo
+// @Sri it looks like this code is for handling errors when fetching books from Gutendex
+// but I think it's redundant now...
 
-/// Filter books based on criteria
-const filterBooks = (books: Book[], filters: FilterOptions): Book[] => {
-  return books.filter((book) => {
-    // Ensure valid, available content meets criteria
-    const contentValid = book.isValid && 
-      book.content !== "CONTENT_UNAVAILABLE" &&
-      book.content.split(" ").length >= (filters.wordCount?.min || 1);
 
-    const meetsDifficulty = !filters.difficulty || 
-      book.difficulty === filters.difficulty;
+// /// Filter books based on criteria
+// const filterBooks = (books: Book[], filters: FilterOptions): Book[] => {
+//   return books.filter((book) => {
+//     // Ensure valid, available content meets criteria
+//     const contentValid = book.isValid && 
+//       book.content !== "CONTENT_UNAVAILABLE" &&
+//       book.content.split(" ").length >= (filters.wordCount?.min || 1);
 
-    return contentValid && meetsDifficulty;
-  });
-};
+//     const meetsDifficulty = !filters.difficulty || 
+//       book.difficulty === filters.difficulty;
+
+//     return contentValid && meetsDifficulty;
+//   });
+// };
 
 /// Service to retrieve texts from Gutendex
-export const getTexts = async (
-  genre: Genre,
-  filters: FilterOptions
-): Promise<Book[]> => {
-  const books = await fetchBooks(genre);
-  console.log("bookService.ts - getTexts:", books.map((book) => book.title));
+// export const getTexts = async (
+//   genre: Genre,
+//   filters: FilterOptions
+// ): Promise<Book[]> => {
+//   const books = await fetchBooks(genre);
+//   console.log("bookService.ts - getTexts:", books.map((book) => book.title));
 
-  // Ensure word limit fallback exists
-  const wordLimit = filters.wordCount?.max ?? 500;
+//   // Ensure word limit fallback exists
+//   const wordLimit = filters.wordCount?.max ?? 500;
 
-  // Fetch book contents with AI processing
-  const booksWithContent = await Promise.all(
-    books.map(book => fetchBookContent(book, wordLimit))
-  );
+//   // Fetch book contents with AI processing
+//   const booksWithContent = await Promise.all(
+//     books.map(book => fetchBookContent(book, wordLimit))
+//   );
 
-  return filterBooks(booksWithContent, filters);
-};
+//   return filterBooks(booksWithContent, filters);
+// };

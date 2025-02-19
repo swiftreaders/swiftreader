@@ -304,26 +304,6 @@ const AdminDashboardContent = () => {
                   ))}
                 </select>
               </div>
-              {/* Difficulty Filter */}
-              <div className="flex-1 min-w-[150px]">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
-                <select
-                  value={generateTextOptions.difficulty}
-                  onChange={(e) =>
-                    setGenerateTextOptions({
-                      ...generateTextOptions,
-                      difficulty: e.target.value as Difficulty,
-                    })
-                  }
-                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                >
-                  {Object.values(Difficulty).map((diff) => (
-                    <option key={diff} value={diff}>
-                      {diff.charAt(0).toUpperCase() + diff.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              </div>
               {/* Word Range Filters */}
               <div className="flex-1 min-w-[150px]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Word Range</label>
