@@ -4,15 +4,16 @@ import React from "react";
 
 interface TeamMember {
   name: string;
+  course: string;
 }
 
 const teamMembers: TeamMember[] = [
-  { name: "Sriharsha" },
-  { name: "Siddhant" },
-  { name: "Hardiv" },
-  { name: "Vivian" },
-  { name: "Toan" },
-  { name: "Kevin" },
+  { name: "Sriharsha", course: "Joint Maths and Computing" },
+  { name: "Siddhant", course: "Joint Maths and Computing" },
+  { name: "Hardiv", course: "Computing" },
+  { name: "Vivian", course: "Computing" },
+  { name: "Toan" , course: "Joint Maths and Computing" },
+  { name: "Kevin", course: "Computing" },
 ];
 
 const About: React.FC = () => {
@@ -43,7 +44,7 @@ const About: React.FC = () => {
                   <span className="text-gray-500">Photo</span>
                 </div>
                 <h3 className="text-2xl font-semibold">{member.name}</h3>
-                <p className="text-gray-600">Computing Student</p>
+                <p className="text-gray-600">{member.course}</p>
               </div>
             ))}
           </div>
