@@ -8,7 +8,7 @@ const Navbar: React.FC = () => {
   const { user, loggedIn } = useAuth();
 
   return (
-    <nav className="bg-white shadow-md p-4 flex justify-between items-center">
+    <nav className="bg-background shadow-md p-4 flex justify-between items-center">
       {/* Branding */}
       <div className="text-blue-600 text-2xl font-bold">
         <Link href="/">SwiftReader</Link>
@@ -17,12 +17,18 @@ const Navbar: React.FC = () => {
       {/* Navigation Links */}
       <ul className="flex space-x-6">
         <li>
-          <Link href="/about" className="text-gray-700 hover:text-blue-600 transition duration-200">
+          <Link
+            href="/about"
+            className="text-gray-700 hover:text-blue-600 transition duration-200"
+          >
             About
           </Link>
         </li>
         <li>
-          <Link href="/features" className="text-gray-700 hover:text-blue-600 transition duration-200">
+          <Link
+            href="/features"
+            className="text-gray-700 hover:text-blue-600 transition duration-200"
+          >
             Features
           </Link>
         </li>
@@ -48,11 +54,17 @@ const Navbar: React.FC = () => {
         )}
         <li>
           {loggedIn ? (
-            <Link href="/auth/logout" className="text-gray-700 hover:text-blue-600 transition duration-200">
+            <Link
+              href="/auth/logout"
+              className="text-gray-700 hover:text-blue-600 transition duration-200"
+            >
               Logout
             </Link>
           ) : (
-            <Link href="/auth/login" className="text-gray-700 hover:text-blue-600 transition duration-200">
+            <Link
+              href="/auth/login"
+              className="text-gray-700 hover:text-blue-600 transition duration-200"
+            >
               Login
             </Link>
           )}
