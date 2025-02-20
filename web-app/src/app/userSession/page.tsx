@@ -17,6 +17,7 @@ import AccessDenied from "@/components/errors/accessDenied";
 
 // import InfoPopup from "@/components/infoPopup"
 import { useRouter } from "next/navigation";
+import webgazer from "webgazer";
 
 
 const UserSessionContent = () => {
@@ -236,7 +237,8 @@ const UserSessionContent = () => {
     clearInterval(intervalId); // Stop measuring WPM once the loop finishes
     const endTime = Timestamp.fromDate(new Date());
     // Stop Webgazer
-    // (window as any).webgazer.stop();
+    (window as any).webgazer.clearGazeListener();
+    (window as any).webgazer.end();
     // GO TO Quiz
     setReadingDone(true);
     setOutputLine("Reading complete!")
