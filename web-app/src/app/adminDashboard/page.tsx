@@ -7,7 +7,7 @@ import {
 } from "@/contexts/adminDashboardContext";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/authContext";
-import AccessDenied from "@/components/errors/accessDenied";
+import AccessDenied from "@/components/pages/errors/accessDenied";
 import { User } from "@/types/user";
 import { Session } from "@/types/sessions";
 import { Timestamp } from "firebase/firestore";
@@ -26,7 +26,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-
 const AdminDashboardContent = () => {
   const { texts, users, removeUser } = useAdminDashboard();
   const [userMetrics, setUserMetrics] = useState({
@@ -36,7 +35,9 @@ const AdminDashboardContent = () => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isRemovePopupOpen, setIsRemovePopupOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedUserSessions, setSelectedUserSessions] = useState<Session[]>([]);
+  const [selectedUserSessions, setSelectedUserSessions] = useState<Session[]>(
+    []
+  );
   const [sortBy, setSortBy] = useState({
     readingSessions: false,
     dateJoined: false,
@@ -63,7 +64,8 @@ const AdminDashboardContent = () => {
 
   const sortedUsers = [...users].sort((a, b) => {
     return (
-      new Date(a.joinDate.toDate()).getTime() - new Date(b.joinDate.toDate()).getTime()
+      new Date(a.joinDate.toDate()).getTime() -
+      new Date(b.joinDate.toDate()).getTime()
     );
   });
 
@@ -128,7 +130,9 @@ const AdminDashboardContent = () => {
   ];
 
   // Sort text genres in descending order by count
-  const sortedTextGenres = [...textGenresData].sort((a, b) => b.count - a.count);
+  const sortedTextGenres = [...textGenresData].sort(
+    (a, b) => b.count - a.count
+  );
 
   // Mocked data for peak activity times (kept as bar chart)
   const peakActivityData = [
@@ -159,7 +163,6 @@ const AdminDashboardContent = () => {
           </p>
         </div>
       </header>
-
       {/* Main Container */}
       <main className="container mx-auto px-4 py-6">
         {/* Top Action Bar & Metrics Summary */}
@@ -183,88 +186,96 @@ const AdminDashboardContent = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Column 1: User Growth Trend */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">User Growth Trend</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={userTrendData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Line 
-                type="monotone" 
-                dataKey="newUsers" 
-                stroke="#4A90E2" 
-                strokeWidth={2}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+          {/* Column 1: User Growth Trend */}
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-lg font-semibold mb-4">User Growth Trend</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={userTrendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Line
+                  type="monotone"
+                  dataKey="newUsers"
+                  stroke="#4A90E2"
+                  strokeWidth={2}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
 
-        {/* Column 2: Text Genres Table */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">Most Popular Text Genres</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Rank
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Genre
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Count
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Medal
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {sortedTextGenres.map((item, index) => (
-                  <tr key={item.genre} className="hover:bg-gray-50">
-                    <td className="px-4 py-2 whitespace-nowrap">{index + 1}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">{item.genre}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">{item.count}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">
-                      {getMedal(index + 1)}
-                    </td>
+          {/* Column 2: Text Genres Table */}
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-lg font-semibold mb-4">
+              Most Popular Text Genres
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Rank
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Genre
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Count
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Medal
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {sortedTextGenres.map((item, index) => (
+                    <tr key={item.genre} className="hover:bg-gray-50">
+                      <td className="px-4 py-2 whitespace-nowrap">
+                        {index + 1}
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap">
+                        {item.genre}
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap">
+                        {item.count}
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap">
+                        {getMedal(index + 1)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Column 3: Peak Activity Times */}
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-lg font-semibold mb-4">Peak Activity Times</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={peakActivityData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="time" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" fill="#FF6384" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
-
-        {/* Column 3: Peak Activity Times */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">Peak Activity Times</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={peakActivityData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="time" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="count" fill="#FF6384" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
 
         {/* User Details Table */}
         <UserTable users={users} handleManageClick={handleManageClick} />
       </main>
-
       {/* More Info Popup */}
       <UserInfoModal
         user={selectedUser}
         sessions={selectedUserSessions}
         isOpen={isPopupOpen}
         onClose={() => setIsPopupOpen(false)}
-      />;
+      />
+      ;
     </div>
   );
 };

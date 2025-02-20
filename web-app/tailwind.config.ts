@@ -14,6 +14,11 @@ export default {
         foreground: "var(--color-foreground)",
         primary: "var(--color-primary)",
         secondary: "var(--color-secondary)",
+        hovertext: "var(--color-hovertext)",
+      },
+      backgroundImage: {
+        "sr-gradient": "linear-gradient(90deg, #8e1dff, #4254ff)", // Custom gradient
+        "admin-gradient": "linear-gradient(90deg, #8c52ff, #ff914d)", // Custom gradient
       },
     },
   },

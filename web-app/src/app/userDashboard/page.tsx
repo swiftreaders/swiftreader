@@ -19,11 +19,9 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useAuth } from "@/contexts/authContext";
-import AccessDenied from "@/components/errors/accessDenied";
-
+import AccessDenied from "@/components/pages/errors/accessDenied";
 
 const UserDashboardContent = () => {
-
   const router = useRouter();
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
@@ -84,33 +82,33 @@ const UserDashboardContent = () => {
           </button>
         </div>
 
-      {/* Progress Header */}
-      <div className="mt-8 bg-white shadow-md rounded-lg p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Your Reading Progress</h2>
-          <button
-            onClick={handleSetGoalClick}
-            className="px-4 py-2 bg-green-500 text-white rounded-md transition hover:bg-green-600"
-          >
-            Set Goal
-          </button>
+        {/* Progress Header */}
+        <div className="mt-8 bg-white shadow-md rounded-lg p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Your Reading Progress</h2>
+            <button
+              onClick={handleSetGoalClick}
+              className="px-4 py-2 bg-green-500 text-white rounded-md transition hover:bg-green-600"
+            >
+              Set Goal
+            </button>
+          </div>
+          <div className="mb-4">
+            <p className="text-gray-700">
+              Total Reading Time:{" "}
+              <span className="font-bold">{totalReadingTime} minutes</span>
+            </p>
+            <p className="text-gray-700">
+              Goal: <span className="font-bold">{readingGoal} minutes</span>
+            </p>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-4">
+            <div
+              className="bg-blue-500 h-4 rounded-full"
+              style={{ width: `${progressPercentage}%` }}
+            ></div>
+          </div>
         </div>
-        <div className="mb-4">
-          <p className="text-gray-700">
-            Total Reading Time:{" "}
-            <span className="font-bold">{totalReadingTime} minutes</span>
-          </p>
-          <p className="text-gray-700">
-            Goal: <span className="font-bold">{readingGoal} minutes</span>
-          </p>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-4">
-          <div
-            className="bg-blue-500 h-4 rounded-full"
-            style={{ width: `${progressPercentage}%` }}
-          ></div>
-        </div>
-      </div>
 
         {/* Goal Setting Modal */}
         {isGoalModalOpen && (
@@ -148,7 +146,9 @@ const UserDashboardContent = () => {
 
         {/* Recent Reading Sessions */}
         <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Recent Reading Sessions</h2>
+          <h2 className="text-xl font-semibold mb-4">
+            Recent Reading Sessions
+          </h2>
           <ul className="bg-white shadow-md rounded-lg p-4">
             {recentSessions.map((session) => (
               <li
@@ -158,8 +158,8 @@ const UserDashboardContent = () => {
               >
                 <span>{session.title}</span>
                 <span className="text-gray-500 text-sm">
-                  {session.startTime.toDate().toLocaleTimeString()} - {session.duration}{" "}
-                  minutes
+                  {session.startTime.toDate().toLocaleTimeString()} -{" "}
+                  {session.duration} minutes
                 </span>
               </li>
             ))}
@@ -168,14 +168,21 @@ const UserDashboardContent = () => {
 
         {/* Chart */}
         <div className="mt-8 bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Reading Performance Over Time</h2>
+          <h2 className="text-xl font-semibold mb-4">
+            Reading Performance Over Time
+          </h2>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={readingProgressData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis />
               <Tooltip />
-              <Line type="monotone" dataKey="wpm" stroke="#4A90E2" strokeWidth={2} />
+              <Line
+                type="monotone"
+                dataKey="wpm"
+                stroke="#4A90E2"
+                strokeWidth={2}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -186,7 +193,10 @@ const UserDashboardContent = () => {
             className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
             onClick={() => setSelectedSession(null)}
           >
-            <SessionStats session={selectedSession} onClose={() => setSelectedSession(null)} />
+            <SessionStats
+              session={selectedSession}
+              onClose={() => setSelectedSession(null)}
+            />
           </div>
         )}
       </main>

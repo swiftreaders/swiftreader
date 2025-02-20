@@ -4,6 +4,7 @@ import React, { use } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/authContext";
 import LandingPage from "@/components/pages/landingPage";
+import Footer from "@/components/Footer";
 
 const Home: React.FC = () => {
   const { user, loggedIn } = useAuth();
@@ -20,17 +21,10 @@ const Home: React.FC = () => {
   }
 
   return (
-    <main className="min-h-screen bg-white font-sans">
+    <main className="min-h-screen bg-sr-gradient font-sans">
       {/* Hero Section */}
       <LandingPage loggedIn={loggedIn} user={user} />
-      {/* Footer */}
-      <footer className="bg-blue-600 text-white py-4">
-        <div className="container mx-auto px-4 text-center">
-          <p>
-            &copy; {new Date().getFullYear()} SwiftReader. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      {/* <Footer /> */}
     </main>
   );
 };
