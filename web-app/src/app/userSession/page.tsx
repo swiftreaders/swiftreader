@@ -115,6 +115,7 @@ const UserSessionContent = () => {
 
       console.log("WebGazer found. Setting up...");
       webgazer
+        .showVideoPreview(false)
         .begin()
         .then(() => console.log("WebGazer started!"))
         .catch((err: any) => console.error("WebGazer failed to start:", err));
