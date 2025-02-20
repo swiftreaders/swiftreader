@@ -11,6 +11,9 @@ import WebGazerClient from "./WebGazerClient"; // We'll keep a separate file
 import Calibration, { CalibrationRef } from "./Calibration"; // Modified import to include ref type
 // import HelpPopup from "@/components/helpPopup" 
 import { useAuth } from "@/contexts/authContext";
+import { useUserContext, UserProvider } from "@/contexts/userContext";
+import AccessDenied from "@/components/errors/accessDenied";
+
 // import InfoPopup from "@/components/infoPopup"
 
 const UserSessionContent = () => {
@@ -326,7 +329,7 @@ const UserSessionContent = () => {
     <>
       <Script
         src="https://webgazer.cs.brown.edu/webgazer.js"
-        strategy="beforeInteractive" // ensures script is loaded early
+        // strategy="beforeInteractive" // ensures script is loaded early
         onLoad={() => console.log("WebGazer script loaded (beforeInteractive)!")}
         onError={() => console.error("Failed to load WebGazer script.")}
       />
@@ -627,10 +630,19 @@ const UserSessionContent = () => {
 };
 
 const UserSession = () => {
+  const { user } = useAuth();
   return (
-    <ReadingSessionProvider>
-      <UserSessionContent />
-    </ReadingSessionProvider>
+    <div>
+      {user ? (
+        <UserProvider>
+          <ReadingSessionProvider>
+            <UserSessionContent />
+          </ReadingSessionProvider>
+        </UserProvider>
+      ) : (
+        <AccessDenied />
+      )}
+    </div>
   );
 };
 
