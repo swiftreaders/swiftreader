@@ -15,6 +15,7 @@ export default {
         primary: "var(--color-primary)",
         secondary: "var(--color-secondary)",
         hovertext: "var(--color-hovertext)",
+        widget: "var(--color-widget)",
       },
       backgroundImage: {
         "sr-gradient": "linear-gradient(90deg, #8e1dff, #4254ff)", // Custom gradient
