@@ -210,12 +210,6 @@ const UserDashboardContent = () => {
         </div>
       </header>
       <div className="py-8 px-20">
-        {/* <button
-          onClick={handleNewSessionClick}
-          className="px-4 py-2 bg-blue-500 text-white rounded-md transition hover:bg-blue-600"
-        >
-          New Session
-        </button> */}
         <Button displayText="New Session" href="/userSession" />
         <ProgressHeader
           totalReadingTime={totalReadingTime}
@@ -232,9 +226,22 @@ const UserDashboardContent = () => {
         />
         <RecentReadingSessions
           recentSessions={recentSessions}
-          onSelectSession={setSelectedSession}
+          onSelectSession={(session) => {
+            setSelectedSession(session)}
+          }
+
         />
-        <ReadingChart readingProgressData={readingProgressData} />
+
+        {/* Session Details Modal */}
+        {selectedSession && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            onClick={() => setSelectedSession(null)}
+          >
+            <SessionStats session={selectedSession} onClose={() => setSelectedSession(null)} />
+          </div>
+        )}
+        <ReadingChart readingProgressData={readingProgressData}/>
       </div>
     </div>
   );
