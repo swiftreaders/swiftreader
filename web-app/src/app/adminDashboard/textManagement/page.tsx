@@ -375,6 +375,7 @@ const AdminDashboardContent = () => {
           />
           <span className="text-gray-700">Is Fiction?</span>
         </div>
+    
 
         {/* Questions Section */}
         <div className="space-y-4">
@@ -382,7 +383,7 @@ const AdminDashboardContent = () => {
             <h3 className="text-lg font-semibold text-gray-800">Questions</h3>
             <button
               onClick={handleAddManualQuestion}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
             >
               + Add Question
             </button>
@@ -409,7 +410,7 @@ const AdminDashboardContent = () => {
 
         <button
           onClick={handleAddText}
-          className="w-full mt-4 py-3 bg-blue-600 text-white rounded-md transition-all duration-200 hover:bg-blue-700"
+          className="w-full mt-4 py-3 bg-indigo-600 text-white rounded-md transition-all duration-200 hover:bg-indigo-700"
         >
           Add Text
         </button>
@@ -536,7 +537,7 @@ const AdminDashboardContent = () => {
             onClick={() => setActiveTab("manual")}
             className={`flex-1 py-2 rounded-md transition-all duration-200 ${
               activeTab === "manual"
-                ? "bg-blue-600 text-white"
+                ? "bg-indigo-600 text-white"
                 : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             }`}
           >
@@ -546,7 +547,7 @@ const AdminDashboardContent = () => {
             onClick={() => setActiveTab("find")}
             className={`flex-1 py-2 rounded-md transition-all duration-200 ${
               activeTab === "find"
-                ? "bg-blue-600 text-white"
+                ? "bg-indigo-600 text-white"
                 : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             }`}
           >
