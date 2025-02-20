@@ -29,6 +29,7 @@
     "react-dom": "^19.0.0",
     "recharts": "^2.15.0",
     "router": "^2.0.0",
+    "sharp": "^0.33.5",
     "swiper": "^11.2.4",
     "webgazer": "^3.3.0"
   },
