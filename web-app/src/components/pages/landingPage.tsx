@@ -20,7 +20,7 @@ interface LandingPageProps {
 
 const LandingPage: React.FC<LandingPageProps> = ({ loggedIn, user }) => {
   return (
-    <>
+    <div className="lowercase italic">
       {/* Hero Section */}
       <Hero loggedIn={loggedIn} user={user} />
 
@@ -29,7 +29,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ loggedIn, user }) => {
 
       {/* About SwiftReader Section */}
       <About loggedIn={false} user={null} />
-    </>
+    </div>
   );
 };
 

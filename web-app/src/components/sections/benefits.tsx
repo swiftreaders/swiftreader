@@ -31,7 +31,7 @@ const Card: React.FC<CardProps> = ({
 
 function Benefits() {
   return (
-    <section className="h-sr-screen py-[5%] px-[5%] lowercase italic flex items-center justify-center">
+    <section className="h-sr-screen py-[5%] px-[5%] flex items-center justify-center">
       <div className="h-full bg-background rounded-2xl mx-5 p-6 shadow-lg relative flex items-center justify-center">
         <ChevronLeftIcon className="absolute left-4 text-white w-8 h-8 cursor-pointer" />
         <div className="container mx-auto px-4">
