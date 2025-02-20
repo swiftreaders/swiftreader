@@ -17,7 +17,7 @@ const NavItem: React.FC<NavItemProps> = ({ href, name, className }) => {
     <li>
       <Link
         href={href}
-        className={`italic font-bold text-text hover:text-hovertext transition duration-200 ${className}`}
+        className={`italic font-bold text-white hover:text-hovertext transition duration-200 ${className}`}
       >
         {name}
       </Link>
@@ -49,7 +49,7 @@ const Navbar = () => {
     <nav
       className={`${
         scrolled ? "navbarScrolled" : "navbar"
-      } px-20 xy-4 flex justify-between items-center`}
+      } px-20 xy-4 flex justify-between items-center text-white`}
     >
       <div>
         {/* Branding */}

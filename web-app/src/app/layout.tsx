@@ -29,7 +29,7 @@ export default async function RootLayout({
   const session = await auth0.getSession(); // 🔹 Fetch latest session on request
 
   return (
-    <html lang="en" className={`${atkinson.variable}`}>
+    <html lang="en" className={`${atkinson.variable} lowercase italic`}>
       <body>
         <ThemeProvider attribute="class">
           <AuthProvider initialSession={session}>

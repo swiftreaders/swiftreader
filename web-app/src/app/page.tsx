@@ -24,7 +24,7 @@ const Home: React.FC = () => {
     <main className="min-h-screen bg-sr-gradient font-sans">
       {/* Hero Section */}
       <LandingPage loggedIn={loggedIn} user={user} />
-      {/* <Footer /> */}
+      <Footer />
     </main>
   );
 };
