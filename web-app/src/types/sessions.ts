@@ -1,5 +1,6 @@
 import { Timestamp } from "firebase/firestore"
 import { Question, Result } from "./text";
+import { get } from "node:http";
 
 export class Session {
   id: string;
@@ -71,6 +72,13 @@ export class Session {
     return this.results.reduce((acc: number, result: Result) => {
       return result.givenAnswer === result.correctAnswer ? acc + 1 : acc;
     }, 0);
+  }
+
+  getComprehensionPercentage(): string {
+    if (this.results.length > 0) {
+      return (100 * this.getComprehensionScore() / this.results.length).toFixed(1) + "%";
+    }
+    return "N/A";
   }
 
   getAverageWpm(): number { 

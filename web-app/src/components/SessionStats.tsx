@@ -34,6 +34,7 @@ export const SessionStats = ({ session, onClose }: SessionStatsProps) => {
               <StatItem label="Text Average" value={session.text_average_performance.toFixed(1)} />
               <StatItem label="Duration" value={`${session.duration} seconds`} />
               <StatItem label="Difficulty" value={session.difficulty} />
+              <StatItem label="Comprehension" value={session.getComprehensionPercentage()} />
             </div>
           </div>
         </div>

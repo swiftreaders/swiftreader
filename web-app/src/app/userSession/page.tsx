@@ -12,14 +12,19 @@ import { Session } from "@/types/sessions";
 import { Timestamp } from "firebase/firestore";
 import WebGazerClient from "./WebGazerClient"; // We'll keep a separate file
 import Calibration, { CalibrationRef } from "./Calibration"; // Modified import to include ref type
-// import HelpPopup from "@/components/helpPopup"
+import { SessionStats } from "@/components/SessionStats";
+// import HelpPopup from "@/components/helpPopup" 
 import { useAuth } from "@/contexts/authContext";
 import { useUserContext, UserProvider } from "@/contexts/userContext";
 import AccessDenied from "@/components/pages/errors/accessDenied";
 
 // import InfoPopup from "@/components/infoPopup"
+import { useRouter } from "next/navigation";
+import webgazer from "webgazer";
+
 
 const UserSessionContent = () => {
+  const router = useRouter();
   const { text, getText } = useReadingContext();
   const { user } = useAuth();
   const [textId, setTextId] = useState("");
@@ -243,7 +248,8 @@ const UserSessionContent = () => {
     clearInterval(intervalId); // Stop measuring WPM once the loop finishes
     const endTime = Timestamp.fromDate(new Date());
     // Stop Webgazer
-    // (window as any).webgazer.stop();
+    (window as any).webgazer.clearGazeListener();
+    (window as any).webgazer.end();
     // GO TO Quiz
     setReadingDone(true);
     setOutputLine("Reading complete!");
@@ -683,13 +689,14 @@ const UserSessionContent = () => {
               session={session}
               onContinue={() => setProgressStage(3)}
             />
-          ) : (
+          ) : session != null ? (
             // Optionally handle other progressStage values if necessary
             <div className="w-full flex justify-center">
-              <p className="text-xl text-gray-800">Stats page goes here</p>
+              {/* <p className="text-xl text-gray-800">Stats page goes here</p> */}
+              <SessionStats session={session} onClose={() => {router.push(`/userDashboard`)}} />
             </div>
-          )}
-
+          ) : null}
+          
           <div className="mt-4">
             {readingDone ? (
               <button
