@@ -64,6 +64,7 @@ export const userService = {
     }
   },
 
+
   setReadingGoal: async (goal: number, id: string): Promise<boolean> => {
     try {
       await updateDoc(doc(db, "Users", id), { readingGoal: goal });
@@ -116,10 +117,10 @@ export const userService = {
       // Check if the document exists and return the reading goal
       if (userDocSnapshot.exists()) {
         const userData = userDocSnapshot.data();
-        return userData.readingGoal || 0; // Default to 0 if readingGoal is not set
+        return userData.readingGoal || 1000; // Default to 1000 if readingGoal is not set
       } else {
         console.error("User document not found");
-        return 0; // Return 0 if the document doesn't exist
+        return 1000; // Return 1000 if the document doesn't exist
       }
     } catch (error) {
       console.error("Error retrieving reading goal:", error);

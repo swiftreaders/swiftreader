@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { userService } from "@/services/userService";
-import { User } from "@/types/user";
+import { useAuth } from "./authContext";
 
 interface UserContextType {
   readingGoal: number;
-  setReadingGoal: (goal: number, userId: string) => Promise<boolean>;
+  setReadingGoal: (goal: number) => Promise<boolean>;
   retrieveTotalReadingTime: (userId: string) => Promise<number>;
 }
 
@@ -21,14 +21,30 @@ export const useUserContext = () => {
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const { user } = useAuth();
   const [readingGoal, setReadingGoalState] = useState(1000); // Default goal
 
-  const setReadingGoal = async (goal: number, userId: string) => {
-    const success = await userService.setReadingGoal(goal, userId);
-    if (success) {
-      setReadingGoalState(goal);
+  useEffect(() => {
+    if (user) {
+      console.log("Getting user reading goal");
+      userService.getReadingGoal(user.id).then((goal) => {
+        if (goal) {
+          setReadingGoalState(goal);
+        }
+      });
     }
-    return success;
+  }, [user]);
+
+  const setReadingGoal = async (goal: number) => {
+    if (user){
+      const success = await userService.setReadingGoal(goal, user.id);
+      if (success) {
+        setReadingGoalState(goal);
+      }
+      return success;
+    } else {
+      return false;
+    }
   };
 
   const retrieveTotalReadingTime = async (userId: string) => {

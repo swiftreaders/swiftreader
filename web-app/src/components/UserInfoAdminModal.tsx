@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SessionChart } from "./SessionChart";
 import { Session } from "../types/sessions";
 import { User } from "../types/user";
@@ -28,6 +28,10 @@ const onRemoveUser = (user: User, onClose: () => void) => {
 
 const UserInfoModal: React.FC<Props> = ({ user, sessions, isOpen, onClose }) => {
   const [selectedSession, setSelectedSession] = useState<number[] | null>(null);
+
+  useEffect(() => {
+    setSelectedSession(null);
+  }, [user?.id]); 
 
   if (!isOpen || !user) return null;
 
@@ -82,7 +86,7 @@ const UserInfoModal: React.FC<Props> = ({ user, sessions, isOpen, onClose }) => 
                       {session.getAverageWpm().toFixed(1)} WPM
                     </div>
                     <div className="text-center text-gray-600 text-sm">
-                      Comprehension: {session.getComprehensionScore()}
+                      Comprehension: {session.getComprehensionScore()}%
                     </div>
                     <div className="text-xs text-gray-500 text-center mt-2">
                       {session.startTime.toDate().toLocaleString()}
