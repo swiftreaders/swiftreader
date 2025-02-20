@@ -666,13 +666,11 @@ const AdminDashboardContent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-work-sans">
+    <div className="min-h-screen mt-[7vh] bg-background">
       {/* Hero Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-indigo-600 py-8 shadow-lg">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl font-bold text-white">
-            Swiftreaders Admin Dashboard
-          </h1>
+      <header className="bg-sr-gradient py-8 shadow-lg">
+        <div className="container mx-auto px-4 text-left">
+          <h1 className="text-4xl font-bold text-white">Text Management</h1>
           <p className="mt-2 text-lg text-gray-200">
             Manage and fine-tune your texts with ease
           </p>
@@ -730,7 +728,7 @@ const AdminDashboardContent = () => {
   );
 };
 
-const AdminDashboard = () => {
+const TextManagement = () => {
   const { user } = useAuth();
   return (
     <div>
@@ -745,4 +743,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default TextManagement;
