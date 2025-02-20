@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Session } from "@/types/sessions";
 import {
@@ -28,10 +28,6 @@ interface ProgressHeaderProps {
   progressPercentage: number;
   onSetGoalClick: () => void;
 }
-
-const handleNewSessionClick = () => {
-  router.push("/userSession");
-};
 
 const ProgressHeader = ({
   totalReadingTime,
@@ -143,7 +139,7 @@ const RecentReadingSessions: FC<RecentReadingSessionsProps> = ({
           <span>{session.title}</span>
           <span className="text-gray-500 text-sm">
             {session.startTime.toDate().toLocaleTimeString()} -{" "}
-            {session.duration} minutes
+            {session.duration} seconds
           </span>
         </li>
       ))}
@@ -190,12 +186,14 @@ const UserDashboardContent = () => {
     { date: "2023-10-25", wpm: 90 },
   ];
 
-  const totalReadingTime = 90;
-  const progressPercentage = (totalReadingTime / readingGoal) * 100;
+  const totalReadingTime = parseFloat((
+    recentSessions.reduce((acc, session) => acc + session.duration, 0) / 60
+  ).toFixed(2));
+  const progressPercentage = Math.min((totalReadingTime / readingGoal) * 100, 100);
 
   const handleGoalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setReadingGoal(newGoal, "AyYtqKV2YHoWAKjpvAxL");
+    setReadingGoal(newGoal);
     setIsGoalModalOpen(false);
   };
 
@@ -229,7 +227,6 @@ const UserDashboardContent = () => {
           onSelectSession={(session) => {
             setSelectedSession(session)}
           }
-
         />
 
         {/* Session Details Modal */}

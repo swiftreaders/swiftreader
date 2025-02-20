@@ -71,7 +71,7 @@ export class Session {
   getComprehensionScore(): number {
     return this.results.reduce((acc: number, result: Result) => {
       return result.givenAnswer === result.correctAnswer ? acc + 1 : acc;
-    }, 0);
+    }, 0) / this.results.length * 100;
   }
 
   getComprehensionPercentage(): string {
