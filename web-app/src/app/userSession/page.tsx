@@ -9,8 +9,12 @@ import { Session } from "@/types/sessions";
 import { Timestamp } from "firebase/firestore";
 import WebGazerClient from "./WebGazerClient"; // We'll keep a separate file
 import Calibration, { CalibrationRef } from "./Calibration"; // Modified import to include ref type
-import HelpPopup from "../../components/helpPopup" 
-import { AuthProvider, useAuth } from "@/contexts/authContext";
+// import HelpPopup from "@/components/helpPopup" 
+import { useAuth } from "@/contexts/authContext";
+import { useUserContext, UserProvider } from "@/contexts/userContext";
+import AccessDenied from "@/components/errors/accessDenied";
+
+// import InfoPopup from "@/components/infoPopup"
 
 const UserSessionContent = () => {
   const { text, getText } = useReadingContext();
@@ -31,6 +35,7 @@ const UserSessionContent = () => {
   const [loading, setLoading] = useState(false);
   const [readingDone, setReadingDone] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
+  // const [popupVisible, setPopupVisible] = useState(false);
   const wpmRef = useRef(wpm);
 
   // Added: Create a ref for the Calibration component
@@ -110,6 +115,7 @@ const UserSessionContent = () => {
 
       console.log("WebGazer found. Setting up...");
       webgazer
+        .showVideoPreview(false)
         .begin()
         .then(() => console.log("WebGazer started!"))
         .catch((err: any) => console.error("WebGazer failed to start:", err));
@@ -324,7 +330,7 @@ const UserSessionContent = () => {
     <>
       <Script
         src="https://webgazer.cs.brown.edu/webgazer.js"
-        strategy="beforeInteractive" // ensures script is loaded early
+        // strategy="beforeInteractive" // ensures script is loaded early
         onLoad={() => console.log("WebGazer script loaded (beforeInteractive)!")}
         onError={() => console.error("Failed to load WebGazer script.")}
       />
@@ -397,9 +403,9 @@ const UserSessionContent = () => {
                 </option>
               ))}
             </select>
-            <HelpPopup message="Mode 1: Read at a fixed WPM \n
+            {/* <HelpPopup message="Mode 1: Read at a fixed WPM \n
             Mode 2: Use eye-tracking software to dynamically adjust reading speed \n
-            Mode 3 (Non-fiction only): Summarise the text for even faster comprehension" />
+            Mode 3 (Non-fiction only): Summarise the text for even faster comprehension" /> */}
           </div>
 
           {/* WPM Input */}
@@ -424,7 +430,7 @@ const UserSessionContent = () => {
                   setWpm(numericValue);
                 }
               }}            />
-            <HelpPopup message="Use the WASD keys to tune your reading speed during the session" />
+            {/* <HelpPopup message="Use the WASD keys to tune your reading speed during the session" /> */}
           </div>
 
           {/* Fiction Checkbox */}
@@ -526,6 +532,52 @@ const UserSessionContent = () => {
         ) : <></>
       }
         <div className="w-full flex justify-center flex-col items-center">
+          {!sessionStarted ? (
+            <div className="w-full bg-gray-200 p-8 rounded-lg shadow-lg">
+              <p className="text-3xl text-gray-800 whitespace-pre-wrap text-center leading-relaxed font-semibold">
+                {"Mode " + mode + " Reading"}
+              </p>
+
+              {mode === 1 && (
+                <>
+                  <p className="text-sm text-gray-600 mt-4 text-center font-semibold">
+                    Read at a fixed speed
+                  </p>
+                  <ul className="text-sm text-gray-600 mt-2 list-inside text-center mx-auto max-w-lg">
+                    <li> - Use the settings bar to choose your starting WPM</li>
+                    <li> - Manually adjust your WPM using WASD</li>
+                  </ul>
+                </>
+              )}
+
+              {mode === 2 && (
+                <>
+                  <p className="text-sm text-gray-600 mt-4 text-center font-semibold">
+                    Use eye tracking software to dynamically adjust reading speed
+                  </p>
+                  <ul className="text-sm text-gray-600 mt-2 list-inside text-center mx-auto max-w-lg">
+                    <li> - Your reading speed will automatically adjust by tracking the position of your eyes</li>
+                    <li> - Ensure your browser can access a webcam, then click Recalibrate before you begin</li>
+                    <li> - Manually adjust your WPM using WASD</li>
+                  </ul>
+                </>
+              )}
+
+              {mode === 3 && (
+                <>
+                  <p className="text-sm text-gray-600 mt-4 text-center font-semibold">
+                    Summarise the text for even faster comprehension (Non-fiction only)
+                  </p>
+                  <ul className="text-sm text-gray-600 mt-2 list-inside text-center mx-auto max-w-lg">
+                    <li> - Use the settings bar to choose your starting WPM</li>
+                    <li> - Manually adjust your WPM using WASD</li>
+                    <li> - Non-fiction texts will be summarised to help you learn faster</li>
+                  </ul>
+                </>
+              )}
+            </div>
+          ) : null}
+
           {progressStage === 1 ? (
             // Session Start Box
             <>
@@ -579,10 +631,19 @@ const UserSessionContent = () => {
 };
 
 const UserSession = () => {
+  const { user } = useAuth();
   return (
-    <ReadingSessionProvider>
-      <UserSessionContent />
-    </ReadingSessionProvider>
+    <div>
+      {user ? (
+        <UserProvider>
+          <ReadingSessionProvider>
+            <UserSessionContent />
+          </ReadingSessionProvider>
+        </UserProvider>
+      ) : (
+        <AccessDenied />
+      )}
+    </div>
   );
 };
 
