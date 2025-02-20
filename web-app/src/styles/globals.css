@@ -1,0 +1,45 @@
+/* src/styles/globals.css */
+
+/* Global Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  /* Root Styles */
+  :root {
+    --primary-color: #4a90e2;
+    --secondary-color: #f4f4f4;
+    --font-family-monospace: var(--font-roboto-mono), monospace;
+  }
+  
+  /* Global Body Styles */
+  body {
+    font-family: var(--font-family-monospace);
+    background-color: var(--secondary-color);
+    color: #333;
+    line-height: 1.6;
+    padding: 20px;
+  }
+  
+  /* Utility Classes */
+  .container {
+    width: 80%;
+    margin: 0 auto;
+  }
+  
+  .btn {
+    display: inline-block;
+    font-family: var(--font-family-monospace);
+    background-color: var(--primary-color);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    transition: background 0.3s;
+  }
+  
+  .btn:hover {
+    background-color: #357ae8;
+  }
+  

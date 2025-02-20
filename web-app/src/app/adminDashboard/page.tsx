@@ -7,12 +7,13 @@ import {
 } from "@/contexts/adminDashboardContext";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/authContext";
-import AccessDenied from "@/components/errors/accessDenied";
+import AccessDenied from "@/components/pages/errors/accessDenied";
 import { User } from "@/types/user";
-import { Session } from "@/types/sessions"; // Assuming correct import
+import { Session } from "@/types/sessions";
 import { Timestamp } from "firebase/firestore";
-import UserInfoSessionWidget from "@/components/UserInfoSessionWidget"; // Assuming correct import
-
+import UserInfoModal from "@/components/UserInfoAdminModal";
+import { userService } from "@/services/userService";
+import UserTable from "@/components/UserTable";
 import {
   LineChart,
   Line,
@@ -24,6 +25,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import Button from "@/components/common/Button";
 
 const AdminDashboardContent = () => {
   const { texts, users, removeUser } = useAdminDashboard();
@@ -41,6 +43,7 @@ const AdminDashboardContent = () => {
     readingSessions: false,
     dateJoined: false,
   });
+
   const router = useRouter();
 
   useEffect(() => {
@@ -51,8 +54,9 @@ const AdminDashboardContent = () => {
     setUserMetrics({ totalUsers, newUsers });
   }, [users]);
 
-  const handleManageClick = (user: User) => {
+  const handleManageClick = async (user: User) => {
     setSelectedUser(user);
+    setSelectedUserSessions(await userService.getUserReadingSessions(user.id));
     setIsPopupOpen(true);
   };
 
@@ -62,7 +66,8 @@ const AdminDashboardContent = () => {
 
   const sortedUsers = [...users].sort((a, b) => {
     return (
-      new Date(a.joinDate.toDate()).getTime() - new Date(b.joinDate.toDate()).getTime()
+      new Date(a.joinDate.toDate()).getTime() -
+      new Date(b.joinDate.toDate()).getTime()
     );
   });
 
@@ -86,7 +91,7 @@ const AdminDashboardContent = () => {
       difficulty: "Medium",
       wpm: 72,
       comprehensionScore: 88,
-      sessionDate: Timestamp.fromDate(new Date("2025-02-01T14:00:00Z")), // Firebase Timestamp
+      sessionDate: Timestamp.fromDate(new Date("2025-02-01T14:00:00Z")),
     },
     {
       id: 2,
@@ -117,50 +122,55 @@ const AdminDashboardContent = () => {
     { month: "Jun", newUsers: 120 },
   ];
 
-  const performanceData = [
-    { name: "User 1", score: 80 },
-    { name: "User 2", score: 85 },
-    { name: "User 3", score: 70 },
-    { name: "User 4", score: 95 },
-    { name: "User 5", score: 60 },
+  // Mocked data for text genres (will be ranked in a table)
+  const textGenresData = [
+    { genre: "Fiction", count: 45 },
+    { genre: "History", count: 30 },
+    { genre: "Science", count: 20 },
+    { genre: "Non-fiction", count: 35 },
+    { genre: "Fantasy", count: 25 },
   ];
 
+  // Sort text genres in descending order by count
+  const sortedTextGenres = [...textGenresData].sort(
+    (a, b) => b.count - a.count
+  );
+
+  // Mocked data for peak activity times (kept as bar chart)
+  const peakActivityData = [
+    { time: "6 AM", count: 10 },
+    { time: "9 AM", count: 20 },
+    { time: "12 PM", count: 50 },
+    { time: "3 PM", count: 40 },
+    { time: "6 PM", count: 30 },
+    { time: "9 PM", count: 15 },
+  ];
+
+  // A helper function to get medal based on rank
+  const getMedal = (rank: number) => {
+    if (rank === 1) return "🥇";
+    if (rank === 2) return "🥈";
+    if (rank === 3) return "🥉";
+    return null;
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Hero Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-indigo-600 py-8 shadow-lg">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl font-bold text-white">Admin Dashboard</h1>
+    <div className="min-h-screen mt-[7vh] bg-background">
+      <header className="bg-sr-gradient py-8 shadow-lg">
+        <div className="container px-20 text-left">
+          <h1 className="text-4xl font-bold text-white">Admin Portal</h1>
           <p className="mt-2 text-lg text-gray-200">
-            Manage users, texts, and performance metrics
+            Manage users and track platform performance
           </p>
         </div>
       </header>
-
-      {/* Main Container */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <button
-            className="w-full sm:w-auto bg-blue-500 text-white px-6 py-3 rounded-md transition hover:bg-blue-600"
-            onClick={() => router.push("adminDashboard/textManagement")}
-          >
-            Manage Texts
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-lg font-semibold mb-2">Total Users</h2>
-            <p className="text-4xl font-bold">{userMetrics.totalUsers}</p>
-          </div>
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-lg font-semibold mb-2">New Users (Last 28 days)</h2>
-            <p className="text-4xl font-bold">{userMetrics.newUsers}</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <div className="bg-white shadow-md rounded-lg p-6">
+      <div className="py-8 px-20">
+        <Button
+          displayText="Manage Texts"
+          href="/adminDashboard/textManagement"
+        />
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="bg-widget shadow-md rounded-lg p-6">
             <h2 className="text-lg font-semibold mb-4">User Growth Trend</h2>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={userTrendData}>
@@ -168,138 +178,110 @@ const AdminDashboardContent = () => {
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="newUsers" stroke="#4A90E2" strokeWidth={2} />
+                <Line
+                  type="monotone"
+                  dataKey="newUsers"
+                  stroke="#3e0075"
+                  strokeWidth={2}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-lg font-semibold mb-4">User Performance</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={performanceData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="score" fill="#36A2EB" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">User Details</h2>
-          <div className="mb-4">
-            <button
-              className="bg-green-500 text-white px-4 py-2 rounded-md transition hover:bg-green-600"
-              onClick={handleSort}
-            >
-              Sort by Date Joined
-            </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full table-auto border-collapse border border-gray-200">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Username</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">WPM</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Join Date</th>
-                  <th className="border border-gray-300 px-4 py-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedUsers.map((user, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="border border-gray-300 px-4 py-2">{user.name}</td>
-                    <td className="border border-gray-300 px-4 py-2">{user.wpm}</td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      {user.joinDate.toDate().toLocaleDateString()}
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2 text-center">
-                      <button
-                        className="bg-blue-500 text-white px-3 py-1 rounded-md transition hover:bg-blue-600"
-                        onClick={() => handleManageClick(user)}
-                      >
-                        Manage
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        
-      </main>
-
-      {/* More Info Popup */}
-      {isPopupOpen && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-5xl h-5/6 overflow-y-auto flex flex-col gap-4">
-            <h2 className="text-lg font-semibold mb-4">Past Sessions for {selectedUser.name}</h2>
-            <div className="flex gap-6">
-              <div className="w-1/3 flex flex-col gap-4">
-                <h3 className="text-md font-medium mb-2">Past Sessions</h3>
-                <div className="flex flex-col gap-4">
-                  {dummySessions.map((session) => (
-                    <div key={session.id} className="bg-gray-100 shadow rounded-lg p-4">
-                      <div className="flex justify-between items-center mb-4">
-                        <span className="text-sm text-gray-600 font-medium">Session {session.id}</span>
-                        <span className="text-sm text-gray-600">{session.difficulty}</span>
-                      </div>
-                      <div className="text-lg font-semibold text-center text-blue-600">{session.wpm} WPM</div>
-                      <div className="text-center text-gray-700 text-sm">
-                        Comprehension Score: {session.comprehensionScore}
-                      </div>
-                      <div className="mt-2 text-xs text-gray-500 text-center">
-                        {session.sessionDate.toDate().toLocaleString()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="w-2/3">
-                <h3 className="text-md font-medium mb-4">WPM Progress</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart
-                    data={dummySessions.map((s, i) => ({ session: `S${i + 1}`, wpm: s.wpm }))}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="session" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="wpm" stroke="#4A90E2" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
+          <div className="bg-widget shadow-md rounded-lg p-6">
+            {/* Column 2: Text Genres Table */}
+            <div className="bg-widget shadow rounded-lg p-6">
+              <h2 className="text-lg font-semibold mb-4">
+                Most Popular Text Genres
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Rank
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Genre
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Count
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Medal
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-widget divide-y divide-gray-200">
+                    {sortedTextGenres.map((item, index) => (
+                      <tr key={item.genre} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          {index + 1}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          {item.genre}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          {item.count}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          {getMedal(index + 1)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
-            <button
-              className="self-end bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
-              onClick={() => setIsPopupOpen(false)}
-            >
-              Close
-            </button>
+          </div>
+          <div className="bg-widget shadow-md rounded-lg p-6">
+            {/* Column 3: Peak Activity Times */}
+            <div className="bg-widget shadow rounded-lg p-6">
+              <h2 className="text-lg font-semibold mb-4">
+                Peak Activity Times
+              </h2>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={peakActivityData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="time" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="#8e1dff" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
-      )}
+        <div className="mt-8 bg-widget shadow-md rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">User Management</h2>
+          <h2 className="text-lg font-semibold mb-4">Total Users</h2>
+          <p className="text-2xl font-bold">{userMetrics.totalUsers}</p>
+          <h2 className="text-lg font-semibold mb-4">
+            New Users (Last 28 Days)
+          </h2>
+          <p className="text-2xl font-bold">{userMetrics.newUsers}</p>
+          <UserTable users={users} handleManageClick={handleManageClick} />
+        </div>
+      </div>
+      <UserInfoModal
+        user={selectedUser}
+        sessions={selectedUserSessions}
+        isOpen={isPopupOpen}
+        onClose={() => setIsPopupOpen(false)}
+      />
     </div>
   );
 };
 
-function AdminDashboard() {
+const AdminDashboard = () => {
   const { user } = useAuth();
-  return (
-    <>
-      {user?.isAdmin ? (
-        <AdminDashboardProvider>
-          <AdminDashboardContent />
-        </AdminDashboardProvider>
-      ) : (
-        <AccessDenied />
-      )}
-    </>
+  return user?.isAdmin ? (
+    <AdminDashboardProvider>
+      <AdminDashboardContent />
+    </AdminDashboardProvider>
+  ) : (
+    <AccessDenied />
   );
-}
+};
 
 export default AdminDashboard;
