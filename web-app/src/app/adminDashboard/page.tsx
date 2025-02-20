@@ -254,14 +254,19 @@ const AdminDashboardContent = () => {
         </div>
         <div className="mt-8 bg-widget shadow-md rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4">User Management</h2>
-          <h2 className="text-lg font-semibold mb-4">Total Users</h2>
-          <p className="text-2xl font-bold">{userMetrics.totalUsers}</p>
-          <h2 className="text-lg font-semibold mb-4">
-            New Users (Last 28 Days)
-          </h2>
-          <p className="text-2xl font-bold">{userMetrics.newUsers}</p>
+          <div className="flex flex-wrap gap-8 mb-8"> {/* Increased spacing below this section */}
+            <div>
+              <h2 className="text-lg font-semibold mb-2">Total Users</h2>
+              <p className="text-2xl font-bold">{userMetrics.totalUsers}</p>
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold mb-2">New Users (Last 28 Days)</h2>
+              <p className="text-2xl font-bold">{userMetrics.newUsers}</p>
+            </div>
+          </div>
           <UserTable users={users} handleManageClick={handleManageClick} />
         </div>
+
       </div>
       <UserInfoModal
         user={selectedUser}
