@@ -351,7 +351,7 @@ const UserSessionContent = () => {
     <>
       <Script
         src="https://webgazer.cs.brown.edu/webgazer.js"
-        strategy="beforeInteractive" // ensures script is loaded early
+        //strategy="beforeInteractive" // ensures script is loaded early
         onLoad={() =>
           console.log("WebGazer script loaded (beforeInteractive)!")
         }
