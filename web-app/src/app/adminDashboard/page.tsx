@@ -190,7 +190,7 @@ const AdminDashboardContent = () => {
 
           <div className="bg-widget shadow-md rounded-lg p-6">
             {/* Column 2: Text Genres Table */}
-            <div className="bg-white shadow rounded-lg p-6">
+            <div className="bg-widget shadow rounded-lg p-6">
               <h2 className="text-lg font-semibold mb-4">
                 Most Popular Text Genres
               </h2>
@@ -212,7 +212,7 @@ const AdminDashboardContent = () => {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-widget divide-y divide-gray-200">
                     {sortedTextGenres.map((item, index) => (
                       <tr key={item.genre} className="hover:bg-gray-50">
                         <td className="px-4 py-2 whitespace-nowrap">
@@ -236,7 +236,7 @@ const AdminDashboardContent = () => {
           </div>
           <div className="bg-widget shadow-md rounded-lg p-6">
             {/* Column 3: Peak Activity Times */}
-            <div className="bg-white shadow rounded-lg p-6">
+            <div className="bg-widget shadow rounded-lg p-6">
               <h2 className="text-lg font-semibold mb-4">
                 Peak Activity Times
               </h2>
