@@ -15,7 +15,7 @@ export const ExistingTextCard = ({ text, onUpdate, onRemove }: ExistingTextCardP
       <h3 className="text-xl font-semibold mb-2 text-gray-800">{text.title}</h3>
       <p className="mb-2 text-gray-700">{firstLine}</p>
       <p className="text-sm text-gray-600">
-        <strong>Category:</strong> {text.category}
+        <strong>{text.isFiction ? "Genre" : "Category"}:</strong> {text.isFiction ? text.genre : text.category}
       </p>
       <p className="text-sm text-gray-600">
         <strong>Difficulty:</strong> {text.difficulty}

@@ -5,6 +5,7 @@ import { sessionService } from "@/services/sessionService";
 
 import { Text, Category, Difficulty, Genre } from "@/types/text";
 import { Session } from "@/types/sessions";
+import { useAuth } from "./authContext";
 
 interface ReadingSessionsContextType {
   recentSessions: Session[];
@@ -35,11 +36,13 @@ export const useReadingContext = () => {
 export const ReadingSessionProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
+  const { user } = useAuth();
   const [recentSessions, setRecentSessions] = useState<Session[]>([]);
   const [text, setText] = useState<Text | null>(null);
 
   useEffect(() => {
-    const unsubscribe = sessionService.getRecentSessions(setRecentSessions);
+    console.log(user);
+    const unsubscribe = sessionService.getRecentSessions(setRecentSessions, user ? user.id : "");
     return () => unsubscribe();
   }, []);
 

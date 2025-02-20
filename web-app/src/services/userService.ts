@@ -14,8 +14,11 @@ import {
 } from "firebase/firestore";
 import { app } from "@/../firebase.config";
 import { User } from "@/types/user";
+import { Session } from "@/types/sessions";
 
-const db = getFirestore(app);
+import { db } from "@/../firebase.config";
+
+// const db = getFirestore(app);
 
 export const userService = {
   getUsers: (onUpdate: (users: User[]) => void) => {
@@ -123,4 +126,47 @@ export const userService = {
       throw error; // Re-throw the error for handling upstream
     }
   },
+
+  toggleAdmin: async (id: string, val: boolean): Promise<boolean> => {
+    try {
+      await updateDoc(doc(db, "Users", id), { isAdmin: val });
+      return true;
+    } catch (error) {
+      console.error("Error making user admin:", error);
+      return false;
+    }
+  },
+
+  getUserReadingSessions: async (id: string): Promise<Session[]> => { 
+    try {
+      const sessionsQuery = query(
+        collection(db, "ReadingSessions"),
+        where("userId", "==", id)
+      );
+      const sessionsSnapshot = await getDocs(sessionsQuery);
+
+      const sessions = sessionsSnapshot.docs.map((doc) => {
+        const data = doc.data();
+        
+        // Create a new `Session` instance using the constructor
+        return new Session(
+          data.textId,
+          data.userId,
+          data.title,
+          data.startTime,
+          data.endTime,
+          data.wpm,
+          data.sessionType,
+          data.difficulty,
+          doc.id,
+          data.results,
+        );
+      });
+      return sessions;
+    } catch (error) {
+      console.error("Error getting user reading sessions:", error);
+      return [];
+    }
+  }
+
 };
