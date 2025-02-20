@@ -15,7 +15,7 @@ import Calibration, { CalibrationRef } from "./Calibration"; // Modified import 
 // import HelpPopup from "@/components/helpPopup"
 import { useAuth } from "@/contexts/authContext";
 import { useUserContext, UserProvider } from "@/contexts/userContext";
-import AccessDenied from "@/components/errors/accessDenied";
+import AccessDenied from "@/components/pages/errors/accessDenied";
 
 // import InfoPopup from "@/components/infoPopup"
 
