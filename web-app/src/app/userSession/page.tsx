@@ -12,6 +12,9 @@ import Calibration, { CalibrationRef } from "./Calibration"; // Modified import 
 import { SessionStats } from "@/components/SessionStats";
 // import HelpPopup from "@/components/helpPopup" 
 import { useAuth } from "@/contexts/authContext";
+import { useUserContext, UserProvider } from "@/contexts/userContext";
+import AccessDenied from "@/components/errors/accessDenied";
+
 // import InfoPopup from "@/components/infoPopup"
 import { useRouter } from "next/navigation";
 
@@ -116,6 +119,7 @@ const UserSessionContent = () => {
 
       console.log("WebGazer found. Setting up...");
       webgazer
+        .showVideoPreview(false)
         .begin()
         .then(() => console.log("WebGazer started!"))
         .catch((err: any) => console.error("WebGazer failed to start:", err));
@@ -330,7 +334,7 @@ const UserSessionContent = () => {
     <>
       <Script
         src="https://webgazer.cs.brown.edu/webgazer.js"
-        strategy="beforeInteractive" // ensures script is loaded early
+        // strategy="beforeInteractive" // ensures script is loaded early
         onLoad={() => console.log("WebGazer script loaded (beforeInteractive)!")}
         onError={() => console.error("Failed to load WebGazer script.")}
       />
@@ -632,10 +636,19 @@ const UserSessionContent = () => {
 };
 
 const UserSession = () => {
+  const { user } = useAuth();
   return (
-    <ReadingSessionProvider>
-      <UserSessionContent />
-    </ReadingSessionProvider>
+    <div>
+      {user ? (
+        <UserProvider>
+          <ReadingSessionProvider>
+            <UserSessionContent />
+          </ReadingSessionProvider>
+        </UserProvider>
+      ) : (
+        <AccessDenied />
+      )}
+    </div>
   );
 };
 
