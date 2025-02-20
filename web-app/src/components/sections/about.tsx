@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Button from "../common/Button";
 
 interface AboutProps {
@@ -11,7 +10,7 @@ interface AboutProps {
 function About({ loggedIn, user }: AboutProps) {
   return (
     <section className="h-sr-screen py-[10%]">
-      <div className="h-full bg-background rounded-2xl mx-5 md:mx-20 shadow-lg text-white py-[5%]">
+      <div className="h-full bg-background rounded-2xl mx-5 md:mx-20 shadow-lg py-[5%]">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-6">
             Why Choose SwiftReader?
