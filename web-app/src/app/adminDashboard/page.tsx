@@ -243,7 +243,7 @@ const AdminDashboardContent = () => {
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={peakActivityData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="time" />
+                  <XAxis dataKey="time" interval={0} tick={{textAnchor: "middle" }} />
                   <YAxis />
                   <Tooltip />
                   <Bar dataKey="count" fill="#8e1dff" />
