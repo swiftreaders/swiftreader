@@ -1,62 +1,80 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/authContext";
+import Image from "next/image";
 
-const Navbar: React.FC = () => {
+import { logo } from "@/../public/assets";
+
+interface NavItemProps {
+  href: string;
+  name: string;
+  className?: string;
+}
+const NavItem: React.FC<NavItemProps> = ({ href, name, className }) => {
+  return (
+    <li>
+      <Link
+        href={href}
+        className={`italic font-bold text-white hover:text-hovertext transition duration-200 ${className}`}
+      >
+        {name}
+      </Link>
+    </li>
+  );
+};
+
+const Navbar = () => {
   const { user, loggedIn } = useAuth();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 10) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   return (
-    <nav className="bg-white shadow-md p-4 flex justify-between items-center">
-      {/* Branding */}
-      <div className="text-blue-600 text-2xl font-bold">
-        <Link href="/">SwiftReader</Link>
+    <nav
+      className={`${
+        scrolled ? "navbarScrolled" : "navbar"
+      } px-20 xy-4 flex justify-between items-center text-white`}
+    >
+      <div>
+        {/* Branding */}
+        <Link href="/">
+          <Image src={logo} alt="Logo" width={120} height={120} />
+        </Link>
       </div>
 
       {/* Navigation Links */}
       <ul className="flex space-x-6">
-        <li>
-          <Link href="/about" className="text-gray-700 hover:text-blue-600 transition duration-200">
-            About
-          </Link>
-        </li>
-        <li>
-          <Link href="/features" className="text-gray-700 hover:text-blue-600 transition duration-200">
-            Features
-          </Link>
-        </li>
-        {loggedIn && user && (
-          <li>
-            <Link
-              href="/userDashboard"
-              className="text-gray-700 hover:text-blue-600 transition duration-200"
-            >
-              User Dashboard
-            </Link>
-          </li>
-        )}
+        <NavItem href="/about" name="about" />
+        <NavItem href="/features" name="features" />
+        {loggedIn && user && <NavItem href="/userDashboard" name="dashboard" />}
         {loggedIn && user && user.isAdmin && (
-          <li>
-            <Link
-              href="/adminDashboard"
-              className="text-gray-700 hover:text-blue-600 transition duration-200"
-            >
-              Admin Dashboard
-            </Link>
-          </li>
+          <NavItem
+            href="/adminDashboard"
+            name="admin portal"
+            className="bg-admin-gradient rounded-full px-4 py-2"
+          />
         )}
-        <li>
-          {loggedIn ? (
-            <Link href="/auth/logout" className="text-gray-700 hover:text-blue-600 transition duration-200">
-              Logout
-            </Link>
-          ) : (
-            <Link href="/auth/login" className="text-gray-700 hover:text-blue-600 transition duration-200">
-              Login
-            </Link>
-          )}
-        </li>
+        {loggedIn ? (
+          <NavItem href="/auth/logout" name="logout" />
+        ) : (
+          <NavItem href="/auth/login" name="login" />
+        )}
       </ul>
     </nav>
   );
