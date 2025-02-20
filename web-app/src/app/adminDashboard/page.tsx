@@ -7,7 +7,7 @@ import {
 } from "@/contexts/adminDashboardContext";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/authContext";
-import AccessDenied from "@/components/errors/accessDenied";
+import AccessDenied from "@/components/pages/errors/accessDenied";
 import { User } from "@/types/user";
 import { Session } from "@/types/sessions";
 import { Timestamp } from "firebase/firestore";
@@ -25,7 +25,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
+import Button from "@/components/common/Button";
 
 const AdminDashboardContent = () => {
   const { texts, users, removeUser } = useAdminDashboard();
@@ -36,17 +36,20 @@ const AdminDashboardContent = () => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isRemovePopupOpen, setIsRemovePopupOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedUserSessions, setSelectedUserSessions] = useState<Session[]>([]);
+  const [selectedUserSessions, setSelectedUserSessions] = useState<Session[]>(
+    []
+  );
   const [sortBy, setSortBy] = useState({
     readingSessions: false,
     dateJoined: false,
   });
+
   const router = useRouter();
 
   useEffect(() => {
     const totalUsers = users.length;
     const newUsers = users.filter(
-      (user) => Date.now() - user.joinDate.toMillis() < 2419200000 // 28 days
+      (user) => Date.now() - user.joinDate.toMillis() < 2419200000
     ).length;
     setUserMetrics({ totalUsers, newUsers });
   }, [users]);
@@ -63,7 +66,8 @@ const AdminDashboardContent = () => {
 
   const sortedUsers = [...users].sort((a, b) => {
     return (
-      new Date(a.joinDate.toDate()).getTime() - new Date(b.joinDate.toDate()).getTime()
+      new Date(a.joinDate.toDate()).getTime() -
+      new Date(b.joinDate.toDate()).getTime()
     );
   });
 
@@ -128,7 +132,9 @@ const AdminDashboardContent = () => {
   ];
 
   // Sort text genres in descending order by count
-  const sortedTextGenres = [...textGenresData].sort((a, b) => b.count - a.count);
+  const sortedTextGenres = [...textGenresData].sort(
+    (a, b) => b.count - a.count
+  );
 
   // Mocked data for peak activity times (kept as bar chart)
   const peakActivityData = [
@@ -149,127 +155,130 @@ const AdminDashboardContent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-work-sans">
-      {/* Hero Header */}
-      <header className="bg-gradient-to-r from-indigo-600 to-blue-500 py-6 shadow">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
+    <div className="min-h-screen mt-[7vh] bg-background">
+      <header className="bg-sr-gradient py-8 shadow-lg">
+        <div className="container px-20 text-left">
+          <h1 className="text-4xl font-bold text-white">Admin Portal</h1>
           <p className="mt-2 text-lg text-gray-200">
-            Overview and management of user activities
+            Manage users and track platform performance
           </p>
         </div>
       </header>
+      <div className="py-8 px-20">
+        <Button
+          displayText="Manage Texts"
+          href="/adminDashboard/textManagement"
+        />
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="bg-widget shadow-md rounded-lg p-6">
+            <h2 className="text-lg font-semibold mb-4">User Growth Trend</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={userTrendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Line
+                  type="monotone"
+                  dataKey="newUsers"
+                  stroke="#3e0075"
+                  strokeWidth={2}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
 
-      {/* Main Container */}
-      <main className="container mx-auto px-4 py-6">
-        {/* Top Action Bar & Metrics Summary */}
-        {/* Top Action Bar & Metrics Summary */}
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-          <button
-            className="bg-blue-600 text-white px-5 py-2 rounded-md hover:bg-blue-700 transition"
-            onClick={() => router.push("adminDashboard/textManagement")}
-          >
-            Manage Texts
-          </button>
-          <div className="flex gap-4 mt-4 sm:mt-0">
-            <div className="bg-white shadow p-4 rounded-md">
-              <h2 className="text-sm text-gray-500">Total Users</h2>
-              <p className="text-xl font-semibold">{userMetrics.totalUsers}</p>
+          <div className="bg-widget shadow-md rounded-lg p-6">
+            {/* Column 2: Text Genres Table */}
+            <div className="bg-widget shadow rounded-lg p-6">
+              <h2 className="text-lg font-semibold mb-4">
+                Most Popular Text Genres
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Rank
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Genre
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Count
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Medal
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-widget divide-y divide-gray-200">
+                    {sortedTextGenres.map((item, index) => (
+                      <tr key={item.genre} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          {index + 1}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          {item.genre}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          {item.count}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          {getMedal(index + 1)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <div className="bg-white shadow p-4 rounded-md">
-              <h2 className="text-sm text-gray-500">New Users (28d)</h2>
-              <p className="text-xl font-semibold">{userMetrics.newUsers}</p>
+          </div>
+          <div className="bg-widget shadow-md rounded-lg p-6">
+            {/* Column 3: Peak Activity Times */}
+            <div className="bg-widget shadow rounded-lg p-6">
+              <h2 className="text-lg font-semibold mb-4">
+                Peak Activity Times
+              </h2>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={peakActivityData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="time" interval={0} tick={{textAnchor: "middle" }} />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="#8e1dff" />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Column 1: User Growth Trend */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">User Growth Trend</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={userTrendData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Line 
-                type="monotone" 
-                dataKey="newUsers" 
-                stroke="#4A90E2" 
-                strokeWidth={2}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Column 2: Text Genres Table */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">Most Popular Text Genres</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Rank
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Genre
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Count
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Medal
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {sortedTextGenres.map((item, index) => (
-                  <tr key={item.genre} className="hover:bg-gray-50">
-                    <td className="px-4 py-2 whitespace-nowrap">{index + 1}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">{item.genre}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">{item.count}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">
-                      {getMedal(index + 1)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="mt-8 bg-widget shadow-md rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">User Management</h2>
+          <div className="flex flex-wrap gap-8 mb-8"> {/* Increased spacing below this section */}
+            <div>
+              <h2 className="text-lg font-semibold mb-2">Total Users</h2>
+              <p className="text-2xl font-bold">{userMetrics.totalUsers}</p>
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold mb-2">New Users (Last 28 Days)</h2>
+              <p className="text-2xl font-bold">{userMetrics.newUsers}</p>
+            </div>
           </div>
+          <UserTable users={users} handleManageClick={handleManageClick} />
         </div>
 
-        {/* Column 3: Peak Activity Times */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">Peak Activity Times</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={peakActivityData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="time" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="count" fill="#FF6384" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
       </div>
-
-        {/* User Details Table */}
-        <UserTable users={users} handleManageClick={handleManageClick} />
-      </main>
-
-      {/* More Info Popup */}
       <UserInfoModal
         user={selectedUser}
         sessions={selectedUserSessions}
         isOpen={isPopupOpen}
         onClose={() => setIsPopupOpen(false)}
-      />;
+      />
     </div>
   );
 };
 
-function AdminDashboard() {
+const AdminDashboard = () => {
   const { user } = useAuth();
   return user?.isAdmin ? (
     <AdminDashboardProvider>
@@ -278,6 +287,6 @@ function AdminDashboard() {
   ) : (
     <AccessDenied />
   );
-}
+};
 
 export default AdminDashboard;
