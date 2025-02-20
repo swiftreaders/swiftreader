@@ -1,5 +1,6 @@
 "use client";
 
+import Footer from "@/components/Footer";
 import React from "react";
 
 interface TeamMember {
@@ -12,39 +13,46 @@ const teamMembers: TeamMember[] = [
   { name: "Siddhant", course: "Joint Maths and Computing" },
   { name: "Hardiv", course: "Computing" },
   { name: "Vivian", course: "Computing" },
-  { name: "Toan" , course: "Joint Maths and Computing" },
+  { name: "Toan", course: "Joint Maths and Computing" },
   { name: "Kevin", course: "Computing" },
 ];
 
 const About: React.FC = () => {
   return (
-    <main className="min-h-screen bg-gray-50 font-sans">
+    <main className="h-sr-screen mt-[7vh] bg-sr-gradient">
       {/* Hero Section */}
-      <section className="bg-blue-600 text-white py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl font-bold">About SwiftReader</h1>
-          <p className="mt-4 text-xl">
-            Innovating the way we read faster and smarter.
+      <section className="text-white py-20">
+        <div className="container mx-auto px-6 text-center">
+          <h1 className="text-5xl font-extrabold leading-tight">
+            About SwiftReader
+          </h1>
+          <p className="mt-4 text-lg sm:text-xl max-w-3xl mx-auto">
+            Innovating the way we read faster and smarter. Join us in changing
+            the way you consume information!
           </p>
         </div>
       </section>
 
       {/* Team Section */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-8">Our Team</h2>
-          <p className="text-center text-lg text-gray-700 mb-8">
-            We are a group of 6 computing students from Imperial College, united by our passion for innovation and speed reading.
+      <section className="py-20 bg-background">
+        <div className="container mx-auto px-6 text-center text-text">
+          <h2 className="text-4xl font-bold mb-8">Our Team</h2>
+          <p className="text-lg mb-12">
+            We are a group of 6 computing students from Imperial College, united
+            by our passion for innovation and speed reading.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
             {teamMembers.map((member, index) => (
-              <div key={index} className="bg-white p-6 rounded shadow text-center">
+              <div
+                key={index}
+                className="bg-text text-background p-8 rounded-lg shadow-xl transform hover:scale-105 transition-all duration-300 ease-in-out"
+              >
                 {/* Placeholder for team member photo */}
-                <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <div className="w-32 h-32 bg-gray-200 rounded-full mx-auto mb-6 flex items-center justify-center">
                   <span className="text-gray-500">Photo</span>
                 </div>
                 <h3 className="text-2xl font-semibold">{member.name}</h3>
-                <p className="text-gray-600">{member.course}</p>
+                <p className="text-lg">{member.course}</p>
               </div>
             ))}
           </div>
@@ -52,26 +60,24 @@ const About: React.FC = () => {
       </section>
 
       {/* Supervisor Section */}
-      <section className="py-16 bg-gray-100">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-8">Our Supervisor</h2>
-          <div className="max-w-md mx-auto bg-white p-6 rounded shadow text-center">
+      <section className="py-20 bg-sr-gradient">
+        <div className="container mx-auto px-6 text-center">
+          <h2 className="text-4xl font-bold text-white mb-8">Our Supervisor</h2>
+          <div className="max-w-xs mx-auto bg-white p-8 rounded-lg shadow-xl">
             {/* Placeholder for supervisor photo */}
-            <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
+            <div className="w-32 h-32 bg-gray-200 rounded-full mx-auto mb-6 flex items-center justify-center">
               <span className="text-gray-500">Photo</span>
             </div>
-            <h3 className="text-2xl font-semibold">Konstantinos</h3>
-            <p className="text-gray-600">Supervisor</p>
+            <h3 className="text-2xl font-semibold text-gray-900">
+              Konstantinos
+            </h3>
+            <p className="text-lg text-gray-600">Supervisor</p>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-8">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-gray-500">&copy; {new Date().getFullYear()} SwiftReader. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </main>
   );
 };

@@ -1,34 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { Search } from "lucide-react";
-import { User } from '@/types/user';
+import { User } from "@/types/user";
 
 type UserTableProps = {
-    users: User[];
-    handleManageClick: (user: User) => void;
+  users: User[];
+  handleManageClick: (user: User) => void;
 };
 
-const UserTable: React.FC<UserTableProps> = (
-    { users, handleManageClick }: UserTableProps
-) => {
+const UserTable: React.FC<UserTableProps> = ({
+  users,
+  handleManageClick,
+}: UserTableProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredUsers, setFilteredUsers] = useState(users);
 
   useEffect(() => {
-    const filtered = users.filter(user => 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.wpm?.toString().includes(searchTerm) ||
-      user.joinDate.toDate().toLocaleDateString().includes(searchTerm)
+    const filtered = users.filter(
+      (user) =>
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.wpm?.toString().includes(searchTerm) ||
+        user.joinDate.toDate().toLocaleDateString().includes(searchTerm)
     );
     setFilteredUsers(filtered);
   }, [searchTerm, users]);
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
+    <div className="bg-background shadow rounded-lg p-6">
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-semibold">User Details</h2>
         </div>
-        
+
         {/* Search Bar */}
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -63,7 +65,7 @@ const UserTable: React.FC<UserTableProps> = (
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-widget divide-y divide-gray-200">
             {filteredUsers.length > 0 ? (
               filteredUsers.map((user: User, index: number) => (
                 <tr key={index} className="hover:bg-gray-50 transition-colors">
@@ -74,7 +76,7 @@ const UserTable: React.FC<UserTableProps> = (
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <button
-                      className="bg-blue-500 text-white px-3 py-1 rounded-md transition hover:bg-blue-600"
+                      className="bg-secondary text-white px-3 py-1 rounded-md transition hover:bg-blue-600"
                       onClick={() => handleManageClick(user)}
                     >
                       Manage
