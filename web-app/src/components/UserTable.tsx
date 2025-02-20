@@ -25,7 +25,7 @@ const UserTable: React.FC<UserTableProps> = ({
   }, [searchTerm, users]);
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
+    <div className="bg-background shadow rounded-lg p-6">
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-semibold">User Details</h2>
@@ -65,7 +65,7 @@ const UserTable: React.FC<UserTableProps> = ({
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-widget divide-y divide-gray-200">
             {filteredUsers.length > 0 ? (
               filteredUsers.map((user: User, index: number) => (
                 <tr key={index} className="hover:bg-gray-50 transition-colors">

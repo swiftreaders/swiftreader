@@ -59,7 +59,7 @@ function Hero({ loggedIn, user }: HeroProps) {
           <h1 className="text-5xl md:text-6xl lg:text-6xl xl:text-8xl">
             read faster,
           </h1>
-          <h1 className="text-5xl md:text-6xl lg:text-6xl xl:text-8xl text-primary">
+          <h1 className="text-5xl md:text-6xl lg:text-6xl xl:text-8xl text-[#3e0075]">
             learn more
           </h1>
           <h3 className="text-l md:text-xl lg:text-2xl xl:text-3xl mt-5 pb-20">
