@@ -35,6 +35,14 @@ interface UserMetrics {
   userTrendData: { month: string; newUsers: number }[];
 }
 
+const numberToMonth = (month: number) => {
+  const months = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
+  return months[month];
+}
+
 const AdminDashboardContent = () => {
   const { texts } = useAdminDashboard();
   const { users } = useUserContext();
@@ -103,24 +111,25 @@ const AdminDashboardContent = () => {
 
   const generateMonthlyJoinStats = () => {
     const monthlyStats: { [key: string]: number } = {};
-    
+
     users.forEach(user => {
       const joinDate = user.joinDate.toDate();
       const monthKey = `${joinDate.getFullYear()}-${String(joinDate.getMonth() + 1).padStart(2, '0')}`;
-      
+
       if (monthlyStats[monthKey]) {
         monthlyStats[monthKey]++;
       } else {
         monthlyStats[monthKey] = 1;
       }
     });
+
     const monthlyData = Object.keys(monthlyStats)
       .sort() // Sort chronologically
       .map(month => ({
-        month,
+        month: `${month.split('-')[0]}-${numberToMonth(parseInt(month.split('-')[1]) - 1)}`,
         newUsers: monthlyStats[month]
       }));
-    
+
     return monthlyData;
   };
 
@@ -170,6 +179,18 @@ const AdminDashboardContent = () => {
     return null;
   };
 
+  const CustomLineTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-[#3e0075] text-white p-3 rounded-lg shadow-xl">
+          <p className="font-semibold">{label}</p>
+          <p>{payload[0].value} New Users</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="min-h-screen mt-[7vh] bg-background">
       <header className="bg-sr-gradient py-8 shadow-lg">
@@ -191,16 +212,49 @@ const AdminDashboardContent = () => {
             <h2 className="text-lg font-semibold mb-4">User Growth Trend</h2>
             <div className="flex-1">
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={userMetrics.userTrendData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
+                <LineChart
+                  data={userMetrics.userTrendData}
+                  margin={{ top: 20, right: 20, left: 20, bottom: 40 }}
+                >
+                  <defs>
+                    <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8e1dff" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#6a0dad" stopOpacity={0.8} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ 
+                      fill: '#6b7280',
+                      fontSize: 12,
+                      textAnchor: 'end'
+                    }}
+                    angle={-45}
+                    height={60}
+                  />
+                  <YAxis
+                    tick={{ fill: '#6b7280', fontSize: 12 }}
+                    label={{
+                      value: 'New Users',
+                      angle: -90,
+                      position: 'insideLeft',
+                      fill: '#6b7280',
+                      fontSize: 14
+                    }}
+                  />
+                  <Tooltip
+                    content={<CustomLineTooltip />}
+                    cursor={{ fill: '#f3e8ff', opacity: 0.4 }}
+                  />
                   <Line
                     type="monotone"
                     dataKey="newUsers"
-                    stroke="#3e0075"
+                    stroke="url(#lineGradient)"
                     strokeWidth={2}
+                    dot={{ fill: '#8e1dff', strokeWidth: 2, r: 5 }}
+                    activeDot={{ r: 8 }}
+                    animationDuration={400}
                   />
                 </LineChart>
               </ResponsiveContainer>
