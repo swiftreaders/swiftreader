@@ -38,7 +38,15 @@ export const userService = {
     const docRef = doc(db, "Users", id);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() } as User;
+      return new User(
+        docSnap.id,
+        docSnap.data().name,
+        docSnap.data().email,
+        docSnap.data().isAdmin,
+        docSnap.data().wpm,
+        docSnap.data().joinDate,
+        docSnap.data().readingGoal
+      );
     } else {
       return null;
     }

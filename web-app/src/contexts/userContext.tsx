@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { userService } from "@/services/userService";
 import { useAuth } from "./authContext";
+import { User } from "@/types/user";
 
 interface UserContextType {
   readingGoal: number;
@@ -23,6 +24,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const { user } = useAuth();
   const [readingGoal, setReadingGoalState] = useState(1000); // Default goal
+
 
   useEffect(() => {
     if (user) {

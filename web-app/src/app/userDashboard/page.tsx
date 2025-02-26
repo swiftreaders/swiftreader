@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Session } from "@/types/sessions";
@@ -11,6 +10,7 @@ import { useUserContext, UserProvider } from "@/contexts/userContext";
 import { useAuth } from "@/contexts/authContext";
 import AccessDenied from "@/components/pages/errors/accessDenied";
 import { SessionStats } from "@/components/SessionStats";
+import Button from "@/components/common/Button";
 import {
   LineChart,
   Line,
@@ -19,44 +19,49 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  AreaChart,
+  Area,
+  Legend,
 } from "recharts";
+import { RecentReadingSessions } from "@/components/userDashboard/RecentSessionsTable";
+import { ProgressHeader } from "@/components/userDashboard/ProgressHeader";
+import LeaderboardComponent from "@/components/userDashboard/Leaderboard";
 
-// Progress Header Component
-interface ProgressHeaderProps {
+// Dashboard Summary Component
+interface DashboardSummaryProps {
   totalReadingTime: number;
-  readingGoal: number;
-  progressPercentage: number;
-  onSetGoalClick: () => void;
+  averageWPM: number;
+  sessionsCount: number;
+  comprehensionRate: number;
 }
 
-const ProgressHeader = ({
+const DashboardSummary = ({
   totalReadingTime,
-  readingGoal,
-  progressPercentage,
-  onSetGoalClick,
-}: ProgressHeaderProps) => (
-  <div className="mt-8 bg-widget shadow-md rounded-lg p-6 w-full">
-    <div className="flex justify-between items-center mb-4">
-      <h2 className="text-xl font-semibold">Your Reading Progress</h2>
-      <button
-        onClick={onSetGoalClick}
-        className="px-4 py-2 bg-sr-gradient text-white font-bold rounded-md transition hover:bg-green-600"
-      >
-        Set Goal
-      </button>
+  averageWPM,
+  sessionsCount,
+  comprehensionRate,
+}: DashboardSummaryProps) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="bg-widget shadow-md rounded-lg p-6">
+      <h3 className="text-gray-500 text-sm font-medium">Total Reading Time</h3>
+      <p className="text-3xl font-bold mt-2">{totalReadingTime} min</p>
     </div>
-    <p>
-      Total Reading Time:{" "}
-      <span className="font-bold">{totalReadingTime} minutes</span>
-    </p>
-    <p>
-      Goal: <span className="font-bold">{readingGoal} minutes</span>
-    </p>
-    <div className="w-full bg-gray-200 rounded-full h-4 mt-5">
-      <div
-        className="bg-secondary h-4 rounded-full"
-        style={{ width: `${progressPercentage}%` }}
-      ></div>
+    <div className="bg-widget shadow-md rounded-lg p-6">
+      <h3 className="text-gray-500 text-sm font-medium">Average Speed</h3>
+      <p className="text-3xl font-bold mt-2">{averageWPM} WPM</p>
+    </div>
+    <div className="bg-widget shadow-md rounded-lg p-6">
+      <h3 className="text-gray-500 text-sm font-medium">Sessions Completed</h3>
+      <p className="text-3xl font-bold mt-2">{sessionsCount}</p>
+    </div>
+    <div className="bg-widget shadow-md rounded-lg p-6">
+      <h3 className="text-gray-500 text-sm font-medium">Comprehension Rate</h3>
+      <p className="text-3xl font-bold mt-2">{comprehensionRate}%</p>
     </div>
   </div>
 );
@@ -78,20 +83,27 @@ const GoalSettingModal = ({
   onClose,
 }: GoalSettingModalProps) => {
   if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-white bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-widget rounded-lg p-6 w-96">
-        <h2 className="text-xl font-semibold mb-4">Set Reading Goal</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-widget rounded-lg p-6 w-96 max-w-full">
+        <h2 className="text-xl font-semibold mb-4">Set Monthly Reading Goal</h2>
         <form onSubmit={onSubmit}>
-          <input
-            type="number"
-            value={newGoal}
-            onChange={(e) => setNewGoal(Number(e.target.value))}
-            className="w-full p-2 border border-gray-300 rounded mb-4"
-            placeholder="Enter your reading goal (in minutes)"
-            min="1"
-          />
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2">
+              Reading Time (minutes)
+            </label>
+            <input
+              type="number"
+              value={newGoal}
+              onChange={(e) => setNewGoal(Number(e.target.value))}
+              className="w-full p-2 border border-gray-300 rounded"
+              placeholder="Enter your reading goal (in minutes)"
+              min="1"
+            />
+            <p className="text-sm text-gray-500 mt-2">
+              This equals approximately {Math.round(newGoal / 30)} minutes per day
+            </p>
+          </div>
           <div className="flex justify-end">
             <button
               type="button"
@@ -113,83 +125,26 @@ const GoalSettingModal = ({
   );
 };
 
-// Recent Reading Sessions Component
-import { FC } from "react";
-import router from "next/router";
-import Button from "@/components/common/Button";
-
-interface RecentReadingSessionsProps {
-  recentSessions: Session[];
-  onSelectSession: (session: Session) => void;
-}
-
-const RecentReadingSessions: FC<RecentReadingSessionsProps> = ({
-  recentSessions,
-  onSelectSession,
-}) => (
-  <div className="mt-8 bg-widget shadow-md rounded-lg p-4">
-    <h2 className="text-xl font-semibold mb-4">Recent Reading Sessions</h2>
-    <ul>
-      {recentSessions.map((session) => (
-        <li
-          key={session.id}
-          className="flex justify-between items-center border-b last:border-b-0 py-2 cursor-pointer hover:bg-gray-50"
-          onClick={() => onSelectSession(session)}
-        >
-          <span>{session.title}</span>
-          <span className="text-gray-500 text-sm">
-            {session.startTime.toDate().toLocaleTimeString()} -{" "}
-            {session.duration} seconds
-          </span>
-        </li>
-      ))}
-    </ul>
-  </div>
-);
-
-// Reading Chart Component
-interface ReadingChartProps {
-  readingProgressData: { date: string; wpm: number }[];
-}
-
-const ReadingChart = ({ readingProgressData }: ReadingChartProps) => (
-  <div className="mt-8 bg-widget shadow-md rounded-lg p-6">
-    <h2 className="text-xl font-semibold mb-4">
-      Reading Performance Over Time
-    </h2>
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={readingProgressData}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="date" />
-        <YAxis />
-        <Tooltip />
-        <Line type="monotone" dataKey="wpm" stroke="#3e0075" strokeWidth={2} />
-      </LineChart>
-    </ResponsiveContainer>
-  </div>
-);
 
 const UserDashboardContent = () => {
-  const router = useRouter();
+  const { user } = useAuth();
   const { recentSessions } = useReadingContext();
   const { readingGoal, setReadingGoal } = useUserContext();
   const [newGoal, setNewGoal] = useState(readingGoal);
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 
-  const readingProgressData = [
-    { date: "2023-10-01", wpm: 50 },
-    { date: "2023-10-05", wpm: 60 },
-    { date: "2023-10-10", wpm: 70 },
-    { date: "2023-10-15", wpm: 80 },
-    { date: "2023-10-20", wpm: 85 },
-    { date: "2023-10-25", wpm: 90 },
-  ];
+  const totalReadingTime = parseFloat(
+    (recentSessions.reduce((acc, session) => acc + session.duration, 0) / 60).toFixed(2)
+  );
 
-  const totalReadingTime = parseFloat((
-    recentSessions.reduce((acc, session) => acc + session.duration, 0) / 60
-  ).toFixed(2));
+  const weeklyProgress = 145; // Sample weekly progress in minutes
   const progressPercentage = Math.min((totalReadingTime / readingGoal) * 100, 100);
+  const averageWPM = user?.wpm || 200; // Sample average WPM
+  const comprehensionRate = recentSessions.reduce
+    ((acc, session) => {
+      return acc + (session.getComprehensionScore() ?? 0) 
+    }, 0) / recentSessions.length ;
 
   const handleGoalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -198,23 +153,52 @@ const UserDashboardContent = () => {
   };
 
   return (
-    <div className="min-h-screen mt-[7vh] bg-background">
+    <div className="min-h-screen mt-[7vh] bg-gray-50">
       <header className="bg-sr-gradient py-8 shadow-lg">
-        <div className="container px-20 text-left">
-          <h1 className="text-4xl font-bold text-white">Dashboard</h1>
+        <div className="container mx-auto px-4 md:px-8 lg:px-20 text-left">
+          <h1 className="text-3xl md:text-4xl font-bold text-white">Reading Dashboard</h1>
           <p className="mt-2 text-lg text-gray-200">
-            Track your reading sessions and progress
+            Track your progress and improve your reading skills
           </p>
         </div>
       </header>
-      <div className="py-8 px-20">
-        <Button displayText="New Session" href="/userSession" />
-        <ProgressHeader
-          totalReadingTime={totalReadingTime}
-          readingGoal={readingGoal}
-          progressPercentage={progressPercentage}
-          onSetGoalClick={() => setIsGoalModalOpen(true)}
-        />
+      
+      <div className="container mx-auto py-8 px-4 md:px-8 lg:px-20 -mt-6">
+        <div className="bg-gray-50 rounded-lg shadow-md p-6 mb-8">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">Overview</h2>
+            <Button displayText="Start New Session" href="/userSession" />
+          </div>
+          
+          <DashboardSummary
+            totalReadingTime={totalReadingTime}
+            averageWPM={Math.round(averageWPM)}
+            sessionsCount={recentSessions.length}
+            comprehensionRate={Math.round(comprehensionRate)}
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+          <div className="md:col-span-8">
+            <ProgressHeader
+              totalReadingTime={totalReadingTime}
+              readingGoal={readingGoal}
+              progressPercentage={progressPercentage}
+              onSetGoalClick={() => setIsGoalModalOpen(true)}
+              weeklyProgress={weeklyProgress}
+            />
+            
+            <RecentReadingSessions
+              recentSessions={recentSessions}
+              onSelectSession={(session) => setSelectedSession(session)}
+            />
+          </div>
+          
+          <div className="md:col-span-4">
+            <LeaderboardComponent />
+          </div>
+        </div>
+        
         <GoalSettingModal
           isOpen={isGoalModalOpen}
           newGoal={newGoal}
@@ -222,13 +206,7 @@ const UserDashboardContent = () => {
           onSubmit={handleGoalSubmit}
           onClose={() => setIsGoalModalOpen(false)}
         />
-        <RecentReadingSessions
-          recentSessions={recentSessions}
-          onSelectSession={(session) => {
-            setSelectedSession(session)}
-          }
-        />
-
+        
         {/* Session Details Modal */}
         {selectedSession && (
           <div
@@ -238,7 +216,6 @@ const UserDashboardContent = () => {
             <SessionStats session={selectedSession} onClose={() => setSelectedSession(null)} />
           </div>
         )}
-        <ReadingChart readingProgressData={readingProgressData}/>
       </div>
     </div>
   );
