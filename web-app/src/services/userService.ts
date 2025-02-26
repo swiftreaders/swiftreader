@@ -18,8 +18,6 @@ import { Session } from "@/types/sessions";
 
 import { db } from "@/../firebase.config";
 
-// const db = getFirestore(app);
-
 export const userService = {
   getUsers: (onUpdate: (users: User[]) => void) => {
     const unsubscribe = onSnapshot(collection(db, "Users"), (snapshot) => {
@@ -27,6 +25,7 @@ export const userService = {
         id: doc.id,
         ...doc.data(),
       })) as User[];
+
       onUpdate(users);
     });
     return unsubscribe;
@@ -38,9 +37,27 @@ export const userService = {
     const docRef = doc(db, "Users", id);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() } as User;
+      return new User(
+        docSnap.id,
+        docSnap.data().name,
+        docSnap.data().email,
+        docSnap.data().isAdmin,
+        docSnap.data().wpm,
+        docSnap.data().joinDate,
+        docSnap.data().readingGoal
+      );
     } else {
       return null;
+    }
+  },
+
+  updateUser: async (id: string, field: string, value: any): Promise<boolean> => {
+    try {
+      await updateDoc(doc(db, "Users", id), { [field]: value });
+      return true; 
+    } catch (error) {
+      console.error("Error updating user:", error);
+      return false;
     }
   },
 
@@ -169,5 +186,6 @@ export const userService = {
       return [];
     }
   }
+
 
 };

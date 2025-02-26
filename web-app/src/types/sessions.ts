@@ -69,6 +69,9 @@ export class Session {
 
   // Corrected method definition
   getComprehensionScore(): number {
+    if (this.results.length === 0) {
+      return 0;
+    }
     return this.results.reduce((acc: number, result: Result) => {
       return result.givenAnswer === result.correctAnswer ? acc + 1 : acc;
     }, 0) / this.results.length * 100;
