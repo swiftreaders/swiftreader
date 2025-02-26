@@ -1,3 +1,4 @@
+import { userService } from "@/services/userService";
 import { Timestamp } from "firebase/firestore";
 
 export class User {
@@ -7,7 +8,7 @@ export class User {
     isAdmin: boolean;
     wpm: number;
     joinDate: Timestamp;
-    readigGoal: number;
+    readingGoal: number;
   
     constructor(
         id: string,
@@ -24,6 +25,7 @@ export class User {
         this.isAdmin = isAdmin; 
         this.wpm = wpm;
         this.joinDate = joinDate;
-        this.readigGoal = readingGoal;
+        this.readingGoal = readingGoal;
     }
+    
   };

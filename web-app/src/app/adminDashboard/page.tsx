@@ -26,9 +26,11 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import Button from "@/components/common/Button";
+import { UserProvider, useUserContext } from "@/contexts/userContext";
 
 const AdminDashboardContent = () => {
-  const { texts, users, removeUser } = useAdminDashboard();
+  const { removeUser } = useAdminDashboard();
+  const { users } = useUserContext();
   const [userMetrics, setUserMetrics] = useState({
     totalUsers: 0,
     newUsers: 0,
@@ -281,9 +283,11 @@ const AdminDashboardContent = () => {
 const AdminDashboard = () => {
   const { user } = useAuth();
   return user?.isAdmin ? (
-    <AdminDashboardProvider>
-      <AdminDashboardContent />
-    </AdminDashboardProvider>
+    <UserProvider>
+      <AdminDashboardProvider>
+        <AdminDashboardContent />
+      </AdminDashboardProvider>
+    </UserProvider>
   ) : (
     <AccessDenied />
   );

@@ -37,7 +37,7 @@ export const SessionStats = ({ session, onClose }: SessionStatsProps) => (
           <div className="space-y-3">
             <StatItem label="Average WPM" value={session.average_wpm.toFixed(1)} />
             <StatItem label="Text Average" value={session.text_average_performance.toFixed(1)} />
-            <StatItem label="Duration" value={`${Math.floor(session.duration / 60)}m ${session.duration % 60}s`} />
+            <StatItem label="Duration" value={`${Math.floor(session.duration / 60)}m ${Math.round(session.duration % 60)}s`} />
             <StatItem label="Difficulty" value={session.difficulty} />
             <StatItem 
               label="Comprehension" 

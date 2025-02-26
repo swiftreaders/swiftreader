@@ -15,12 +15,10 @@ import {
     where
 } from "firebase/firestore";
 import { Session } from "@/types/sessions";
-import { app } from "@/../firebase.config";
 import { Category, Text, Result } from "@/types/text";
 
 import { db } from "@/../firebase.config";
 
-// const db = getFirestore(app);
 
 // get recent sessions (last 10 sessions)
 const getRecentSessions = (onUpdate: (sessions: Session[]) => void, userId: string) => {
@@ -52,7 +50,6 @@ const getRecentSessions = (onUpdate: (sessions: Session[]) => void, userId: stri
         data.results,
       );
     });
-    console.log(sessions);
     // Invoke the callback with the list of `Session` objects
     onUpdate(sessions);
   });
