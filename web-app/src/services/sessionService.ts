@@ -15,12 +15,10 @@ import {
     where
 } from "firebase/firestore";
 import { Session } from "@/types/sessions";
-import { app } from "@/../firebase.config";
 import { Category, Text, Result } from "@/types/text";
 
 import { db } from "@/../firebase.config";
 
-// const db = getFirestore(app);
 
 // get recent sessions (last 10 sessions)
 const getRecentSessions = (onUpdate: (sessions: Session[]) => void, userId: string) => {
@@ -52,7 +50,40 @@ const getRecentSessions = (onUpdate: (sessions: Session[]) => void, userId: stri
         data.results,
       );
     });
-    console.log(sessions);
+    // Invoke the callback with the list of `Session` objects
+    onUpdate(sessions);
+  });
+
+  // Return the unsubscribe function
+  return unsubscribe;
+};
+
+const getAllReadingSessions = (onUpdate: (sessions: Session[]) => void) => {
+  // Query the `ReadingSessions` collection for the last 10 sessions for the stubbed user
+  const recentSessionsQuery = query(
+    collection(db, "ReadingSessions"),
+  );
+
+  // Set up the Firestore real-time listener
+  const unsubscribe = onSnapshot(recentSessionsQuery, (snapshot) => {
+
+    const sessions = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      
+      // Create a new `Session` instance using the constructor
+      return new Session(
+        data.textId,
+        data.userId,
+        data.title,
+        data.startTime,
+        data.endTime,
+        data.wpm,
+        data.sessionType,
+        data.difficulty,
+        doc.id,
+        data.results,
+      );
+    });
     // Invoke the callback with the list of `Session` objects
     onUpdate(sessions);
   });
@@ -198,7 +229,8 @@ export const sessionService = {
     getRecentSessions,
     addSession,
     getText,
-    storeQuizResults
+    storeQuizResults, 
+    getAllReadingSessions
 }
 
 export default sessionService;

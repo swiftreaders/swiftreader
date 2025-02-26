@@ -18,8 +18,6 @@ import { Session } from "@/types/sessions";
 
 import { db } from "@/../firebase.config";
 
-// const db = getFirestore(app);
-
 export const userService = {
   getUsers: (onUpdate: (users: User[]) => void) => {
     const unsubscribe = onSnapshot(collection(db, "Users"), (snapshot) => {
@@ -27,6 +25,7 @@ export const userService = {
         id: doc.id,
         ...doc.data(),
       })) as User[];
+
       onUpdate(users);
     });
     return unsubscribe;
@@ -38,9 +37,27 @@ export const userService = {
     const docRef = doc(db, "Users", id);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() } as User;
+      return new User(
+        docSnap.id,
+        docSnap.data().name,
+        docSnap.data().email,
+        docSnap.data().isAdmin,
+        docSnap.data().wpm,
+        docSnap.data().joinDate,
+        docSnap.data().readingGoal
+      );
     } else {
       return null;
+    }
+  },
+
+  updateUser: async (id: string, field: string, value: any): Promise<boolean> => {
+    try {
+      await updateDoc(doc(db, "Users", id), { [field]: value });
+      return true; 
+    } catch (error) {
+      console.error("Error updating user:", error);
+      return false;
     }
   },
 
@@ -63,6 +80,7 @@ export const userService = {
       return false;
     }
   },
+
 
   setReadingGoal: async (goal: number, id: string): Promise<boolean> => {
     try {
@@ -116,10 +134,10 @@ export const userService = {
       // Check if the document exists and return the reading goal
       if (userDocSnapshot.exists()) {
         const userData = userDocSnapshot.data();
-        return userData.readingGoal || 0; // Default to 0 if readingGoal is not set
+        return userData.readingGoal || 1000; // Default to 1000 if readingGoal is not set
       } else {
         console.error("User document not found");
-        return 0; // Return 0 if the document doesn't exist
+        return 1000; // Return 1000 if the document doesn't exist
       }
     } catch (error) {
       console.error("Error retrieving reading goal:", error);
@@ -168,5 +186,6 @@ export const userService = {
       return [];
     }
   }
+
 
 };
