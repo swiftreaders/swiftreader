@@ -1,64 +1,70 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Question, Difficulty, Genre, Category } from "@/types/text";
+import { Category, Difficulty, Question } from "@/types/text";
 
 const GEMINI_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
-export interface AIResponse {
-  excerpt: string;
-  questions: Question[];
+export interface GenText {
+  id: string;
+  title: string;
+  author: string;
+  difficulty: Difficulty;
+  content: string;
+  text_link: string;
+  questions: Question[]; // Ensure it matches expected type
   isValid: boolean;
+  isAI: boolean;
+  category: Category; // Only non-fiction
 }
 
-export interface GenText {
-    id: string;
-    title: string;
-    author: string;
-    difficulty: Difficulty;
-    content: string;
-    text_link: string;
-    questions: Question[];
-    isValid: boolean;
-    isAI: boolean;
-    genre?: Genre; // Only if fiction
-    category?: Category; // Only if non-fiction
-  }
-  
-
-/// Generate text using Gemini
-export const generateTextUsingAI = async (
-  prompt: string,
+/// Generate multiple non-fiction texts using Gemini
+export const fetchGeneratedTexts = async (
+  category: Category,
   minWordLimit: number,
   maxWordLimit: number
-): Promise<AIResponse> => {
+): Promise<GenText[]> => {
   try {
     const gemini = new GoogleGenerativeAI(GEMINI_KEY ?? "");
     const model = gemini.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const fullPrompt = `
-      Generate a coherent passage of text based on the following theme:
-      "${prompt}"
-      - The passage must be between ${minWordLimit} and ${maxWordLimit} words.
-      - The passage should form a complete, meaningful narrative or idea.
-      - It must have a natural start and end (no mid-sentence truncations).
-      - The text must be in English and easy to read.
+    Generate 5 **non-fiction** passages based on the following category:
+    "${category}"
+    
+    - These texts are for **reading comprehension practice**.
+    - Each passage should be **factual, structured, and informative**.
+    - Each passage must be between ${minWordLimit} and ${maxWordLimit} words.
+    - Ensure proper grammar, coherence, and a natural beginning and end.
 
-      Generate 4 multiple-choice questions based on this passage.
-      Ensure only one answer is correct and the other options are plausible but incorrect.
+    Generate 4 multiple-choice questions per passage:
+      - Each question is based **ONLY** on the passage.
+      - Each question has exactly **4 answer choices**.
+      - Only **one** choice is correct.
+      - Format each choice as a **separate string in an array**.
 
-      Return JSON format:
-      \`\`\`json
-      {
-        "excerpt": "Generated passage",
-        "isValid": true/false,
-        "questions": [
-          {
-            "question": "...",
-            "choices": ["...", "...", "...", "..."],
-            "answer": "..."
-          }
-        ]
-      }
-      \`\`\`
+    Classify difficulty using:
+      - Easy: Simple language, short sentences, common words.
+      - Medium: Moderate complexity, some uncommon words.
+      - Hard: Complex language, long sentences, and many uncommon words.
+
+    Return JSON format:
+    \`\`\`json
+    {
+      "texts": [
+        {
+          "title": "Generated Passage Title",
+          "content": "Generated passage text...",
+          "difficulty": "easy/medium/hard",
+          "questions": [
+            {
+              "question": "...",
+              "choices": ["...", "...", "...", "..."],
+              "answer": "..."
+            }
+          ]
+        }
+      ]
+    }
+    \`\`\`
     `;
 
     const result = await model.generateContent(fullPrompt);
@@ -67,12 +73,31 @@ export const generateTextUsingAI = async (
     const jsonStart = rawResponse.indexOf("{");
     const jsonEnd = rawResponse.lastIndexOf("}");
     const cleanJson = rawResponse.slice(jsonStart, jsonEnd + 1);
-    console.log("Gemini Generated JSON:", cleanJson);
+    console.log("Generated JSON:", cleanJson);
 
     const response = JSON.parse(cleanJson);
-    return response;
+
+    // Map AI response to match `GenText` structure
+    const generatedTexts: GenText[] = response.texts.map((text: any, index: number) => ({
+      id: `gen-${Date.now()}-${index}`,
+      title: text.title,
+      author: "AI Generated",
+      difficulty: text.difficulty as Difficulty,
+      content: text.content,
+      text_link: "",
+      isValid: true,
+      isAI: true,
+      category, // Only non-fiction
+      questions: text.questions.map((q: any) => ({
+        question: q.question,
+        choices: q.choices.slice(0, 4), // Ensure exactly 4 choices
+        answer: q.answer
+      })) as Question[], // Ensure type matches
+    }));
+
+    return generatedTexts;
   } catch (error) {
-    console.error("Error generating AI text:", error);
-    return { excerpt: "", questions: [], isValid: false };
+    console.error("Error generating AI texts:", error);
+    return [];
   }
 };
