@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useAdminDashboard,
   AdminDashboardProvider,
@@ -8,6 +8,7 @@ import {
 import { Category, Difficulty, Text, Question, Genre } from "@/types/text";
 import { Book, fetchBooks, fetchBookContent } from "@/services/bookService";
 import { GenText } from "@/services/generateService";
+import { fetchGeneratedTexts } from "@/services/generateService";
 import { UpdateTextPopup } from "@/components/UpdateTextPopup";
 import { ExistingTextCard } from "@/components/ExistingTextCard";
 import { useAuth } from "@/contexts/authContext";
@@ -33,31 +34,31 @@ const AdminDashboardContent = () => {
     minLength: 100,
     maxLength: 500,
   });
-  const [newGeneratedText, setNewGeneratedText] = useState(DEFAULT_TEXT);
-  const [generateTextOptions, setGenerateTextOptions] = useState<{
-    genre?: Genre;
-    category?: Category;
-    difficulty: Difficulty;
-    minLength: number;
-    maxLength: number;
-  }>({
-    genre: Genre.FANTASY, // Default to a fiction genre
+
+  
+  const [generatedTexts, setGeneratedTexts] = useState<GenText[]>([]);
+  const [generateTextOptions, setGenerateTextOptions] = useState({
+    category: Category.SCIENCE, // Default to a non-fiction category
     difficulty: Difficulty.EASY,
     minLength: 100,
     maxLength: 500,
   });
+  const [currentTextIndex, setCurrentTextIndex] = useState(0);
+  const currentGeneratedText = generatedTexts[currentTextIndex] || null;
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const [activeTab, setActiveTab] = useState<"manual" | "find" | "generate">(
     "manual"
   );
   const [foundTexts, setFoundTexts] = useState<Book[]>([]);
-  const [generatedTexts, setGeneratedTexts] = useState<GenText[]>([]);
-  const [currentTextIndex, setCurrentTextIndex] = useState(0);
-  const currentText =
-    activeTab === "find"
-      ? foundTexts[currentTextIndex]
-      : generatedTexts[currentTextIndex];
   const [isLoading, setIsLoading] = useState(false);
+
+  const currentText =
+  activeTab === "find"
+    ? foundTexts[currentTextIndex]
+    : activeTab === "generate"
+    ? generatedTexts[currentTextIndex]
+    : DEFAULT_TEXT;
 
   // State for update popup
   const [updatePopupOpen, setUpdatePopupOpen] = useState(false);
@@ -177,8 +178,12 @@ const AdminDashboardContent = () => {
     }
   };
 
+  function isBook(currentText: Book | GenText | Text): currentText is Book {
+    return activeTab === "find";
+  }
+
   const handleApproveText = () => {
-    const currentText = foundTexts[currentTextIndex];
+    const currentText = activeTab === "find" ? foundTexts[currentTextIndex] : generatedTexts[currentTextIndex];
     console.log("currentText subject:", currentText);
     if (currentText) {
       addText(
@@ -186,8 +191,8 @@ const AdminDashboardContent = () => {
           currentText.title,
           currentText.content,
           currentText.difficulty,
-          true,
-          currentText.subject,
+          activeTab === "find" ? true : false,
+          isBook(currentText) ? currentText.subject : currentText.category,
           currentText.id,
           Timestamp.fromMillis(Date.now()),
           Timestamp.fromMillis(Date.now()),
@@ -202,19 +207,31 @@ const AdminDashboardContent = () => {
   };
 
   const handleRejectText = () => {
-    setFoundTexts((prev) =>
+    if (isBook(currentText)) {
+      setFoundTexts((prev) =>
       prev.filter((_, index) => index !== currentTextIndex)
-    );
+    )
+    } else {
+      setGeneratedTexts((prev) =>
+      prev.filter((_, index) => index !== currentTextIndex)
+    )
+    }
   };
 
   const handleNextText = () => {
-    setCurrentTextIndex((prev) => (prev + 1) % foundTexts.length);
+    if (isBook(currentText)) {
+      setCurrentTextIndex((prev) => (prev + 1) % foundTexts.length);
+    } else {
+      setCurrentTextIndex((prev) => (prev + 1) % generatedTexts.length);
+    }
   };
 
   const handlePreviousText = () => {
-    setCurrentTextIndex(
-      (prev) => (prev - 1 + foundTexts.length) % foundTexts.length
-    );
+    if (isBook(currentText)) {
+      setCurrentTextIndex((prev) => (prev - 1) % foundTexts.length);
+    } else {
+      setCurrentTextIndex((prev) => (prev - 1) % generatedTexts.length);
+    }
   };
 
   const handleQuestionChange = (
@@ -279,8 +296,142 @@ const AdminDashboardContent = () => {
     });
   };
 
+  // Handlers for generated texts
+  const handleGenerateText = async () => {
+    try {
+      setIsGenerating(true);
+      setGeneratedTexts([]);
+      const aiGeneratedTexts = await fetchGeneratedTexts(
+        generateTextOptions.category,
+        generateTextOptions.minLength,
+        generateTextOptions.maxLength
+      );
+      setGeneratedTexts(aiGeneratedTexts);
+    } catch (error) {
+      console.error("Error generating texts:", error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // const handleApproveGeneratedText = () => {
+  //   if (currentGeneratedText) {
+  //     addText(
+  //       new Text(
+  //         currentGeneratedText.title,
+  //         currentGeneratedText.content,
+  //         currentGeneratedText.difficulty,
+  //         false, // Generated texts are non-fiction
+  //         currentGeneratedText.category,
+  //         currentGeneratedText.id,
+  //         Timestamp.fromMillis(Date.now()),
+  //         Timestamp.fromMillis(Date.now()),
+  //         currentGeneratedText.content.split(" ").length,
+  //         currentGeneratedText.questions
+  //       )
+  //     );
+  //     setGeneratedTexts((prev) =>
+  //       prev.filter((_, index) => index !== currentGeneratedIndex)
+  //     );
+  //   }
+  // };
+  
+  // const handleRejectGeneratedText = () => {
+  //   setGeneratedTexts((prev) =>
+  //     prev.filter((_, index) => index !== currentGeneratedIndex)
+  //   );
+  // };
+  
+  // const handleNextGeneratedText = () => {
+  //   setCurrentGeneratedIndex((prev) => (prev + 1) % generatedTexts.length);
+  // };
+  
+  // const handlePreviousGeneratedText = () => {
+  //   setCurrentGeneratedIndex(
+  //     (prev) => (prev - 1 + generatedTexts.length) % generatedTexts.length
+  //   );
+  // };
+  
+
+
   /* ===================== components ===================== */
 
+  const renderGenerateTextSection = () => {
+    return (
+      <div className="space-y-6">
+        <p className="text-gray-600 text-sm">
+          This feature generates AI-created non-fiction passages for reading comprehension. 
+          Select the category and word range, then generate new texts.
+        </p>
+        <div className="flex flex-wrap gap-4">
+          {/* Category Selection */}
+          <div className="flex-1 min-w-[150px]">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Category
+            </label>
+            <select
+              value={generateTextOptions.category}
+              onChange={(e) =>
+                setGenerateTextOptions({
+                  ...generateTextOptions,
+                  category: e.target.value as Category,
+                })
+              }
+              className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+              {Object.values(Category).map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+          {/* Word Range Selection */}
+          <div className="flex-1 min-w-[150px]">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Word Range
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                placeholder="Min"
+                value={generateTextOptions.minLength}
+                onChange={(e) =>
+                  setGenerateTextOptions({
+                    ...generateTextOptions,
+                    minLength: parseInt(e.target.value, 10),
+                  })
+                }
+                className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+              <input
+                type="number"
+                placeholder="Max"
+                value={generateTextOptions.maxLength}
+                onChange={(e) =>
+                  setGenerateTextOptions({
+                    ...generateTextOptions,
+                    maxLength: parseInt(e.target.value, 10),
+                  })
+                }
+                className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+            </div>
+          </div>
+        </div>
+        <button
+          onClick={handleGenerateText}
+          disabled={isGenerating}
+          className="w-full py-3 bg-green-600 text-white rounded-md transition-all duration-200 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isGenerating ? "Generating..." : "Generate Texts"}
+        </button>
+  
+        {currentText && renderNavigateFoundTextsSection()}
+      </div>
+    );
+  };
+  
   const renderManualTextSection = () => {
     return (
       <div className="space-y-4">
@@ -431,7 +582,7 @@ const AdminDashboardContent = () => {
               ← Previous
             </button>
             <span className="px-4 py-2 bg-gray-100 rounded-lg text-gray-600">
-              {currentTextIndex + 1} / {foundTexts.length}
+              {currentTextIndex + 1} / {activeTab === "find" ? foundTexts.length : generatedTexts.length}
             </span>
             <button
               onClick={handleNextText}
@@ -553,11 +704,22 @@ const AdminDashboardContent = () => {
           >
             Find
           </button>
+          <button
+            onClick={() => setActiveTab("generate")}
+            className={`flex-1 py-2 rounded-md transition-all duration-200 ${
+              activeTab === "generate"
+                ? "bg-indigo-600 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            Generate
+          </button>
         </div>
+
 
         {activeTab === "manual" ? (
           renderManualTextSection()
-        ) : (
+        ) : activeTab === "find" ? (
           <div className="space-y-6">
             <label className="text-gray-600 text-sm">
               This feature enables you to search for books from Gutendex&apos;s
@@ -661,6 +823,8 @@ const AdminDashboardContent = () => {
             {/* Found Texts Navigation */}
             {currentText && renderNavigateFoundTextsSection()}
           </div>
+        ) : (
+          renderGenerateTextSection()
         )}
       </section>
     );
