@@ -44,7 +44,6 @@ const AdminDashboardContent = () => {
     maxLength: 500,
   });
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
-  const currentGeneratedText = generatedTexts[currentTextIndex] || null;
   const [isGenerating, setIsGenerating] = useState(false);
 
   const [activeTab, setActiveTab] = useState<"manual" | "find" | "generate">(
@@ -136,6 +135,10 @@ const AdminDashboardContent = () => {
     setManualTextQuestions((prev) => prev.filter((_, i) => i !== index));
   };
 
+  useEffect(() => {
+    setCurrentTextIndex(0);
+  }, [activeTab]);
+
   const handleFindText = async () => {
     try {
       setIsLoading(true);
@@ -200,22 +203,28 @@ const AdminDashboardContent = () => {
           currentText.questions
         )
       );
-      setFoundTexts((prev) =>
-        prev.filter((_, index) => index !== currentTextIndex)
-      );
+      if (activeTab === "find") {
+        setFoundTexts((prev) =>
+          prev.filter((_, index) => index !== currentTextIndex)
+        );
+      } else {
+        setGeneratedTexts((prev) =>
+          prev.filter((_, index) => index !== currentTextIndex)
+        );
+      }
+      setCurrentTextIndex(0);
     }
   };
 
   const handleRejectText = () => {
     if (isBook(currentText)) {
       setFoundTexts((prev) =>
-      prev.filter((_, index) => index !== currentTextIndex)
-    )
+      prev.filter((_, index) => index !== currentTextIndex))
     } else {
       setGeneratedTexts((prev) =>
-      prev.filter((_, index) => index !== currentTextIndex)
-    )
+      prev.filter((_, index) => index !== currentTextIndex))
     }
+    setCurrentTextIndex(0)
   };
 
   const handleNextText = () => {
@@ -239,61 +248,116 @@ const AdminDashboardContent = () => {
     field: keyof Question,
     value: string
   ) => {
-    setFoundTexts((prev) => {
-      const updated = [...prev];
-      const current = updated[currentTextIndex];
-      const updatedQuestions = [...(current.questions || [])];
-      if (field === "choices") {
-        updatedQuestions[questionIndex] = {
-          ...updatedQuestions[questionIndex],
-          choices: value.split(",").map((choice) => choice.trim()),
-        };
-      } else {
-        updatedQuestions[questionIndex] = {
-          ...updatedQuestions[questionIndex],
-          [field]: value,
-        };
-      }
-      updated[currentTextIndex] = { ...current, questions: updatedQuestions };
-      return updated;
-    });
+    if (activeTab === "find") {
+      setFoundTexts((prev) => {
+        const updated = [...prev];
+        const current = updated[currentTextIndex];
+        const updatedQuestions = [...(current.questions || [])];
+        if (field === "choices") {
+          updatedQuestions[questionIndex] = {
+            ...updatedQuestions[questionIndex],
+            choices: value.split(",").map((choice) => choice.trim()),
+          };
+        } else {
+          updatedQuestions[questionIndex] = {
+            ...updatedQuestions[questionIndex],
+            [field]: value,
+          };
+        }
+        updated[currentTextIndex] = { ...current, questions: updatedQuestions };
+        return updated;
+      });
+    } else {
+      setGeneratedTexts((prev) => {
+        const updated = [...prev];
+        const current = updated[currentTextIndex];
+        const updatedQuestions = [...(current.questions || [])];
+        if (field === "choices") {
+          updatedQuestions[questionIndex] = {
+            ...updatedQuestions[questionIndex],
+            choices: value.split(",").map((choice) => choice.trim()),
+          };
+        } else {
+          updatedQuestions[questionIndex] = {
+            ...updatedQuestions[questionIndex],
+            [field]: value,
+          };
+        }
+        updated[currentTextIndex] = { ...current, questions: updatedQuestions };
+        return updated;
+      });
+    }
   };
 
   const removeQuestion = (questionIndex: number) => {
-    setFoundTexts((prev) => {
-      const updated = [...prev];
-      const current = updated[currentTextIndex];
-      const updatedQuestions = [...(current.questions || [])];
-      updatedQuestions.splice(questionIndex, 1);
-      updated[currentTextIndex] = { ...current, questions: updatedQuestions };
-      return updated;
-    });
+    if (activeTab === "find") {
+      setFoundTexts((prev) => {
+        const updated = [...prev];
+        const current = updated[currentTextIndex];
+        const updatedQuestions = [...(current.questions || [])];
+        updatedQuestions.splice(questionIndex, 1);
+        updated[currentTextIndex] = { ...current, questions: updatedQuestions };
+        return updated;
+      });
+    }
+    else {
+      setGeneratedTexts((prev) => {
+        const updated = [...prev];
+        const current = updated[currentTextIndex];
+        const updatedQuestions = [...(current.questions || [])];
+        updatedQuestions.splice(questionIndex, 1);
+        updated[currentTextIndex] = { ...current, questions: updatedQuestions };
+        return updated;
+      });
+    }
   };
 
   const addQuestion = () => {
-    setFoundTexts((prev) => {
-      const updated = [...prev];
-      const current = updated[currentTextIndex];
-      const updatedQuestions = [...(current.questions || [])];
-      updatedQuestions.push({
-        question: "",
-        choices: ["", "", "", ""],
-        answer: "",
+    if (activeTab === "find") {
+      setFoundTexts((prev) => {
+        const updated = [...prev];
+        const current = updated[currentTextIndex];
+        const updatedQuestions = [...(current.questions || [])];
+        updatedQuestions.push({
+          question: "",
+          choices: ["", "", "", ""],
+          answer: "",
+        });
+        updated[currentTextIndex] = { ...current, questions: updatedQuestions };
+        return updated;
       });
-      updated[currentTextIndex] = { ...current, questions: updatedQuestions };
-      return updated;
-    });
+    } else {
+      setGeneratedTexts((prev) => {
+        const updated = [...prev];
+        const current = updated[currentTextIndex];
+        const updatedQuestions = [...(current.questions || [])];
+        updatedQuestions.push({
+          question: "",
+          choices: ["", "", "", ""],
+          answer: "",
+        });
+        updated[currentTextIndex] = { ...current, questions: updatedQuestions };
+        return updated;
+      });
+    }
   };
 
   const updateFoundText = (field: string, value: any) => {
-    setFoundTexts((prev) => {
-      const updated = [...prev];
-      updated[currentTextIndex] = {
-        ...updated[currentTextIndex],
-        [field]: value,
-      };
-      return updated;
-    });
+    if (activeTab === "find") {
+      setFoundTexts((prev) => {
+        const updated = [...prev];
+        const current = updated[currentTextIndex];
+        updated[currentTextIndex] = { ...current, [field]: value };
+        return updated;
+      });
+    } else {
+      setGeneratedTexts((prev) => {
+        const updated = [...prev];
+        const current = updated[currentTextIndex];
+        updated[currentTextIndex] = { ...current, [field]: value };
+        return updated;
+      });
+    }
   };
 
   // Handlers for generated texts
