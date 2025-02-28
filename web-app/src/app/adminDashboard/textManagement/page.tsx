@@ -237,9 +237,9 @@ const AdminDashboardContent = () => {
 
   const handlePreviousText = () => {
     if (isBook(currentText)) {
-      setCurrentTextIndex((prev) => (prev - 1) % foundTexts.length);
+      setCurrentTextIndex((prev) => (prev - 1 + foundTexts.length) % foundTexts.length);
     } else {
-      setCurrentTextIndex((prev) => (prev - 1) % generatedTexts.length);
+      setCurrentTextIndex((prev) => (prev - 1 + generatedTexts.length) % generatedTexts.length);
     }
   };
 
@@ -377,46 +377,6 @@ const AdminDashboardContent = () => {
       setIsGenerating(false);
     }
   };
-
-  // const handleApproveGeneratedText = () => {
-  //   if (currentGeneratedText) {
-  //     addText(
-  //       new Text(
-  //         currentGeneratedText.title,
-  //         currentGeneratedText.content,
-  //         currentGeneratedText.difficulty,
-  //         false, // Generated texts are non-fiction
-  //         currentGeneratedText.category,
-  //         currentGeneratedText.id,
-  //         Timestamp.fromMillis(Date.now()),
-  //         Timestamp.fromMillis(Date.now()),
-  //         currentGeneratedText.content.split(" ").length,
-  //         currentGeneratedText.questions
-  //       )
-  //     );
-  //     setGeneratedTexts((prev) =>
-  //       prev.filter((_, index) => index !== currentGeneratedIndex)
-  //     );
-  //   }
-  // };
-  
-  // const handleRejectGeneratedText = () => {
-  //   setGeneratedTexts((prev) =>
-  //     prev.filter((_, index) => index !== currentGeneratedIndex)
-  //   );
-  // };
-  
-  // const handleNextGeneratedText = () => {
-  //   setCurrentGeneratedIndex((prev) => (prev + 1) % generatedTexts.length);
-  // };
-  
-  // const handlePreviousGeneratedText = () => {
-  //   setCurrentGeneratedIndex(
-  //     (prev) => (prev - 1 + generatedTexts.length) % generatedTexts.length
-  //   );
-  // };
-  
-
 
   /* ===================== components ===================== */
 
