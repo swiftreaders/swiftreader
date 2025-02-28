@@ -85,29 +85,31 @@ const Quiz = ({ textId, session, onContinue }: { textId: string; session: Sessio
           <div key={q.question} className="mb-4">
             <p className="font-medium text-gray-900 mb-2">{q.question}</p>
             <div className="space-y-2">
-              {q.choices.map((option) => (
-                <label
-                  key={option}
-                  className={`block p-2 rounded cursor-pointer transition ${
-                    submitted
-                      ? answers[q.question] === option
-                        ? "bg-blue-300" // Highlight selected answer
-                        : "bg-gray-200"
-                      : "bg-gray-200 hover:bg-gray-300"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name={q.question}
-                    value={option}
-                    checked={answers[q.question] === option}
-                    onChange={() => handleAnswerChange(q.question, option)}
-                    className="mr-2"
-                    disabled={submitted} // Prevent changes after submit
-                  />
-                  {option}
-                </label>
-              ))}
+              {q.choices.map((option) => {
+                let correctAnswer = results.find(r => r.question === q.question)?.correctAnswer;
+                let isCorrect = option === correctAnswer;
+                let isSelected = answers[q.question] === option;
+                let icon = submitted ? (isCorrect ? " ✅" : isSelected ? " ❌" : "") : "";
+  
+                return (
+                  <label
+                    key={option}
+                    className={`block p-2 rounded cursor-pointer transition flex items-center
+                      ${submitted ? (isCorrect ? "bg-green-300" : isSelected ? "bg-red-300" : "bg-gray-300 text-black") : "bg-gray-200 hover:bg-gray-300"}`}
+                  >
+                    <input
+                      type="radio"
+                      name={q.question}
+                      value={option}
+                      checked={isSelected}
+                      onChange={() => handleAnswerChange(q.question, option)}
+                      className="mr-2"
+                      disabled={submitted} // Prevent changes after submit
+                    />
+                    {option} <span className="ml-2">{icon}</span>
+                  </label>
+                );
+              })}
             </div>
           </div>
         ))}
@@ -127,28 +129,6 @@ const Quiz = ({ textId, session, onContinue }: { textId: string; session: Sessio
         >
           Continue to Stats
         </button>
-      )}
-
-      {submitted && (
-        <div className="mt-6 p-4 bg-white rounded shadow-md w-full max-w-md">
-          <h3 className="text-lg font-bold mb-2">Results:</h3>
-          {results.map((result, index) => (
-            <p
-              key={index}
-              className={`p-2 ${
-                result.givenAnswer === result.correctAnswer
-                  ? "text-green-600"
-                  : "text-red-600"
-              }`}
-            >
-              {`Q${index + 1}: ${
-                result.givenAnswer === result.correctAnswer
-                  ? "✅ Correct"
-                  : "❌ Incorrect"
-              } (You chose: "${result.givenAnswer || "No Answer"}")`}
-            </p>
-          ))}
-        </div>
       )}
     </div>
   );
