@@ -86,10 +86,10 @@ const Quiz = ({ textId, session, onContinue }: { textId: string; session: Sessio
             <p className="font-medium text-gray-900 mb-2">{q.question}</p>
             <div className="space-y-2">
               {q.choices.map((option) => {
-                let correctAnswer = results.find(r => r.question === q.question)?.correctAnswer;
-                let isCorrect = option === correctAnswer;
-                let isSelected = answers[q.question] === option;
-                let icon = submitted ? (isCorrect ? " ✅" : isSelected ? " ❌" : "") : "";
+                const correctAnswer = results.find(r => r.question === q.question)?.correctAnswer;
+                const isCorrect = option === correctAnswer;
+                const isSelected = answers[q.question] === option;
+                const icon = submitted ? (isCorrect ? " ✅" : isSelected ? " ❌" : "") : "";
   
                 return (
                   <label
