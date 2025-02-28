@@ -80,7 +80,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
     if (userId === user?.id) {
       console.log("processing trolling", sessions);
     }
-    const validSessions = sessions.filter(s => s.average_wpm > 0);
+    const validSessions = sessions.filter(s => s.average_wpm > 0 && s.getComprehensionScore() > 49);
     console.log("valid sessions", validSessions.length);
     const averageWpm = validSessions.length > 0 
       ? validSessions.reduce((sum, s) => sum + s.average_wpm, 0) / (validSessions.length + 1)
