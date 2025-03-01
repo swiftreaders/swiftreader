@@ -239,7 +239,7 @@ const filterTextUsingAI = async (content: string, minWords: number, maxWords: nu
     console.log("AI filtering failed:", error);
     return { 
       // excerpt: findNaturalExcerpt(content, maxWords),
-      excerpt: "",
+      excerpt: "CONTENT_UNAVAILABLE",
       questions: [],
       isValid: false, 
       difficulty: Difficulty.EASY
