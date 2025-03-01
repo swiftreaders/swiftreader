@@ -1,4 +1,4 @@
-name: Run Tests on All Branches
+name: Run Tests
 
 on:
   push: # Runs on EVERY push to ANY branch
