@@ -1,8 +1,8 @@
 name: Run Tests
 
 on:
-  push: # Runs on EVERY push to ANY branch
-  pull_request: # Runs on ALL pull requests
+  push:
+  pull_request:
 
 jobs:
   test:
@@ -18,11 +18,10 @@ jobs:
         with:
           node-version: 20
 
-      - name: Change to web-app directory
-        run: cd web-app
-
       - name: Install dependencies
-        run: cd web-app && npm install
+        working-directory: web-app
+        run: npm install
 
       - name: Run tests
-        run: cd web-app && npm test -- --ci --coverage
+        working-directory: web-app
+        run: npm test -- --ci --coverage
