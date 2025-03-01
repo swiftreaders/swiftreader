@@ -9,7 +9,7 @@
     "postbuild": "node scripts/update-auth0-urls.js",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest --watch"
+    "test": "jest --ci --coverage"
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^4.0.0-beta.14",
