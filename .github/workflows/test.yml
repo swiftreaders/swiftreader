@@ -25,4 +25,4 @@ jobs:
         run: cd web-app && npm install
 
       - name: Run tests
-        run: cd web-app && npm test
+        run: cd web-app && npm test -- --ci --coverage
