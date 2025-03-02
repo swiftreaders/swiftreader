@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
   useReadingContext,
   ReadingSessionProvider,
@@ -106,7 +107,7 @@ const AccessibilitySettingsPanel = ({
 const transformText = (
   text: string,
   settings: AccessibilitySettings
-): JSX.Element[] => {
+): React.ReactElement[] => {
   if (!text) return [];
   // Split text by spaces to get individual words.
   const words = text.split(" ");
