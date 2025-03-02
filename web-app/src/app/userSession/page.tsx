@@ -333,10 +333,10 @@ const UserSessionContent = () => {
       let newWpm = wpmRef.current;
       switch (prevBoundaryChange + currBoundaryChange) {
         case 6:
-          newWpm = wpmRef.current + 20;
+          newWpm = Math.min(wpmRef.current + 20, 1000);
           break;
         case 5:
-          newWpm = wpmRef.current + 10;
+          newWpm = Math.min(wpmRef.current + 10, 1000);
           break;
         case 4:
           break;
@@ -423,7 +423,7 @@ const UserSessionContent = () => {
       let newWpm = wpmRef.current;
       switch (event.key.toLowerCase()) {
         case "w":
-          newWpm = wpmRef.current + 1;
+          newWpm = Math.min(wpmRef.current + 1, 1000);
           setWpm(newWpm);
           setInputValue(newWpm.toString());
           break;
@@ -438,7 +438,7 @@ const UserSessionContent = () => {
           setInputValue(newWpm.toString());
           break;
         case "d":
-          newWpm = wpmRef.current + 10;
+          newWpm = Math.min(wpmRef.current + 10, 1000);
           setWpm(newWpm);
           setInputValue(newWpm.toString());
           break;
@@ -577,6 +577,9 @@ const UserSessionContent = () => {
                     if (isNaN(numericValue) || numericValue < 50) {
                       setWpm(50);
                       setInputValue("50"); // Reset input if it's below 50
+                    } else if (numericValue > 1000) {
+                      setWpm(1000);
+                      setInputValue("1000");
                     } else {
                       setWpm(numericValue);
                     }
