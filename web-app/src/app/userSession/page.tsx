@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
   useReadingContext,
   ReadingSessionProvider,
@@ -17,11 +18,127 @@ import { SessionStats } from "@/components/SessionStats";
 import { useAuth } from "@/contexts/authContext";
 import { useUserContext, UserProvider } from "@/contexts/userContext";
 import AccessDenied from "@/components/pages/errors/accessDenied";
-
 // import InfoPopup from "@/components/infoPopup"
 import { useRouter } from "next/navigation";
 import webgazer from "webgazer";
 
+// -------------------------
+// Accessibility Features
+// -------------------------
+
+interface AccessibilitySettings {
+  boldFirst: boolean;
+  boldLast: boolean;
+  fontSize: number; // in pixels
+}
+
+const defaultAccessibilitySettings: AccessibilitySettings = {
+  boldFirst: false,
+  boldLast: false,
+  fontSize: 32,
+};
+
+interface AccessibilitySettingsPanelProps {
+  settings: AccessibilitySettings;
+  setSettings: React.Dispatch<React.SetStateAction<AccessibilitySettings>>;
+  onClose: () => void;
+}
+
+const AccessibilitySettingsPanel = ({
+  settings,
+  setSettings,
+  onClose,
+}: AccessibilitySettingsPanelProps) => {
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setSettings((prev) => ({ ...prev, [name]: checked }));
+  };
+
+  const handleFontSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    setSettings((prev) => ({ ...prev, fontSize: value }));
+  };
+
+  return (
+    <div className="absolute top-20 right-6 bg-white shadow-md p-4 rounded-lg z-50">
+      <h3 className="text-lg font-bold mb-2">Accessibility Settings</h3>
+      <div className="mb-2">
+        <label className="mr-2">
+          <input
+            type="checkbox"
+            name="boldFirst"
+            checked={settings.boldFirst}
+            onChange={handleCheckboxChange}
+          />
+          Bold First Letter
+        </label>
+      </div>
+      <div className="mb-2">
+        <label className="mr-2">
+          <input
+            type="checkbox"
+            name="boldLast"
+            checked={settings.boldLast}
+            onChange={handleCheckboxChange}
+          />
+          Bold Last Letter
+        </label>
+      </div>
+      <div className="mb-2">
+        <label className="mr-2">Font Size:</label>
+        <input
+          type="number"
+          value={settings.fontSize}
+          onChange={handleFontSizeChange}
+          className="border border-gray-300 rounded px-2 py-1 w-20"
+        />
+        <span className="ml-1">px</span>
+      </div>
+      <button
+        className="mt-2 bg-secondary text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+        onClick={onClose}
+      >
+        Close
+      </button>
+    </div>
+  );
+};
+
+const transformText = (
+  text: string,
+  settings: AccessibilitySettings
+): React.ReactElement[] => {
+  if (!text) return [];
+  // Split text by spaces to get individual words.
+  const words = text.split(" ");
+  return words.map((word, index) => {
+    if (word === "") return <span key={index}> </span>;
+    // Bold first and/or last letter as per settings.
+    const first = word.charAt(0);
+    const middle = word.slice(1, word.length - 1);
+    const last = word.length > 1 ? word.charAt(word.length - 1) : "";
+    return (
+      <span key={index}>
+        {settings.boldFirst ? (
+          <span style={{ fontWeight: "bold" }}>{first}</span>
+        ) : (
+          first
+        )}
+        {middle}
+        {word.length > 1 && settings.boldLast ? (
+          <span style={{ fontWeight: "bold" }}>{last}</span>
+        ) : (
+          last
+        )}
+        {index < words.length - 1 ? " " : ""}
+      </span>
+    );
+  });
+};
+
+// -------------------------
+// Main UserSessionContent
+// -------------------------
 
 const UserSessionContent = () => {
   const router = useRouter();
@@ -48,6 +165,12 @@ const UserSessionContent = () => {
 
   // Added: Create a ref for the Calibration component
   const calibrationRef = useRef<CalibrationRef>(null);
+
+  // Accessibility settings state and panel toggle
+  const [accessibilitySettings, setAccessibilitySettings] = useState<AccessibilitySettings>(
+    defaultAccessibilitySettings
+  );
+  const [showAccessibilityPanel, setShowAccessibilityPanel] = useState(false);
 
   const calculateCharsPerLine = () => {
     const containerWidth = window.innerWidth;
@@ -109,9 +232,9 @@ const UserSessionContent = () => {
       } else {
         setTextId(text.id);
         setSessionStarted(true);
-        if (mode == 1) {
+        if (mode === 1) {
           startReadingMode1(text);
-        } else if (mode == 2) {
+        } else if (mode === 2) {
           startReadingMode2(text);
         }
       }
@@ -120,7 +243,7 @@ const UserSessionContent = () => {
   }, [requested, loading, text]);
 
   useEffect(() => {
-    if (mode == 2) {
+    if (mode === 2) {
       if (typeof window === "undefined") return;
 
       const webgazer = (window as any).webgazer;
@@ -141,7 +264,7 @@ const UserSessionContent = () => {
         console.log("WebGazer stopped on unmount.");
       };
     }
-  }, [mode]); // Runs when mode updates
+  }, [mode]);
 
   useEffect(() => {
     wpmRef.current = wpm;
@@ -162,7 +285,7 @@ const UserSessionContent = () => {
     const lines = splitTextIntoLines(text.content);
     await preRead(text);
     const startTime = Timestamp.fromDate(new Date());
-    const wpmReadings: Array<number> = [];
+    const wpmReadings: number[] = [];
     const intervalId = setInterval(() => {
       wpmReadings.push(wpmRef.current);
     }, 5000);
@@ -189,28 +312,13 @@ const UserSessionContent = () => {
     let prevBoundaryChange = 2; // lineChange = [1|2|3], 1 means quadrant 1 to 2, 2 means 2 to 3, 3 means 3 to 4.
 
     // 1. Split content into lines
-
     const lines = splitTextIntoLines(text.content);
     await preRead(text);
-
-    // let currentLineIndex = 0;
-
-    // 2. Define a helper to show the next line
-    // setOutputLine(lines[currentLineIndex]);
-    // const showNextLine = () => {
-    //   if (currentLineIndex < lines.length) {
-    //     setOutputLine(lines[currentLineIndex]);
-    //     currentLineIndex++;
-    //   } else {
-    //     // Optionally handle the end of content here (e.g., stop WebGazer, etc.)
-    //     console.log("All lines have been displayed.");
-    //   }
-    // };
 
     // Initialize WebGazer & set the gaze listener
     // Make sure WebGazer is loaded on `window` (as in your example).
     (window as any).webgazer.setGazeListener(handleGaze);
-    const wpmReadings: Array<number> = [];
+    const wpmReadings: number[] = [];
     const intervalId = setInterval(() => {
       wpmReadings.push(wpmRef.current);
     }, 5000);
@@ -221,7 +329,7 @@ const UserSessionContent = () => {
       const sleepTime = calculateSleepTime(line);
       await sleep(sleepTime);
 
-      // Adusts wpm based on previous two boundary changes
+      // Adjusts wpm based on previous two boundary changes
       let newWpm = wpmRef.current;
       switch (prevBoundaryChange + currBoundaryChange) {
         case 6:
@@ -292,7 +400,7 @@ const UserSessionContent = () => {
     text: Text,
     startTime: Timestamp,
     endTime: Timestamp,
-    wpm: Array<number>
+    wpm: number[]
   ) => {
     console.log(user);
     const session = new Session(
@@ -309,7 +417,7 @@ const UserSessionContent = () => {
     console.log(session);
   };
 
-  // Handle keypresses to alter WPM using arrow keys
+  // Handle keypresses to alter WPM using arrow keys (WASD keys)
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       let newWpm = wpmRef.current;
@@ -345,8 +453,6 @@ const UserSessionContent = () => {
     };
   }, []);
 
-  // useEffect(() => {console.log(wpmRef.current, inputValue)}, [wpm, inputValue]);
-
   return (
     <>
       <Script
@@ -358,7 +464,7 @@ const UserSessionContent = () => {
         onError={() => console.error("Failed to load WebGazer script.")}
       />
       <div className="min-h-screen mt-[7vh] bg-background flex flex-col items-center p-8 relative">
-        {/* Added: Recalibrate Button in the top right */}
+        {/* Recalibrate Button (only for mode 2) */}
         {mode === 2 && (
           <button
             onClick={() =>
@@ -369,6 +475,20 @@ const UserSessionContent = () => {
           >
             Recalibrate
           </button>
+        )}
+        {/* Accessibility Settings Button */}
+        <button
+          onClick={() => setShowAccessibilityPanel(!showAccessibilityPanel)}
+          className="absolute top-6 left-6 bg-secondary text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+        >
+          Accessibility Settings
+        </button>
+        {showAccessibilityPanel && (
+          <AccessibilitySettingsPanel
+            settings={accessibilitySettings}
+            setSettings={setAccessibilitySettings}
+            onClose={() => setShowAccessibilityPanel(false)}
+          />
         )}
         {/* Progress Circles */}
         <div className="flex items-center justify-center mb-8">
@@ -411,7 +531,7 @@ const UserSessionContent = () => {
           <>
             {/* Settings Bar */}
             <div className="flex flex-wrap items-center justify-between w-full bg-white shadow-md p-4 rounded-lg space-y-4 md:space-y-0 md:flex-nowrap">
-              {/* Select Mode Dropdown*/}
+              {/* Select Mode Dropdown */}
               <div className="flex items-center space-x-2">
                 <label
                   htmlFor="modeSelect"
@@ -606,61 +726,47 @@ const UserSessionContent = () => {
               <p className="text-3xl text-gray-800 whitespace-pre-wrap text-center leading-relaxed font-semibold">
                 {"Mode " + mode + " Reading"}
               </p>
-
               {mode === 1 && (
                 <>
                   <p className="text-sm text-gray-600 mt-4 text-center font-semibold">
                     Read at a fixed speed
                   </p>
                   <ul className="text-sm text-gray-600 mt-2 list-inside text-center mx-auto max-w-lg">
-                    <li> - Use the settings bar to choose your starting WPM</li>
-                    <li> - Manually adjust your WPM using WASD</li>
+                    <li>- Use the settings bar to choose your starting WPM</li>
+                    <li>- Manually adjust your WPM using WASD</li>
                   </ul>
                 </>
               )}
-
               {mode === 2 && (
                 <>
                   <p className="text-sm text-gray-600 mt-4 text-center font-semibold">
-                    Use eye tracking software to dynamically adjust reading
-                    speed
+                    Use eye tracking software to dynamically adjust reading speed
                   </p>
                   <ul className="text-sm text-gray-600 mt-2 list-inside text-center mx-auto max-w-lg">
                     <li>
-                      {" "}
-                      - Your reading speed will automatically adjust by tracking
-                      the position of your eyes
+                      - Your reading speed will automatically adjust by tracking your eyes
                     </li>
                     <li>
-                      {" "}
-                      - Ensure your browser can access a webcam, then click
-                      Recalibrate before you begin
+                      - Ensure your browser can access a webcam, then click Recalibrate before you begin
                     </li>
-                    <li> - Manually adjust your WPM using WASD</li>
+                    <li>- Manually adjust your WPM using WASD</li>
                   </ul>
                 </>
               )}
-
               {mode === 3 && (
                 <>
                   <p className="text-sm text-gray-600 mt-4 text-center font-semibold">
-                    Summarise the text for even faster comprehension
-                    (Non-fiction only)
+                    Summarise the text for even faster comprehension (Non-fiction only)
                   </p>
                   <ul className="text-sm text-gray-600 mt-2 list-inside text-center mx-auto max-w-lg">
-                    <li> - Use the settings bar to choose your starting WPM</li>
-                    <li> - Manually adjust your WPM using WASD</li>
-                    <li>
-                      {" "}
-                      - Non-fiction texts will be summarised to help you learn
-                      faster
-                    </li>
+                    <li>- Use the settings bar to choose your starting WPM</li>
+                    <li>- Manually adjust your WPM using WASD</li>
+                    <li>- Non-fiction texts will be summarised to help you learn faster</li>
                   </ul>
                 </>
               )}
             </div>
           ) : null}
-
           {progressStage === 1 ? (
             // Session Start Box
             <>
@@ -677,8 +783,11 @@ const UserSessionContent = () => {
                 </div>
               ) : sessionStarted ? (
                 <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner">
-                  <p className="text-4xl text-gray-800 whitespace-pre-wrap text-center leading-relaxed">
-                    {outputLine}
+                  <p
+                    className="whitespace-pre-wrap text-center leading-relaxed"
+                    style={{ fontSize: accessibilitySettings.fontSize }}
+                  >
+                    {transformText(outputLine, accessibilitySettings)}
                   </p>
                 </div>
               ) : null}
@@ -696,7 +805,6 @@ const UserSessionContent = () => {
               <SessionStats session={session} onClose={() => {router.push(`/userDashboard`)}} />
             </div>
           ) : null}
-          
           <div className="mt-4">
             {readingDone ? (
               <button
