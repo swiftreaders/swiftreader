@@ -31,7 +31,7 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      className={`${atkinson.variable} lowercase italic text-text`}
+      className={`${atkinson.variable} italic text-text`}
     >
       <body>
         <ThemeProvider attribute="class">
