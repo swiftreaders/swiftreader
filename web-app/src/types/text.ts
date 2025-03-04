@@ -68,13 +68,13 @@ export class Text {
     isFiction: boolean,
     // Use either genre or category depending on isFiction
     genreOrCategory: Genre | Category,
+    questions: Question[] = [],
     
     // Default arguments
     id: string = "",
     createdAt: Timestamp = Timestamp.fromMillis(Date.now()),
     updatedAt: Timestamp = createdAt,
     wordLength: number = content.split(" ").length,
-    questions: Question[] = []
   ) {
     this.id = id;
     this.title = title;
