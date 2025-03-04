@@ -16,6 +16,7 @@
     "@google/generative-ai": "^0.21.0",
     "@heroicons/react": "^1.0.6",
     "@next/font": "^14.2.15",
+    "@testing-library/react": "^16.2.0",
     "axios": "^1.7.9",
     "chart.js": "^4.4.7",
     "firebase": "^11.1.0",
