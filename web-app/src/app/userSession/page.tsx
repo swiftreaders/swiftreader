@@ -21,6 +21,7 @@ import AccessDenied from "@/components/pages/errors/accessDenied";
 // import InfoPopup from "@/components/infoPopup"
 import { useRouter } from "next/navigation";
 import webgazer from "webgazer";
+import { summariseText } from "@/services/generateService";
 
 // -------------------------
 // Accessibility Features
@@ -154,6 +155,7 @@ const UserSessionContent = () => {
   const [wpm, setWpm] = useState(300);
   const [inputValue, setInputValue] = useState("300");
   const [sessionStarted, setSessionStarted] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [progressStage, setProgressStage] = useState(1);
   const [outputLine, setOutputLine] = useState<string>("");
   const [requested, setRequested] = useState(false);
@@ -223,7 +225,6 @@ const UserSessionContent = () => {
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-  // Modified: Added an eslint disable comment to ignore missing dependencies warning
   useEffect(() => {
     if (requested && !loading) {
       if (text == null) {
@@ -236,10 +237,11 @@ const UserSessionContent = () => {
           startReadingMode1(text);
         } else if (mode === 2) {
           startReadingMode2(text);
+        } else {
+          startReadingMode3(text);
         }
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requested, loading, text]);
 
   useEffect(() => {
@@ -263,6 +265,9 @@ const UserSessionContent = () => {
         webgazer.end();
         console.log("WebGazer stopped on unmount.");
       };
+    }
+    if (mode === 3) {
+      setFiction(false);
     }
   }, [mode]);
 
@@ -394,6 +399,14 @@ const UserSessionContent = () => {
       // Update the previous quarter for the next reading
       previousQuarter = activeQuarter;
     }
+  };
+
+  const startReadingMode3 = async (text: Text) => {
+    setGenerating(true);
+    const summary = await summariseText(text.content, text.title);
+    setGenerating(false);
+    text.content = summary;
+    startReadingMode1(text);
   };
 
   const finishReading = (
@@ -600,7 +613,8 @@ const UserSessionContent = () => {
                   id="fictionCheckbox"
                   type="checkbox"
                   className="h-5 w-5 text-blue-500 focus:ring focus:ring-blue-300"
-                  checked={fiction}
+                  checked={mode === 3 ? false : fiction}
+                  disabled={mode === 3}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                     setFiction(event.target.checked)
                   }
@@ -783,6 +797,10 @@ const UserSessionContent = () => {
               ) : loading ? (
                 <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner flex justify-center items-center">
                   <p className="text-xl text-gray-800">Loading...</p>
+                </div>
+              ) : generating ? (
+                <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner flex justify-center items-center">
+                  <p className="text-xl text-gray-800">Generating summary...</p>
                 </div>
               ) : sessionStarted ? (
                 <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner">
