@@ -556,6 +556,7 @@ const UserSessionContent = () => {
                   id="modeSelect"
                   value={mode}
                   onChange={(e) => setMode(parseInt(e.target.value, 10))}
+                  disabled={sessionStarted}
                   className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
                 >
                   {[1, 2, 3].map((num) => (
@@ -614,7 +615,7 @@ const UserSessionContent = () => {
                   type="checkbox"
                   className="h-5 w-5 text-blue-500 focus:ring focus:ring-blue-300"
                   checked={mode === 3 ? false : fiction}
-                  disabled={mode === 3}
+                  disabled={mode === 3 || sessionStarted}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                     setFiction(event.target.checked)
                   }
@@ -638,6 +639,7 @@ const UserSessionContent = () => {
                         e.target.value === "" ? null : (e.target.value as Genre)
                       )
                     }
+                    disabled={sessionStarted}
                     className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
                   >
                     <option value="">Any</option> {/* Option for "Any" */}
@@ -658,6 +660,7 @@ const UserSessionContent = () => {
                           : (e.target.value as Category)
                       )
                     }
+                    disabled={sessionStarted}
                     className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
                   >
                     <option value="">Any</option> {/* Option for "Any" */}
@@ -688,6 +691,7 @@ const UserSessionContent = () => {
                         : (e.target.value as Difficulty)
                     )
                   }
+                  disabled={sessionStarted}
                   className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
                 >
                   <option value="">Any</option> {/* Option for "Any" */}
@@ -719,6 +723,7 @@ const UserSessionContent = () => {
                         : parseInt(event.target.value, 10)
                     )
                   }
+                  disabled={sessionStarted}
                 />
                 {/* Checkbox for "Any" */}
                 <label htmlFor="anyLength" className="text-sm text-gray-500">
@@ -729,6 +734,7 @@ const UserSessionContent = () => {
                   type="checkbox"
                   checked={length === null}
                   onChange={(e) => setLength(e.target.checked ? null : 300)}
+                  disabled={sessionStarted}
                   className="ml-2"
                 />
               </div>
