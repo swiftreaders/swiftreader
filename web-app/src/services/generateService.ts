@@ -1,27 +1,14 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Category, Difficulty, Question } from "@/types/text";
+import { Category, Difficulty, NewTextType, Question } from "@/types/text";
 
 const GEMINI_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-
-export interface GenText {
-  id: string;
-  title: string;
-  author: string;
-  difficulty: Difficulty;
-  content: string;
-  text_link: string;
-  questions: Question[]; // Ensure it matches expected type
-  isValid: boolean;
-  isAI: boolean;
-  category: Category; // Only non-fiction
-}
 
 /// Generate multiple non-fiction texts using Gemini
 export const fetchGeneratedTexts = async (
   category: Category,
   minWordLimit: number,
   maxWordLimit: number
-): Promise<GenText[]> => {
+): Promise<NewTextType[]> => {
   try {
     const gemini = new GoogleGenerativeAI(GEMINI_KEY ?? "");
     const model = gemini.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -78,13 +65,14 @@ export const fetchGeneratedTexts = async (
     const response = JSON.parse(cleanJson);
 
     // Map AI response to match `GenText` structure
-    const generatedTexts: GenText[] = response.texts.map((text: any, index: number) => ({
+    const generatedTexts: NewTextType[] = response.texts.map((text: any, index: number) => ({
       id: `gen-${Date.now()}-${index}`,
       title: text.title,
       author: "AI Generated",
       difficulty: text.difficulty as Difficulty,
       content: text.content,
       text_link: "",
+      isFiction: false,
       isValid: true,
       isAI: true,
       category, // Only non-fiction

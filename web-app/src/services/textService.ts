@@ -92,11 +92,11 @@ export const textService = {
         data.difficulty,
         data.isFiction,
         data.isFiction ? data.genre : data.category,
+        questions,
         docId,
         data.createdAt,
         data.updatedAt,
-        data.wordLength,
-        questions
+        data.wordLength
       );
       textsMap.set(docId, text);
       onUpdate(Array.from(textsMap.values()));
