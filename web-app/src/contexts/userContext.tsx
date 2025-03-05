@@ -83,7 +83,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
     const validSessions = sessions.filter(s => s.average_wpm > 0 && s.getComprehensionScore() > 49);
     console.log("valid sessions", validSessions.length);
     const averageWpm = validSessions.length > 0 
-      ? validSessions.reduce((sum, s) => sum + s.average_wpm, 0) / (validSessions.length + 1)
+      ? validSessions.reduce((sum, s) => sum + s.average_wpm, 0) / (validSessions.length)
       : 0;
     console.log("average wpm", averageWpm);
 

@@ -101,8 +101,7 @@ const filterTextUsingAI = async (content: string, minWords: number, maxWords: nu
       Each question has 4 choices,
       Only one choice is correct.
       Ensure the 4 choices in the JSON are comma-separated and in each 
-      choice there are NO COMMAS. If a comma must be used in an option, 
-      it is replaced with a dash (-).
+      choice there are NO COMMAS. 
 
     Validate the excerpt, setting "isValid": true only if the text:
       Is part of the main text of a book and is NOT a preface or disclaimer,

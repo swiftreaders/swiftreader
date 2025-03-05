@@ -10,23 +10,6 @@ import { useAuth } from "@/contexts/authContext";
 import AccessDenied from "@/components/pages/errors/accessDenied";
 import { SessionStats } from "@/components/SessionStats";
 import Button from "@/components/common/Button";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-  AreaChart,
-  Area,
-  Legend,
-} from "recharts";
 import { RecentReadingSessions } from "@/components/userDashboard/RecentSessionsTable";
 import { ProgressHeader } from "@/components/userDashboard/ProgressHeader";
 import LeaderboardComponent from "@/components/userDashboard/Leaderboard";
