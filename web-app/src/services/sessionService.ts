@@ -167,10 +167,11 @@ const getText = async (constraints: { [key: string]: any }): Promise<Text | null
         data.difficulty,
         data.isFiction,
         (data.isFiction ? data.genre : data.category),
+        [],
         randomDoc.id,
         data.createdAt,
         data.updatedAt,
-        data.wordLength
+        data.wordLength,
       );
     } catch (error) {
       console.error("Error fetching text:", error);
