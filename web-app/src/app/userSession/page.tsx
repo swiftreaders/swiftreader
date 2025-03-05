@@ -16,11 +16,10 @@ import Calibration, { CalibrationRef } from "./Calibration"; // Modified import 
 import { SessionStats } from "@/components/SessionStats";
 // import HelpPopup from "@/components/helpPopup" 
 import { useAuth } from "@/contexts/authContext";
-import { useUserContext, UserProvider } from "@/contexts/userContext";
+import { UserProvider } from "@/contexts/userContext";
 import AccessDenied from "@/components/pages/errors/accessDenied";
 // import InfoPopup from "@/components/infoPopup"
 import { useRouter } from "next/navigation";
-import webgazer from "webgazer";
 import { summariseText } from "@/services/generateService";
 import { AccessibilitySettings, 
   AccessibilitySettingsPanel,
@@ -88,8 +87,8 @@ const UserSessionContent = () => {
   const [genre, setGenre] = useState<Genre | null>(null);
   const [fiction, setFiction] = useState(true);
   const [length, setLength] = useState<number | null>(null);
-  const [wpm, setWpm] = useState(300);
-  const [inputValue, setInputValue] = useState("300");
+  const [wpm, setWpm] = useState(user?.wpm ?? 300);
+  const [inputValue, setInputValue] = useState((user?.wpm)?.toString() ?? "300");
   const [sessionStarted, setSessionStarted] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [progressStage, setProgressStage] = useState(1);
@@ -100,11 +99,12 @@ const UserSessionContent = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [currentLineIndex, setCurrentLineIndex] = useState(0);
   const [totalLines, setTotalLines] = useState(100);
-  // const [popupVisible, setPopupVisible] = useState(false);
-  const wpmRef = useRef(wpm);
-  
   const [paused, setPaused] = useState(false);
+  const [cancelled, setCancelled] = useState(false);
+  const wpmRef = useRef(wpm);
   const pausedRef = useRef(paused);
+
+
   // Keep the ref in sync with the state
   useEffect(() => {
     pausedRef.current = paused;
@@ -174,6 +174,24 @@ const UserSessionContent = () => {
     setPaused(false);
   };
 
+  const handleCancelSession = () => {
+    setCancelled(true);
+    setSessionStarted(false);
+    setReadingDone(false);
+    setCurrentLineIndex(0);
+    setPaused(true);
+    setRequested(false);
+
+    // Clean up WebGazer if in mode 2
+    if (mode === 2 && typeof window !== "undefined") {
+      const webgazer = (window as any).webgazer;
+      if (webgazer) {
+        webgazer.clearGazeListener();
+        webgazer.end();
+      }
+    }
+  };
+
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
   useEffect(() => {
@@ -236,7 +254,7 @@ const UserSessionContent = () => {
 
   const handleRecalibrate = () => {
     setPaused(true);
-    if (calibrationRef.current) {
+    if (calibrationRef.current && !calibrationRef.current.calibrating) {
       calibrationRef.current.startCalibration();
     }
   }
@@ -567,9 +585,6 @@ const UserSessionContent = () => {
                     </option>
                   ))}
                 </select>
-                {/* <HelpPopup message="Mode 1: Read at a fixed WPM \n
-            Mode 2: Use eye-tracking software to dynamically adjust reading speed \n
-            Mode 3 (Non-fiction only): Summarise the text for even faster comprehension" /> */}
               </div>
 
               {/* WPM Input */}
@@ -898,8 +913,20 @@ const UserSessionContent = () => {
                 <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner relative">
                   {/* Pause overlay */}
                   {paused && (
-                    <div className="absolute inset-0 bg-white bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-10">
+                    <div className="absolute inset-0 bg-white bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-10 flex-col gap-4">
                       <div className="text-4xl text-gray-700 font-bold">PAUSED</div>
+                      <button
+                        onClick={handleCancelSession}
+                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+                      >
+                        Cancel Session
+                      </button>
+                      <button
+                        onClick={() => setPaused(!paused)}
+                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+                      >
+                        Resume Session
+                      </button>
                     </div>
                   )}
                   
@@ -926,6 +953,16 @@ const UserSessionContent = () => {
                           <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd"/>
                         </svg>
                       )}
+                    </button>
+
+                    <button
+                      onClick={handleCancelSession}
+                      className="text-red-500 hover:text-red-600 transition-colors"
+                      title="Cancel Session"
+                    >
+                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/>
+                      </svg>
                     </button>
                     
                     <div className="flex-1 bg-gray-300 h-2 rounded-full overflow-hidden">
