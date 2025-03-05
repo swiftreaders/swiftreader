@@ -25,6 +25,7 @@ import { summariseText } from "@/services/generateService";
 import { AccessibilitySettings, 
   AccessibilitySettingsPanel,
   defaultAccessibilitySettings } from "@/components/AccessibilitySettingsPanel";
+import { Bold } from "lucide-react";
 
 const transformText = (
   text: string,
@@ -821,19 +822,42 @@ const UserSessionContent = () => {
                   Quick Start
                 </h3>
                 <ul className="space-y-3 text-sm text-gray-600">
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"/>
-                    1. Configure your chosen text above
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"/>
-                    2. Click &quot;Start Session&quot;
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"/>
-                    3. Use keyboard controls during reading
-                  </li>
-                </ul>
+                {mode === 2 ? (
+                  <>
+                    <li className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full" />
+                      1. Ensure a stable webcam setup and click Recalibrate
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full" />
+                      2. Configure your chosen text above
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full" />
+                      3. Click &quot;Start Session&quot;
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full" />
+                      4. Use keyboard controls during reading
+                    </li>
+                  </>
+                ) : (
+                  <>
+                    <li className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full" />
+                      1. Configure your chosen text above
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full" />
+                      2. Click &quot;Start Session&quot;
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full" />
+                      3. Use keyboard controls during reading
+                    </li>
+                  </>
+                )}
+              </ul>
               </div>
             </div>
           </div>
