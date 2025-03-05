@@ -21,6 +21,7 @@ import AccessDenied from "@/components/pages/errors/accessDenied";
 // import InfoPopup from "@/components/infoPopup"
 import { useRouter } from "next/navigation";
 import webgazer from "webgazer";
+import { summariseText } from "@/services/generateService";
 import { AccessibilitySettings, 
   AccessibilitySettingsPanel,
   defaultAccessibilitySettings } from "@/components/AccessibilitySettingsPanel";
@@ -89,6 +90,7 @@ const UserSessionContent = () => {
   const [wpm, setWpm] = useState(300);
   const [inputValue, setInputValue] = useState("300");
   const [sessionStarted, setSessionStarted] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [progressStage, setProgressStage] = useState(1);
   const [outputLine, setOutputLine] = useState<string>("");
   const [requested, setRequested] = useState(false);
@@ -185,6 +187,8 @@ const UserSessionContent = () => {
           startReadingMode1(text);
         } else if (mode === 2) {
           startReadingMode2(text);
+        } else {
+          startReadingMode3(text);
         }
       }
     }
@@ -211,6 +215,9 @@ const UserSessionContent = () => {
         webgazer.end();
         console.log("WebGazer stopped on unmount.");
       };
+    }
+    if (mode === 3) {
+      setFiction(false);
     }
   }, [mode, progressStage]);
 
@@ -373,6 +380,14 @@ const UserSessionContent = () => {
     }
   };
 
+  const startReadingMode3 = async (text: Text) => {
+    setGenerating(true);
+    const summary = await summariseText(text.content, text.title);
+    setGenerating(false);
+    text.content = summary;
+    startReadingMode1(text);
+  };
+
   const finishReading = (
     text: Text,
     startTime: Timestamp,
@@ -528,6 +543,7 @@ const UserSessionContent = () => {
                   id="modeSelect"
                   value={mode}
                   onChange={(e) => setMode(parseInt(e.target.value, 10))}
+                  disabled={sessionStarted}
                   className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
                 >
                   {[1, 2, 3].map((num) => (
@@ -585,7 +601,8 @@ const UserSessionContent = () => {
                   id="fictionCheckbox"
                   type="checkbox"
                   className="h-5 w-5 text-blue-500 focus:ring focus:ring-blue-300"
-                  checked={fiction}
+                  checked={mode === 3 ? false : fiction}
+                  disabled={mode === 3 || sessionStarted}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                     setFiction(event.target.checked)
                   }
@@ -609,6 +626,7 @@ const UserSessionContent = () => {
                         e.target.value === "" ? null : (e.target.value as Genre)
                       )
                     }
+                    disabled={sessionStarted}
                     className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
                   >
                     <option value="">Any</option> {/* Option for "Any" */}
@@ -629,6 +647,7 @@ const UserSessionContent = () => {
                           : (e.target.value as Category)
                       )
                     }
+                    disabled={sessionStarted}
                     className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
                   >
                     <option value="">Any</option> {/* Option for "Any" */}
@@ -659,6 +678,7 @@ const UserSessionContent = () => {
                         : (e.target.value as Difficulty)
                     )
                   }
+                  disabled={sessionStarted}
                   className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
                 >
                   <option value="">Any</option> {/* Option for "Any" */}
@@ -690,6 +710,7 @@ const UserSessionContent = () => {
                         : parseInt(event.target.value, 10)
                     )
                   }
+                  disabled={sessionStarted}
                 />
                 {/* Checkbox for "Any" */}
                 <label htmlFor="anyLength" className="text-sm text-gray-500">
@@ -700,6 +721,7 @@ const UserSessionContent = () => {
                   type="checkbox"
                   checked={length === null}
                   onChange={(e) => setLength(e.target.checked ? null : 300)}
+                  disabled={sessionStarted}
                   className="ml-2"
                 />
               </div>
@@ -829,6 +851,10 @@ const UserSessionContent = () => {
               ) : loading ? (
                 <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner flex justify-center items-center">
                   <p className="text-xl text-gray-800">Loading...</p>
+                </div>
+              ) : generating ? (
+                <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner flex justify-center items-center">
+                  <p className="text-xl text-gray-800">Generating summary...</p>
                 </div>
               ) : sessionStarted ? (
                 <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner relative">
