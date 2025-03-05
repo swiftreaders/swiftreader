@@ -97,7 +97,6 @@ const UserSessionContent = () => {
   const [loading, setLoading] = useState(false);
   const [readingDone, setReadingDone] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
-  const [showControls, setShowControls] = useState(true);
   const [currentLineIndex, setCurrentLineIndex] = useState(0);
   const [totalLines, setTotalLines] = useState(100);
   // const [popupVisible, setPopupVisible] = useState(false);
@@ -171,6 +170,7 @@ const UserSessionContent = () => {
       length,
       setLoading
     );
+    setPaused(false);
   };
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -227,7 +227,9 @@ const UserSessionContent = () => {
 
   const handleRecalibrate = () => {
     setPaused(true);
-    calibrationRef.current && calibrationRef.current.startCalibration();
+    if (calibrationRef.current) {
+      calibrationRef.current.startCalibration();
+    }
   }
 
   const preRead = async (text: Text) => {
@@ -438,10 +440,6 @@ const UserSessionContent = () => {
           newWpm = Math.min(wpmRef.current + 10, 1000);
           setWpm(newWpm);
           setInputValue(newWpm.toString());
-          break;
-        case "h": // Toggle controls visibility
-          event.preventDefault();
-          setShowControls(prev => !prev);
           break;
         case " ":
           event.preventDefault();
@@ -698,7 +696,7 @@ const UserSessionContent = () => {
                   htmlFor="lengthInput"
                   className="text-sm font-medium text-gray-700"
                 >
-                  Length in words:
+                  Text length:
                 </label>
                 <input
                   id="lengthInput"
@@ -733,7 +731,7 @@ const UserSessionContent = () => {
           <></>
         )}
         <div className="w-full flex justify-center flex-col items-center">
-        {!sessionStarted && (
+        {!sessionStarted && !generating && (
           <div className="w-full bg-gradient-to-br from-purple-50 to-blue-50 p-8 rounded-2xl shadow-xl border border-purple-100">
             <div className="text-center mb-6">
               <div className="inline-flex items-center justify-center bg-gradient-to-r from-purple-600 to-blue-500 text-white px-6 py-2 rounded-full text-lg font-bold shadow-sm">
