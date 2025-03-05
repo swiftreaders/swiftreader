@@ -1,51 +1,13 @@
-import { Category, Difficulty, Genre } from "@/types/text";
+import { Difficulty, Genre } from "@/types/text";
 import axios from "axios";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Question } from "@/types/text";
+import { NewTextType } from "@/types/text";
 
 const CORS_PROXY = "https://api.allorigins.win/get?url=";
 const GEMINI_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;  
 
 /// Gutendex API base URL
 const GUTENDEX_API = "https://gutendex.com/books";
-
-// Define the types for the books and texts
-export interface Book {
-  id: string;
-  title: string;
-  author: string;
-  subject: Genre;
-  difficulty: Difficulty;
-  content: string;
-  text_link: string;
-  questions: Question[];  
-  isValid: boolean;
-  isAI: boolean; 
-}
-
-// export interface Excerpt {
-//   book_id: string;
-//   excerpt: string;
-//   questions: Question[];
-// }
-
-// interface FilterOptions {
-//   difficulty?: "easy" | "medium" | "hard";
-//   subjects?: string[];
-//   wordCount?: { min: number; max: number };
-// }
-
-/// Helper function to classify text difficulty
-// const classifyDifficulty = (text: string): Difficulty => {
-//   const wordCount = text.split(" ").length;
-//   const averageWordLength = text
-//     .split(" ")
-//     .reduce((acc, word) => acc + word.length, 0) / wordCount;
-
-//   if (averageWordLength < 5) return Difficulty.EASY;
-//   if (averageWordLength < 7) return Difficulty.MEDIUM;
-//   return Difficulty.HARD;
-// };
 
 const findTxtUrl = (data: { [format: string]: string }, id: string, title: string): string => {
   for (const [format, url] of Object.entries(data)) {
@@ -60,85 +22,58 @@ const findTxtUrl = (data: { [format: string]: string }, id: string, title: strin
   return "NOT_FOUND";
 };
 
-/// Fetch books from the Gutendex API
-export const fetchBooks = async (genre: Genre, existingTexts: string[]): Promise<Book[]> => {
+/// Fetch texts from the Gutendex API
+export const fetchBooks = async (genre: Genre, existingTexts: string[]): Promise<NewTextType[]> => {
   try {
-    console.log("fetchBooks: waiting for list of books fetch");
+    console.log("fetchBooks: waiting for list of texts fetch");
     const response = await axios.get(GUTENDEX_API, {
       params: { 
-      topic: genre as string, 
-      languages: ["en"], 
-      mime_type: ["text/plain; charset=us-ascii"],
-      copyright: "false", 
-      page: Math.floor(Math.random() * 10) + 1
+        topic: genre as string, 
+        languages: ["en"], 
+        mime_type: ["text/plain; charset=us-ascii"],
+        copyright: "false", 
+        page: Math.floor(Math.random() * 10) + 1
       },
     });
 
-    // Manually filter for english books as some were still non-english
-    const temp_books = response.data.results.filter(
-      (book: any) => Array.isArray(book.languages) && book.languages.includes("en")
+    // Manually filter for English texts as some were still non-English
+    const tempTexts = response.data.results.filter(
+      (text: any) => Array.isArray(text.languages) && text.languages.includes("en")
     );
 
-    console.log(temp_books);
+    console.log(tempTexts);
     
-    console.log(`fetchBooks: ${temp_books.length} books fetched`, temp_books.map((book: any) => book.title));
+    console.log(`fetchBooks: ${tempTexts.length} texts fetched`, tempTexts.map((text: any) => text.title));
 
-    const books = temp_books
-    .sort(() => Math.random())
-    .map((book: any) => ({
-      id: book.id,
-      title: book.title,
-      author: book.authors[0]?.name || "Unknown Author",
-      subject: genre,
-      difficulty: Difficulty.EASY, // Placeholder difficulty
-      text_link: findTxtUrl(book.formats || {}, book.id, book.title) || "NOT_FOUND",
-      content: "", // fetch the content later
-    }))
-    .filter((book: any) => !existingTexts.includes(book.title))
-    .slice(0, 5);
+    const texts = tempTexts
+      .sort(() => Math.random())
+      .map((text: any) => ({
+        title: text.title,
+        content: "", // Fetch the content later
+        difficulty: Difficulty.EASY, // Placeholder difficulty
+        isFiction: true, 
+        genre: genre,
+        category: null, // Books can only be fiction
+        text_link: findTxtUrl(text.formats || {}, text.id, text.title) || "NOT_FOUND",
+        wordLength: 0, // Placeholder, will be updated later
+        questions: [], // Placeholder, will be updated later
+        isValid: false, // Placeholder, will be updated later
+        isAI: false, // Placeholder, will be updated later
+      }))
+      .filter((text: NewTextType) => !existingTexts.includes(text.title))
+      .slice(0, 5);
 
-    console.log("books: ",books);
+    console.log("texts: ", texts);
     
-    return books;
+    return texts;
   } catch (error) {
-    console.error("Error fetching books from Gutendex:", error);
+    console.error("Error fetching texts from Gutendex:", error);
     return [];
   }
 };
 
-// const findNaturalExcerpt = (text: string, targetWordCount: number): string => {
-//   const cleaned = text
-//     .replace(/(\r\n|\n|\r)/gm, " ") // Remove newlines
-//     .replace(/\s+/g, " ") // Collapse whitespace
-//     .replace(/\[\d+\]/g, "") // Remove footnotes
-//     .trim();
-
-//   // Find sentence boundaries
-//   const sentences = cleaned.match(/[^.!?]+[.!?]+/g) || [];
-//   if (sentences.length === 0) return cleaned.split(/\s+/).slice(0, targetWordCount).join(" ");
-
-//   // Find random starting point
-//   const startIdx = Math.floor(Math.random() * Math.max(0, sentences.length - 5));
-//   let wordCount = 0;
-//   const selectedSentences = [];
-
-//   // Collect sentences until we reach target length
-//   for (let i = startIdx; i < sentences.length; i++) {
-//     const words = sentences[i].split(/\s+/).length;
-//     if (wordCount + words > targetWordCount) break;
-//     selectedSentences.push(sentences[i]);
-//     wordCount += words;
-//   }
-
-//   // Fallback if no sentences were selected
-//   if (selectedSentences.length === 0) {
-//     return cleaned.split(/\s+/).slice(0, targetWordCount).join(" ");
-//   }
-
-//   return selectedSentences.join(" ");
-// };
-
-const filterTextUsingAI = async (content: string, minWords: number, maxWords: number): Promise<{ excerpt: string, questions: any[], isValid: boolean, difficulty: Difficulty }> => {
+const filterTextUsingAI = async (content: string, minWords: number, maxWords: number): Promise<{ 
+  excerpt: string, questions: any[], isValid: boolean, difficulty: Difficulty }> => {
   try {
     const gemini = new GoogleGenerativeAI(GEMINI_KEY ?? "");
     const model = gemini.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -238,7 +173,6 @@ const filterTextUsingAI = async (content: string, minWords: number, maxWords: nu
   } catch (error) {
     console.log("AI filtering failed:", error);
     return { 
-      // excerpt: findNaturalExcerpt(content, maxWords),
       excerpt: "CONTENT_UNAVAILABLE",
       questions: [],
       isValid: false, 
@@ -247,9 +181,8 @@ const filterTextUsingAI = async (content: string, minWords: number, maxWords: nu
   }
 };
 
-
-// Update fetchBookContent
-export const fetchBookContent = async (book: Book, minWords: number, maxWords: number): Promise<Book> => {
+/// Fetch coherent paragraph from specified book
+export const fetchBookContent = async (book: NewTextType, minWords: number, maxWords: number): Promise<NewTextType> => {
   try {
     if (book.text_link === "NOT_FOUND") {
       return { 
@@ -286,7 +219,8 @@ export const fetchBookContent = async (book: Book, minWords: number, maxWords: n
       difficulty,
       questions: aiResponse.questions,
       isValid: aiResponse.isValid, 
-      isAI: false
+      isAI: false,
+      wordLength: finalExcerpt.split(/\s+/).length
     };
   } catch (error) {
     console.error(`Error processing ${book.title}:`, error);
@@ -300,42 +234,3 @@ export const fetchBookContent = async (book: Book, minWords: number, maxWords: n
     };
   }
 };
-
-//todo
-// @Sri it looks like this code is for handling errors when fetching books from Gutendex
-// but I think it's redundant now...
-
-
-// /// Filter books based on criteria
-// const filterBooks = (books: Book[], filters: FilterOptions): Book[] => {
-//   return books.filter((book) => {
-//     // Ensure valid, available content meets criteria
-//     const contentValid = book.isValid && 
-//       book.content !== "CONTENT_UNAVAILABLE" &&
-//       book.content.split(" ").length >= (filters.wordCount?.min || 1);
-
-//     const meetsDifficulty = !filters.difficulty || 
-//       book.difficulty === filters.difficulty;
-
-//     return contentValid && meetsDifficulty;
-//   });
-// };
-
-/// Service to retrieve texts from Gutendex
-// export const getTexts = async (
-//   genre: Genre,
-//   filters: FilterOptions
-// ): Promise<Book[]> => {
-//   const books = await fetchBooks(genre);
-//   console.log("bookService.ts - getTexts:", books.map((book) => book.title));
-
-//   // Ensure word limit fallback exists
-//   const wordLimit = filters.wordCount?.max ?? 500;
-
-//   // Fetch book contents with AI processing
-//   const booksWithContent = await Promise.all(
-//     books.map(book => fetchBookContent(book, wordLimit))
-//   );
-
-//   return filterBooks(booksWithContent, filters);
-// };

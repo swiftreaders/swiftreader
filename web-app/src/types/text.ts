@@ -33,6 +33,20 @@ export enum Genre {
   DRAMA = "drama",
 }
 
+export interface NewTextType {
+  title: string;
+  content: string;
+  difficulty: Difficulty; 
+  isFiction: boolean;
+  genre: Genre;
+  category: Category;
+  text_link: string;
+  wordLength: number;
+  questions: Question[];
+  isValid: boolean;
+  isAI: boolean;
+}
+
 /// Text class containing all fields related to the Firestore database texts collection
 export class Text {
   id: string;
@@ -54,13 +68,13 @@ export class Text {
     isFiction: boolean,
     // Use either genre or category depending on isFiction
     genreOrCategory: Genre | Category,
+    questions: Question[] = [],
     
     // Default arguments
     id: string = "",
     createdAt: Timestamp = Timestamp.fromMillis(Date.now()),
     updatedAt: Timestamp = createdAt,
     wordLength: number = content.split(" ").length,
-    questions: Question[] = []
   ) {
     this.id = id;
     this.title = title;
