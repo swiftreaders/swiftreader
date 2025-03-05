@@ -173,7 +173,6 @@ const UserSessionContent = () => {
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-  // Modified: Added an eslint disable comment to ignore missing dependencies warning
   useEffect(() => {
     if (requested && !loading) {
       if (text == null) {
@@ -189,11 +188,10 @@ const UserSessionContent = () => {
         }
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requested, loading, text]);
 
   useEffect(() => {
-    if (mode === 2) {
+    if (mode === 2 && progressStage === 1) {
       if (typeof window === "undefined") return;
 
       const webgazer = (window as any).webgazer;
@@ -214,7 +212,7 @@ const UserSessionContent = () => {
         console.log("WebGazer stopped on unmount.");
       };
     }
-  }, [mode]);
+  }, [mode, progressStage]);
 
   useEffect(() => {
     wpmRef.current = wpm;
@@ -452,7 +450,7 @@ const UserSessionContent = () => {
       />
       <div className="min-h-screen mt-[7vh] bg-background flex flex-col items-center p-8 relative">
         {/* Recalibrate Button (only for mode 2) */}
-        {mode === 2 && (
+        {mode === 2 && progressStage === 1 && (
           <button
             onClick={() =>
               calibrationRef.current &&
