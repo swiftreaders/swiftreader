@@ -72,6 +72,7 @@ export const fetchGeneratedTexts = async (
       difficulty: text.difficulty as Difficulty,
       content: text.content,
       text_link: "",
+      isFiction: false,
       isValid: true,
       isAI: true,
       category, // Only non-fiction
