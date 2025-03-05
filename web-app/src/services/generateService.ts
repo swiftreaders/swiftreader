@@ -21,11 +21,14 @@ export const fetchGeneratedTexts = async (
     - Each passage should be **factual, structured, and informative**.
     - Each passage must be between ${minWordLimit} and ${maxWordLimit} words.
     - Ensure proper grammar, coherence, and a natural beginning and end.
+    - Aim to target the maximum word limit for each passage, even if that means sacrificing conciseness.
+      - If needed, be more verbose and talk about related topics.
 
     Generate 4 multiple-choice questions per passage:
       - Each question is based **ONLY** on the passage.
       - Each question has exactly **4 answer choices**.
       - Only **one** choice is correct.
+      - Ensure the questions assess the main topic of the passage, rather than any side topics.
       - Format each choice as a **separate string in an array**.
 
     Classify difficulty using:
@@ -88,4 +91,36 @@ export const fetchGeneratedTexts = async (
     console.error("Error generating AI texts:", error);
     return [];
   }
+
 };
+
+export const summariseText = async (text: string, title: string): Promise<string> => {
+  try {
+    const gemini = new GoogleGenerativeAI(GEMINI_KEY ?? "");
+    const model = gemini.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const fullPrompt = `
+    Summarise the following text:
+    "${title}"
+    
+    - The summary should be **concise and informative**.
+    - Aim to reduce the number of words to either 200 or 50% of the original text, whichever is greater.
+    - Retain the main idea, which is the topic stated in the title above, as well as key points.
+    - Ensure the summary is **grammatically correct**.
+    - **Do not add any new information**.
+    
+    Return the summary as a string.
+    The text is as follows:
+    ${text}
+    `;
+
+    const result = await model.generateContent(fullPrompt);
+    const rawResponse = result.response.text().trim();
+    console.log("Generated Summary:", rawResponse);
+
+    return rawResponse;
+  } catch (error) {
+    console.error("Error generating AI summary:", error);
+    return "";
+  }
+}

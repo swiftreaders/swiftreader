@@ -1,4 +1,4 @@
-import { fetchGeneratedTexts } from "@/services/generateService";
+import { fetchGeneratedTexts, summariseText } from "@/services/generateService";
 import { Category } from "@/types/text";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -143,4 +143,62 @@ describe("generateTextUsingAI", () => {
     expect(result[1].questions[0].answer).toBe("Theme X");
   });
   
+});
+
+describe("summariseText", () => {
+  let mockGenerateContent: jest.Mock;
+  let consoleLogSpy: jest.SpyInstance;
+  let consoleErrorSpy: jest.SpyInstance;
+
+  afterAll(() => {
+    consoleLogSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
+  });
+
+  beforeAll(() => {
+    consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    mockGenerateContent = jest.fn();
+    
+    (GoogleGenerativeAI as jest.Mock).mockImplementation(() => ({
+      getGenerativeModel: jest.fn().mockReturnValue({
+        generateContent: mockGenerateContent,
+      }),
+    }));
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test("should return a valid AI-generated summary", async () => {
+    const mockSummary = "This is a concise summary of the given text.";
+
+    mockGenerateContent.mockResolvedValue({
+      response: {
+        text: jest.fn().mockReturnValue(mockSummary),
+      },
+    });
+
+    const text = "This is a long passage that needs summarization.";
+    const title = "Sample Title";
+
+    const result = await summariseText(text, title);
+
+    expect(mockGenerateContent).toHaveBeenCalledTimes(1);
+    expect(result).toBe(mockSummary);
+  });
+
+  test("should handle AI generation errors and return an empty string", async () => {
+    mockGenerateContent.mockRejectedValue(new Error("AI service failure"));
+
+    const text = "This is a long passage that needs summarization.";
+    const title = "Sample Title";
+
+    const result = await summariseText(text, title);
+
+    expect(mockGenerateContent).toHaveBeenCalledTimes(1);
+    expect(result).toBe("");
+  });
 });
