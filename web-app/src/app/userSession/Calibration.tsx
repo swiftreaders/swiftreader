@@ -6,6 +6,7 @@ import { trainWebGazer } from "./TrainWebGazer"; // (Adjust import path)
 // Exporting the ref interface for external components
 export interface CalibrationRef {
   startCalibration: () => Promise<void>;
+  calibrating: boolean;
 }
 
 const Calibration = forwardRef<CalibrationRef>((props, ref) => {
@@ -60,6 +61,7 @@ const Calibration = forwardRef<CalibrationRef>((props, ref) => {
   // Expose the startCalibration method via ref
   useImperativeHandle(ref, () => ({
     startCalibration,
+    calibrating
   }));
 
   return (
