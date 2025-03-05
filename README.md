@@ -53,11 +53,11 @@ Ensure you have the following installed:
 ### Installation
 ```sh
 # Clone the repository
-git clone https://github.com/your-username/speed-reading-platform.git
-cd speed-reading-platform
+https://github.com/swiftreaders/swiftreader.git
+cd swiftreaders
 
 # Install dependencies
-yarn install  # or npm install
+npm install  # or yarn install
 ```
 
 ### Environment Variables
@@ -72,7 +72,7 @@ NEXT_PUBLIC_GEMINI_API_KEY=
 
 ### Running the Development Server
 ```sh
-yarn dev  # or npm run dev
+npm run dev  # or yarn dev
 ```
 The application will be available at `http://localhost:3000`
 
