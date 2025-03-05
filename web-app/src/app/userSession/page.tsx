@@ -21,88 +21,9 @@ import AccessDenied from "@/components/pages/errors/accessDenied";
 // import InfoPopup from "@/components/infoPopup"
 import { useRouter } from "next/navigation";
 import webgazer from "webgazer";
-
-// -------------------------
-// Accessibility Features
-// -------------------------
-
-interface AccessibilitySettings {
-  boldFirst: boolean;
-  boldLast: boolean;
-  fontSize: number; // in pixels
-}
-
-const defaultAccessibilitySettings: AccessibilitySettings = {
-  boldFirst: false,
-  boldLast: false,
-  fontSize: 32,
-};
-
-interface AccessibilitySettingsPanelProps {
-  settings: AccessibilitySettings;
-  setSettings: React.Dispatch<React.SetStateAction<AccessibilitySettings>>;
-  onClose: () => void;
-}
-
-const AccessibilitySettingsPanel = ({
-  settings,
-  setSettings,
-  onClose,
-}: AccessibilitySettingsPanelProps) => {
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setSettings((prev) => ({ ...prev, [name]: checked }));
-  };
-
-  const handleFontSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    setSettings((prev) => ({ ...prev, fontSize: value }));
-  };
-
-  return (
-    <div className="absolute top-20 right-6 bg-white shadow-md p-4 rounded-lg z-50">
-      <h3 className="text-lg font-bold mb-2">Accessibility Settings</h3>
-      <div className="mb-2">
-        <label className="mr-2">
-          <input
-            type="checkbox"
-            name="boldFirst"
-            checked={settings.boldFirst}
-            onChange={handleCheckboxChange}
-          />
-          Bold First Letter
-        </label>
-      </div>
-      <div className="mb-2">
-        <label className="mr-2">
-          <input
-            type="checkbox"
-            name="boldLast"
-            checked={settings.boldLast}
-            onChange={handleCheckboxChange}
-          />
-          Bold Last Letter
-        </label>
-      </div>
-      <div className="mb-2">
-        <label className="mr-2">Font Size:</label>
-        <input
-          type="number"
-          value={settings.fontSize}
-          onChange={handleFontSizeChange}
-          className="border border-gray-300 rounded px-2 py-1 w-20"
-        />
-        <span className="ml-1">px</span>
-      </div>
-      <button
-        className="mt-2 bg-secondary text-white px-4 py-2 rounded hover:bg-blue-600 transition"
-        onClick={onClose}
-      >
-        Close
-      </button>
-    </div>
-  );
-};
+import { AccessibilitySettings, 
+  AccessibilitySettingsPanel,
+  defaultAccessibilitySettings } from "@/components/AccessibilitySettingsPanel";
 
 const transformText = (
   text: string,
@@ -136,6 +57,20 @@ const transformText = (
   });
 };
 
+const FeatureItem = ({ icon, title, children }: { 
+  icon: string;
+  title: string;
+  children: React.ReactNode;
+}) => (
+  <div className="flex items-start gap-3">
+    <span className="text-2xl">{icon}</span>
+    <div>
+      <h4 className="font-medium text-gray-800">{title}</h4>
+      <p className="text-sm text-gray-600 mt-1">{children}</p>
+    </div>
+  </div>
+);
+
 // -------------------------
 // Main UserSessionContent
 // -------------------------
@@ -160,8 +95,23 @@ const UserSessionContent = () => {
   const [loading, setLoading] = useState(false);
   const [readingDone, setReadingDone] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
+  const [showControls, setShowControls] = useState(true);
+  const [currentLineIndex, setCurrentLineIndex] = useState(0);
+  const [totalLines, setTotalLines] = useState(100);
   // const [popupVisible, setPopupVisible] = useState(false);
   const wpmRef = useRef(wpm);
+  
+  const [paused, setPaused] = useState(false);
+  const pausedRef = useRef(paused);
+  // Keep the ref in sync with the state
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
+
+  useEffect(() => {
+    setCurrentLineIndex(0);
+    setTotalLines(100);
+  }, [text]);
 
   // Added: Create a ref for the Calibration component
   const calibrationRef = useRef<CalibrationRef>(null);
@@ -286,14 +236,33 @@ const UserSessionContent = () => {
     await preRead(text);
     const startTime = Timestamp.fromDate(new Date());
     const wpmReadings: number[] = [];
+    let elapsedPausedTime = 0;
+    setTotalLines(lines.length); // Store total lines
+    setCurrentLineIndex(0); 
+  
+    // Record WPM readings only when not paused.
     const intervalId = setInterval(() => {
-      wpmReadings.push(wpmRef.current);
+      if (!pausedRef.current) {
+        wpmReadings.push(wpmRef.current);
+      }
     }, 5000);
+  
+    // Process each line and pause if needed
     for (const line of lines) {
+      // Wait until paused is false
+      while (pausedRef.current) {
+        await sleep(100); // Check every 100ms
+        elapsedPausedTime += 100; 
+        await new Promise(resolve => requestAnimationFrame(resolve));
+      }
+      
       setOutputLine(line);
+      setCurrentLineIndex((prev) => prev + 1);
       const sleepTime = calculateSleepTime(line);
       await sleep(sleepTime);
     }
+
+  
     clearInterval(intervalId); // Stop measuring WPM once the loop finishes
     const endTime = Timestamp.fromDate(new Date());
     setReadingDone(true);
@@ -314,6 +283,9 @@ const UserSessionContent = () => {
     // 1. Split content into lines
     const lines = splitTextIntoLines(text.content);
     await preRead(text);
+    let elapsedPausedTime = 0;
+    setTotalLines(lines.length); // Store total lines
+    setCurrentLineIndex(0); // Reset current line index
 
     // Initialize WebGazer & set the gaze listener
     // Make sure WebGazer is loaded on `window` (as in your example).
@@ -324,7 +296,14 @@ const UserSessionContent = () => {
     }, 5000);
     const startTime = Timestamp.fromDate(new Date());
     for (const line of lines) {
+      while (pausedRef.current) {
+        await sleep(100); // Check every 100ms
+        elapsedPausedTime += 100; 
+        await new Promise(resolve => requestAnimationFrame(resolve));
+      }
+
       setOutputLine(line);
+      setCurrentLineIndex((prev) => prev + 1);
       currBoundaryChange = 2;
       const sleepTime = calculateSleepTime(line);
       await sleep(sleepTime);
@@ -400,7 +379,7 @@ const UserSessionContent = () => {
     text: Text,
     startTime: Timestamp,
     endTime: Timestamp,
-    wpm: number[]
+    wpm: number[],
   ) => {
     console.log(user);
     const session = new Session(
@@ -441,6 +420,14 @@ const UserSessionContent = () => {
           newWpm = Math.min(wpmRef.current + 10, 1000);
           setWpm(newWpm);
           setInputValue(newWpm.toString());
+          break;
+        case "h": // Toggle controls visibility
+          event.preventDefault();
+          setShowControls(prev => !prev);
+          break;
+        case " ":
+          event.preventDefault();
+          setPaused(prev => !prev); // Toggle pause
           break;
         default:
           break;
@@ -724,52 +711,113 @@ const UserSessionContent = () => {
           <></>
         )}
         <div className="w-full flex justify-center flex-col items-center">
-          {!sessionStarted ? (
-            <div className="w-full bg-gray-200 p-8 rounded-lg shadow-lg">
-              <p className="text-3xl text-gray-800 whitespace-pre-wrap text-center leading-relaxed font-semibold">
-                {"Mode " + mode + " Reading"}
-              </p>
-              {mode === 1 && (
-                <>
-                  <p className="text-sm text-gray-600 mt-4 text-center font-semibold">
-                    Read at a fixed speed
-                  </p>
-                  <ul className="text-sm text-gray-600 mt-2 list-inside text-center mx-auto max-w-lg">
-                    <li>- Use the settings bar to choose your starting WPM</li>
-                    <li>- Manually adjust your WPM using WASD</li>
-                  </ul>
-                </>
-              )}
-              {mode === 2 && (
-                <>
-                  <p className="text-sm text-gray-600 mt-4 text-center font-semibold">
-                    Use eye tracking software to dynamically adjust reading speed
-                  </p>
-                  <ul className="text-sm text-gray-600 mt-2 list-inside text-center mx-auto max-w-lg">
-                    <li>
-                      - Your reading speed will automatically adjust by tracking your eyes
-                    </li>
-                    <li>
-                      - Ensure your browser can access a webcam, then click Recalibrate before you begin
-                    </li>
-                    <li>- Manually adjust your WPM using WASD</li>
-                  </ul>
-                </>
-              )}
-              {mode === 3 && (
-                <>
-                  <p className="text-sm text-gray-600 mt-4 text-center font-semibold">
-                    Summarise the text for even faster comprehension (Non-fiction only)
-                  </p>
-                  <ul className="text-sm text-gray-600 mt-2 list-inside text-center mx-auto max-w-lg">
-                    <li>- Use the settings bar to choose your starting WPM</li>
-                    <li>- Manually adjust your WPM using WASD</li>
-                    <li>- Non-fiction texts will be summarised to help you learn faster</li>
-                  </ul>
-                </>
-              )}
+        {!sessionStarted && (
+          <div className="w-full bg-gradient-to-br from-purple-50 to-blue-50 p-8 rounded-2xl shadow-xl border border-purple-100">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center bg-gradient-to-r from-purple-600 to-blue-500 text-white px-6 py-2 rounded-full text-lg font-bold shadow-sm">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Mode {mode} Ready
+              </div>
             </div>
-          ) : null}
+
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+              {/* Keyboard Controls Card */}
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 className="text-lg font-semibold mb-4 flex items-center text-purple-600">
+                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M6 18H18V20H6zM12 16.04L8.04 20L6 17.96L12 12L18 17.96L15.96 20L12 16.04zM12 4L15.96 8.04L18 6L12 0L6 6L8.04 8.04L12 4z"/>
+                  </svg>
+                  Keyboard Controls
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-1">
+                      <kbd className="key">W</kbd>
+                      <kbd className="key">S</kbd>
+                    </div>
+                    <span className="text-sm text-gray-600">Adjust WPM ±1</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-1">
+                      <kbd className="key">A</kbd>
+                      <kbd className="key">D</kbd>
+                    </div>
+                    <span className="text-sm text-gray-600">Adjust WPM ±10</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <kbd className="key">SPACE</kbd>
+                    <span className="text-sm text-gray-600">Play/Pause</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mode-specific Features */}
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 className="text-lg font-semibold mb-4 flex items-center text-blue-600">
+                  {mode === 1 ? "📖 Fixed Speed" : mode === 2 ? "👁 Eye Tracking" : "📚 Summary Mode"}
+                </h3>
+                <div className="space-y-4">
+                  {mode === 1 && (
+                    <>
+                      <FeatureItem icon="🚀" title="Set Your Pace">
+                        Choose starting WPM and fine-tune with keyboard
+                      </FeatureItem>
+                      <FeatureItem icon="⚡" title="Instant Adjustments">
+                        Real-time speed changes without interruptions
+                      </FeatureItem>
+                    </>
+                  )}
+                  {mode === 2 && (
+                    <>
+                      <FeatureItem icon="👁️" title="Smart Adaptation">
+                        Dynamic speed adjustment based on eye movement
+                      </FeatureItem>
+                      <FeatureItem icon="📷" title="Webcam Setup">
+                        Requires camera access for optimal calibration
+                      </FeatureItem>
+                    </>
+                  )}
+                  {mode === 3 && (
+                    <>
+                      <FeatureItem icon="✍️" title="Smart Summarization">
+                        Key points extraction for faster comprehension
+                      </FeatureItem>
+                      <FeatureItem icon="📈" title="Efficiency Focused">
+                        Maintain understanding at higher speeds
+                      </FeatureItem>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick Start Guide */}
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 className="text-lg font-semibold mb-4 flex items-center text-green-600">
+                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.18 5 4.05 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                  </svg>
+                  Quick Start
+                </h3>
+                <ul className="space-y-3 text-sm text-gray-600">
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"/>
+                    1. Configure your chosen text above
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"/>
+                    2. Click &quot;Start Session&quot;
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"/>
+                    3. Use keyboard controls during reading
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
           {progressStage === 1 ? (
             // Session Start Box
             <>
@@ -785,13 +833,52 @@ const UserSessionContent = () => {
                   <p className="text-xl text-gray-800">Loading...</p>
                 </div>
               ) : sessionStarted ? (
-                <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner">
+                <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner relative">
+                  {/* Pause overlay */}
+                  {paused && (
+                    <div className="absolute inset-0 bg-white bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-10">
+                      <div className="text-4xl text-gray-700 font-bold">PAUSED</div>
+                    </div>
+                  )}
+                  
                   <p
-                    className="whitespace-pre-wrap text-center leading-relaxed"
+                    className="whitespace-pre-wrap text-center leading-relaxed relative z-0"
                     style={{ fontSize: accessibilitySettings.fontSize }}
                   >
                     {transformText(outputLine, accessibilitySettings)}
                   </p>
+              
+                  {/* Progress controls */}
+                  <div className="mt-4 flex items-center gap-4">
+                    <button
+                      onClick={() => setPaused(!paused)}
+                      className="text-gray-600 hover:text-gray-800 transition-colors"
+                      aria-label={paused ? "Play" : "Pause"}
+                    >
+                      {paused ? (
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd"/>
+                        </svg>
+                      ) : (
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd"/>
+                        </svg>
+                      )}
+                    </button>
+                    
+                    <div className="flex-1 bg-gray-300 h-2 rounded-full overflow-hidden">
+                      <div
+                        className="bg-secondary h-full transition-all duration-300"
+                        style={{
+                          width: `${((currentLineIndex + 1) / totalLines) * 100}%`
+                        }}
+                      />
+                    </div>
+                    
+                    <div className="text-sm text-gray-600">
+                      {Math.round(((currentLineIndex + 1) / totalLines) * 100)}% Complete
+                    </div>
+                  </div>
                 </div>
               ) : null}
             </>

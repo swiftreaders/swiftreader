@@ -63,7 +63,7 @@ const Features: React.FC = () => {
             {/* Mode 3 */}
             <div className="bg-text text-background p-8 rounded-lg shadow-xl transform hover:scale-105 transition-all duration-300 ease-in-out">
               <h3 className="text-2xl font-semibold mb-2">
-                Mode 3 - Summarised Adaptive Speed-Reading{" "}
+                Mode 3 - Summarised Adaptive Speed-Reading 
                 <span className="text-sm">(Non-fiction only)</span>
               </h3>
               <p className="text-lg ">

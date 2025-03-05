@@ -33,7 +33,7 @@ export const RecentReadingSessions = ({
                 <tr key={session.id} className="hover:bg-gray-50">
                     <td className="py-3 px-4 text-sm">{session.title}</td>
                     <td className="py-3 px-4 text-sm text-gray-500">
-                    {session.startTime.toDate().toLocaleDateString()}{" "}
+                    {session.startTime.toDate().toLocaleDateString()}
                     {session.startTime.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-500">
