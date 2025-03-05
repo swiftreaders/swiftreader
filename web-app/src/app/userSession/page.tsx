@@ -225,6 +225,11 @@ const UserSessionContent = () => {
     wpmRef.current = wpm;
   }, [wpm]);
 
+  const handleRecalibrate = () => {
+    setPaused(true);
+    calibrationRef.current && calibrationRef.current.startCalibration();
+  }
+
   const preRead = async (text: Text) => {
     setOutputLine("Reading '" + text.title + "'");
     await sleep(3000);
@@ -467,10 +472,7 @@ const UserSessionContent = () => {
         {/* Recalibrate Button (only for mode 2) */}
         {mode === 2 && progressStage === 1 && (
           <button
-            onClick={() =>
-              calibrationRef.current &&
-              calibrationRef.current.startCalibration()
-            }
+            onClick={ handleRecalibrate }
             className="absolute top-6 right-6 bg-secondary text-white px-4 py-2 rounded hover:bg-blue-600 transition"
           >
             Recalibrate
@@ -900,7 +902,7 @@ const UserSessionContent = () => {
                     </div>
                     
                     <div className="text-sm text-gray-600">
-                      {Math.round(((currentLineIndex + 1) / totalLines) * 100)}% Complete
+                      {Math.round(((currentLineIndex) / totalLines) * 100)}% Complete
                     </div>
                   </div>
                 </div>
