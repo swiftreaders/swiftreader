@@ -213,8 +213,16 @@ const UserSessionContent = () => {
         .catch((err: any) => console.error("WebGazer failed to start:", err));
 
       return () => {
+        const videoElem = document.querySelector("video");
+        if (videoElem && videoElem.srcObject) {
+          const stream = videoElem.srcObject as MediaStream;
+          stream.getTracks().forEach((track) => track.stop());
+          videoElem.srcObject = null;
+        }
         webgazer.end();
-        console.log("WebGazer stopped on unmount.");
+
+        console.log("WebGazer stopped and all video streams released.");
+
       };
     }
     if (mode === 3) {
@@ -349,6 +357,12 @@ const UserSessionContent = () => {
     const endTime = Timestamp.fromDate(new Date());
     // Stop Webgazer
     (window as any).webgazer.clearGazeListener();
+    const videoElem = document.querySelector("video");
+        if (videoElem && videoElem.srcObject) {
+          const stream = videoElem.srcObject as MediaStream;
+          stream.getTracks().forEach((track) => track.stop());
+          videoElem.srcObject = null;
+        }
     (window as any).webgazer.end();
     // GO TO Quiz
     setReadingDone(true);
