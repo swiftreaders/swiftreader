@@ -1,7 +1,7 @@
 import { fetchBooks, fetchBookContent } from "@/services/bookService";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import axios from "axios";
-import { Difficulty, Genre } from "@/types/text";
+import { Category, Difficulty, Genre, NewTextType } from "@/types/text";
 
 jest.mock("axios");
 jest.mock("@google/generative-ai");
@@ -11,23 +11,22 @@ describe("Book Service", () => {
   let consoleLogSpy: jest.SpyInstance;
   let consoleErrorSpy: jest.SpyInstance;
 
+  afterAll(() => {
+    consoleLogSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
+  });
 
-    afterAll(() => {
-        consoleLogSpy.mockRestore();
-        consoleErrorSpy.mockRestore();
-    });
+  beforeAll(() => {
+    mockGenerateContent = jest.fn();
+    consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
-    beforeAll(() => {
-        mockGenerateContent = jest.fn();
-        consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
-        consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-
-        (GoogleGenerativeAI as jest.Mock).mockImplementation(() => ({
-        getGenerativeModel: jest.fn().mockReturnValue({
-            generateContent: mockGenerateContent,
-        }),
-        }));
-    });
+    (GoogleGenerativeAI as jest.Mock).mockImplementation(() => ({
+      getGenerativeModel: jest.fn().mockReturnValue({
+        generateContent: mockGenerateContent,
+      }),
+    }));
+  });
 
   afterEach(() => {
     jest.clearAllMocks();
@@ -48,18 +47,19 @@ describe("Book Service", () => {
       },
     });
 
-    const books = await fetchBooks(Genre.FICTION, []);
-    
+    const books: NewTextType[] = await fetchBooks(Genre.FANTASY, []);
+
     expect(axios.get).toHaveBeenCalledTimes(1);
     expect(books.length).toBeGreaterThan(0);
     expect(books[0].title).toBe("Sample Book");
-    expect(books[0].author).toBe("Author Name");
+    expect(books[0].genre).toBe(Genre.FANTASY);
+    expect(books[0].text_link).toBe("https://example.com/sample.txt");
   });
 
   test("should return an empty array if Gutendex API request fails", async () => {
     axios.get.mockRejectedValue(new Error("API Error"));
 
-    const books = await fetchBooks(Genre.FICTION, []);
+    const books = await fetchBooks(Genre.FANTASY, []);
 
     expect(axios.get).toHaveBeenCalledTimes(1);
     expect(books).toEqual([]);
@@ -89,17 +89,20 @@ describe("Book Service", () => {
       },
     });
 
-    const book = {
+    const book: NewTextType = {
       id: "123",
       title: "Sample Book",
       author: "Author Name",
-      subject: Genre.FICTION,
+      genre: Genre.FANTASY,
       difficulty: Difficulty.EASY,
       text_link: "https://example.com/sample.txt",
       content: "",
       questions: [],
       isValid: false,
       isAI: false,
+      isFiction: true,
+      category: Category.NATURE, // Add this if required by NewTextType
+      wordLength: 0, // Add this if required by NewTextType
     };
 
     const result = await fetchBookContent(book, 100, 200);
@@ -109,6 +112,7 @@ describe("Book Service", () => {
     expect(result.isValid).toBe(true);
     expect(result.content).toBe("This is an AI-generated excerpt.");
     expect(result.questions.length).toBe(1);
+    expect(result.difficulty).toBe("medium");
   });
 
   test("should handle AI filtering failure gracefully", async () => {
@@ -116,17 +120,20 @@ describe("Book Service", () => {
 
     mockGenerateContent.mockRejectedValue(new Error("AI Error"));
 
-    const book = {
+    const book: NewTextType = {
       id: "123",
       title: "Sample Book",
       author: "Author Name",
-      subject: Genre.FICTION,
+      genre: Genre.FICTION,
       difficulty: Difficulty.EASY,
       text_link: "https://example.com/sample.txt",
       content: "",
       questions: [],
       isValid: false,
       isAI: false,
+      isFiction: true,
+      category: Category.NATURE, // Add this if required by NewTextType
+      wordLength: 0, // Add this if required by NewTextType
     };
 
     const result = await fetchBookContent(book, 100, 200);
@@ -138,17 +145,20 @@ describe("Book Service", () => {
   });
 
   test("should return CONTENT_UNAVAILABLE for books without text links", async () => {
-    const book = {
+    const book: NewTextType = {
       id: "123",
       title: "Sample Book",
       author: "Author Name",
-      subject: Genre.FICTION,
+      genre: Genre.FANTASY,
       difficulty: Difficulty.EASY,
       text_link: "NOT_FOUND",
       content: "",
       questions: [],
       isValid: false,
       isAI: false,
+      isFiction: true,
+      category: Category.NATURE, // Add this if required by NewTextType
+      wordLength: 0, // Add this if required by NewTextType
     };
 
     const result = await fetchBookContent(book, 100, 200);

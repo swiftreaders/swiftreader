@@ -1,27 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import {
-  useAdminDashboard,
-  AdminDashboardProvider,
-} from "@/contexts/adminDashboardContext";
-import { Text } from "@/types/text";
-import { UpdateTextPopup } from "@/components/UpdateTextPopup";
-import { ExistingTextCard } from "@/components/textManagement/ExistingTextCard";
 import { useAuth } from "@/contexts/authContext";
 import AccessDenied from "@/components/pages/errors/accessDenied";
-import { TextManagementProvider, useTextManagementContext } from "@/contexts/textManagementContext";
+import { AdminDashboardProvider } from "@/contexts/adminDashboardContext";
+import { TextManagementProvider } from "@/contexts/textManagementContext";
 import TextManagementSection from "@/components/textManagement/AddTextContainer";
+import ExistingTextsGrid from "@/components/textManagement/ExistingTextGrid";
+
 
 const AdminDashboardContent = () => {
-  const { removeText, updateText } = useAdminDashboard();
-  const {
-    texts,
-  } = useTextManagementContext();
-
-  const [selectedTextForUpdate, setSelectedTextForUpdate] = useState<Text | null>(null);
-  const [updatePopupOpen, setUpdatePopupOpen] = useState(false);
-
   return (
     <div className="min-h-screen mt-[7vh] bg-background">
       {/* Hero Header */}
@@ -39,48 +26,8 @@ const AdminDashboardContent = () => {
         <TextManagementSection />
 
         {/* Existing Texts Section */}
-        <section>
-          <h2 className="text-2xl font-semibold mb-6 text-gray-800">
-            Existing Texts
-          </h2>
-          <div className="grid gap-6 sm:grid-cols-2">
-            {texts.map((text) => (
-              <ExistingTextCard
-                key={text.id}
-                text={text}
-                onUpdate={() => {
-                  setSelectedTextForUpdate(text);
-                  setUpdatePopupOpen(true);
-                }}
-                onRemove={() => {
-                  if (
-                    window.confirm(
-                      `Are you sure you want to remove "${text.title}"?`
-                    )
-                  )
-                    removeText(text.id);
-                }}
-              />
-            ))}
-          </div>
-        </section>
+        <ExistingTextsGrid />
       </main>
-
-      {/* Update Text Popup */}
-      {updatePopupOpen && selectedTextForUpdate && (
-        <UpdateTextPopup
-          text={selectedTextForUpdate}
-          onClose={() => {
-            setUpdatePopupOpen(false);
-            setSelectedTextForUpdate(null);
-          }}
-          onSave={(updatedText) => {
-            updateText(updatedText);
-            setUpdatePopupOpen(false);
-            setSelectedTextForUpdate(null);
-          }}
-        />
-      )}
     </div>
   );
 };
