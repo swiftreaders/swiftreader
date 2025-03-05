@@ -910,9 +910,11 @@ const UserSessionContent = () => {
           </div>
         </div>
 
-        <WebGazerClient />
-        {/* Pass the ref to the Calibration component */}
-        <Calibration ref={calibrationRef} />
+        <div className="z-20">
+          <WebGazerClient />
+          {/* Pass the ref to the Calibration component */}
+          <Calibration ref={calibrationRef} />
+        </div>
       </div>
     </>
   );
