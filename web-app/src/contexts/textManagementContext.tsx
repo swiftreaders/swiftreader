@@ -2,7 +2,7 @@ import { fetchBookContent, fetchBooks } from '@/services/bookService';
 import { fetchGeneratedTexts } from '@/services/generateService';
 import textService from '@/services/textService';
 import { Category, Difficulty, Genre, NewTextType, Question, Text } from '@/types/text';
-import React, { createContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useState, ReactNode, useEffect, useContext } from 'react';
 
 interface TextManagementContextProps {
   // Core State
@@ -14,9 +14,7 @@ interface TextManagementContextProps {
   // Manual Texts
   newManualText: NewTextType;
   setNewManualText: (text: NewTextType) => void;
-  manualTextQuestions: Question[];
-  setManualTextQuestions: (questions: Question[]) => void;
-
+  
   // Found Texts
   foundTexts: NewTextType[];
   setFoundTexts: (texts: NewTextType[]) => void;
@@ -76,6 +74,16 @@ const DEFAULT_GENERATE_OPTIONS = {
 };
 
 const TextManagementContext = createContext<TextManagementContextProps | undefined>(undefined);
+
+export const useTextManagementContext = () => {
+  const context = useContext(TextManagementContext);
+  if (!context) {
+    throw new Error(
+      "useAdminDashboard must be used within a AdminDashboardProvider"
+    );
+  }
+  return context;
+};
 
 const TextManagementProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Core State
@@ -166,6 +174,7 @@ const TextManagementProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     // Update the current text with the new questions
     updated[currentTextIndex] = { ...current, questions: updatedQuestions };
+    console.log("updated - ", updated);
     return updated;
   };
 
@@ -383,8 +392,6 @@ const TextManagementProvider: React.FC<{ children: ReactNode }> = ({ children })
         // Manual Texts
         newManualText,
         setNewManualText,
-        manualTextQuestions,
-        setManualTextQuestions,
 
         // Found Texts
         foundTexts,
