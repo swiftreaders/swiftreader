@@ -10,6 +10,7 @@ import { useAuth } from "./authContext";
 interface ReadingSessionsContextType {
   recentSessions: Session[];
   text: Text | null;
+  setText: React.Dispatch<React.SetStateAction<Text | null>>;
   getText: (
     categoryOrGenre: Category | Genre | null,
     difficulty: Difficulty | null,
@@ -73,7 +74,7 @@ export const ReadingSessionProvider: React.FC<{
   };
 
   return (
-    <ReadingSessionContext.Provider value={{ recentSessions, text, getText }}>
+    <ReadingSessionContext.Provider value={{ recentSessions, text, setText, getText }}>
       {children}
     </ReadingSessionContext.Provider>
   );
