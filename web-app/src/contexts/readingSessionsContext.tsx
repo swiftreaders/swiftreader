@@ -45,7 +45,7 @@ export const ReadingSessionProvider: React.FC<{
     console.log(user);
     const unsubscribe = sessionService.getRecentSessions(setRecentSessions, user ? user.id : "");
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   const getText = async (
     categoryOrGenre: Category | Genre | null,

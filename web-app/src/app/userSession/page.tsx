@@ -371,7 +371,7 @@ const UserSessionContent = () => {
     cancelledRef.current = false;
   
     try {
-      let currBoundaryChange = 2;
+      const currBoundaryChange = 2;
       let prevBoundaryChange = 2;
       const lines = splitTextIntoLines(text.content);
       
@@ -423,7 +423,7 @@ const UserSessionContent = () => {
         if (cancelledRef.current) break;
   
         // WPM adjustment logic
-        let newWpm = wpmRef.current;
+        const newWpm = wpmRef.current;
         switch (prevBoundaryChange + currBoundaryChange) {
           // ... existing case logic ...
         }
