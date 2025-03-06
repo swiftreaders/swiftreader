@@ -1,3 +1,35 @@
+// Preview
+import React from 'react';
+
+interface AccessibilityPreviewProps {
+  settings: AccessibilitySettings;
+}
+
+export const AccessibilityPreview = ({ settings }: AccessibilityPreviewProps) => {
+  const sampleText = `Sample Text`;
+
+  return (
+    <div
+      className="p-4 rounded-lg"
+      style={{
+        padding: `${settings.readingBoxPadding}px`,
+        backgroundColor: settings.readingBoxBackground,
+        border: settings.readingBoxBorder,
+        fontFamily: settings.fontFamily,
+        fontSize: `${settings.fontSize}px`,
+        lineHeight: settings.lineHeight,
+        color: settings.textColor,
+      }}
+    >
+      <p>
+        {settings.boldFirst ? <strong>{sampleText[0]}</strong> : sampleText[0]}
+        {sampleText.slice(1, -1)}
+        {settings.boldLast ? <strong>{sampleText[sampleText.length - 1]}</strong> : sampleText[sampleText.length - 1]}
+      </p>
+    </div>
+  );
+};
+
 export interface AccessibilitySettings {
   boldFirst: boolean;
   boldLast: boolean;
@@ -79,173 +111,165 @@ export const AccessibilitySettingsPanel = ({
       setSettings(prev => ({ ...prev, [name]: e.target.value }));
     };
 
-  const previewText = "Preview";
-  const firstChar = previewText[0];
-  const lastChar = previewText.slice(-1);
-  const middle = previewText.slice(1, -1);
-
-  return (
-    <div className="absolute top-20 right-6 bg-white shadow-md p-4 rounded-lg z-50 min-w-[300px]">
-      <h3 className="text-lg font-bold mb-2">Accessibility Settings</h3>
-      
-      {/* Text Settings */}
-      <div className="mb-4 border-b pb-4">
-        <h4 className="font-medium mb-2">Text Settings</h4>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm mb-1">Font Family</label>
-            <select
-              value={settings.fontFamily}
-              onChange={handleSelectChange('fontFamily')}
-              className="w-full border rounded p-1"
-            >
-              <option value="sans-serif">Sans Serif</option>
-              <option value="serif">Serif</option>
-              <option value="monospace">Monospace</option>
-              <option value="arial">Arial</option>
-              <option value="verdana">Verdana</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm mb-1">Text Color</label>
-            <input
-              type="color"
-              value={settings.textColor}
-              onChange={handleColorChange('textColor')}
-              className="w-full h-8"
-            />
-          </div>
-          <div>
-            <label className="block text-sm mb-1">Line Height</label>
-            <input
-              type="range"
-              min="1"
-              max="3"
-              step="0.1"
-              value={settings.lineHeight}
-              onChange={handleNumberChange('lineHeight')}
-              className="w-full"
-            />
-            <span className="text-xs">{settings.lineHeight}x</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Reading Box Settings */}
-      <div className="mb-4 border-b pb-4">
-        <h4 className="font-medium mb-2">Reading Box</h4>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm mb-1">Padding (px)</label>
-            <input
-              type="number"
-              defaultValue={settings.readingBoxPadding}
-              onChange={handleNumberChange('readingBoxPadding')}
-              onBlur={handleNumberBlur('readingBoxPadding')}
-              className="w-full border rounded p-1"
-              min="10"
-              max="64"
-            />
-          </div>
-          <div>
-            <label className="block text-sm mb-1">Background</label>
-            <input
-              type="color"
-              value={settings.readingBoxBackground}
-              onChange={handleColorChange('readingBoxBackground')}
-              className="w-full h-8"
-            />
-          </div>
-          <div>
-            <label className="block text-sm mb-1">Border</label>
-            <input
-              type="color"
-              value={settings.readingBoxBorder?.split(' ')[2] || '#e5e7eb'}  // Extract color from border string
-              onChange={(e) => setSettings(prev => ({
-                ...prev,
-                readingBoxBorder: `1px solid ${e.target.value}`
-              }))}
-              className="w-full h-8"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Original Settings */}
-      <div className="mb-4">
-        <div className="mb-2">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="boldFirst"
-              checked={settings.boldFirst}
-              onChange={handleCheckboxChange}
-            />
-            Bold First Letter
-          </label>
-        </div>
-        <div className="mb-2">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="boldLast"
-              checked={settings.boldLast}
-              onChange={handleCheckboxChange}
-            />
-            Bold Last Letter
-          </label>
-        </div>
-        <div className="mb-2">
-          <label className="block text-sm mb-1">Font Size (px)</label>
-          <input
-            type="number"
-            defaultValue={settings.fontSize}
-            onChange={handleNumberChange('fontSize')}
-            onBlur={handleNumberBlur('fontSize')}
-            className="w-full border rounded p-1"
-            min="10"
-            max="64"
-          />
-        </div>
-      </div>
-
-      {/* Preview Section */}
-      <div className="mb-4">
-        <h4 className="font-medium mb-2">Preview</h4>
-        <div 
-          style={{ 
-            padding: `${settings.readingBoxPadding}px`,
-            backgroundColor: settings.readingBoxBackground,
-            border: settings.readingBoxBorder,
-            borderRadius: '0.375rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '100px'
-          }}
-        >
-          <div 
-            style={{
-              fontSize: `${settings.fontSize}px`,
-              fontFamily: settings.fontFamily,
-              color: settings.textColor,
-              lineHeight: settings.lineHeight,
-              textAlign: 'center'
-            }}
+    return (
+      <div className="absolute top-24 right-6 bg-white shadow-xl p-6 rounded-2xl z-50 min-w-[340px] border border-gray-100">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-bold text-gray-800">Accessibility Settings</h3>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+            aria-label="Close settings"
           >
-            {settings.boldFirst ? <strong>{firstChar}</strong> : firstChar}
-            {middle}
-            {settings.boldLast ? <strong>{lastChar}</strong> : lastChar}
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <AccessibilityPreview settings={settings} />
+        
+        {/* Settings Sections */}
+        <div className="space-y-6">
+          {/* Text Settings */}
+          <div className="space-y-4">
+            <h4 className="font-semibold text-gray-700 border-b pb-2">Text Settings</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-600">Font Family</label>
+                <select
+                  value={settings.fontFamily}
+                  onChange={handleSelectChange('fontFamily')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="sans-serif">Sans Serif</option>
+                  <option value="serif">Serif</option>
+                  <option value="monospace">Monospace</option>
+                  <option value="opendyslexic">OpenDyslexic</option>
+                </select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-600">Text Color</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={settings.textColor}
+                    onChange={handleColorChange('textColor')}
+                    className="w-10 h-10 rounded-md border border-gray-300 cursor-pointer"
+                  />
+                  <span className="text-sm text-gray-500">{settings.textColor}</span>
+                </div>
+              </div>
+  
+              <div className="space-y-2 col-span-2">
+                <label className="block text-sm font-medium text-gray-600">
+                  Line Height: {settings.lineHeight}x
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="3"
+                  step="0.1"
+                  value={settings.lineHeight}
+                  onChange={handleNumberChange('lineHeight')}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                />
+              </div>
+            </div>
+          </div>
+  
+          {/* Reading Box Settings */}
+          <div className="space-y-4">
+            <h4 className="font-semibold text-gray-700 border-b pb-2">Reading Box</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-600">Padding (px)</label>
+                <input
+                  type="number"
+                  value={settings.readingBoxPadding}
+                  onChange={handleNumberChange('readingBoxPadding')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-600">Background</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={settings.readingBoxBackground}
+                    onChange={handleColorChange('readingBoxBackground')}
+                    className="w-10 h-10 rounded-md border border-gray-300 cursor-pointer"
+                  />
+                  <span className="text-sm text-gray-500">{settings.readingBoxBackground}</span>
+                </div>
+              </div>
+  
+              <div className="space-y-2 col-span-2">
+                <label className="block text-sm font-medium text-gray-600">Border Color</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={settings.readingBoxBorder.split(' ')[2] || '#e5e7eb'}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      readingBoxBorder: `1px solid ${e.target.value}`
+                    }))}
+                    className="w-10 h-10 rounded-md border border-gray-300 cursor-pointer"
+                  />
+                  <span className="text-sm text-gray-500">
+                    {settings.readingBoxBorder.split(' ')[2]}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+  
+          {/* Original Settings */}
+          <div className="space-y-4">
+            <h4 className="font-semibold text-gray-700 border-b pb-2">Text Formatting</h4>
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg">
+                <input
+                  type="checkbox"
+                  name="boldFirst"
+                  checked={settings.boldFirst}
+                  onChange={handleCheckboxChange}
+                  className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Bold First Letter</span>
+              </label>
+              <label className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg">
+                <input
+                  type="checkbox"
+                  name="boldLast"
+                  checked={settings.boldLast}
+                  onChange={handleCheckboxChange}
+                  className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Bold Last Letter</span>
+              </label>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-600">Font Size (px)</label>
+                <input
+                  type="number"
+                  value={settings.fontSize}
+                  onChange={handleNumberChange('fontSize')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
           </div>
         </div>
+  
+        <div className="mt-6 border-t pt-4">
+          <button
+            onClick={onClose}
+            className="w-full bg-blue-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            Apply Settings
+          </button>
+        </div>
       </div>
-
-      <button
-        className="mt-2 bg-secondary text-white px-4 py-2 rounded hover:bg-blue-600 transition w-full"
-        onClick={onClose}
-      >
-        Close
-      </button>
-    </div>
-  );
+    );
 };

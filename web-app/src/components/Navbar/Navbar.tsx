@@ -59,21 +59,21 @@ const Navbar = () => {
       </div>
 
       {/* Navigation Links */}
-      <ul className="flex space-x-6 italic">
-        <NavItem href="/about" name="about" />
-        <NavItem href="/features" name="features" />
-        {loggedIn && user && <NavItem href="/userDashboard" name="dashboard" />}
+      <ul className="flex space-x-6 ">
+        <NavItem href="/about" name="About" />
+        <NavItem href="/features" name="Features" />
+        {loggedIn && user && <NavItem href="/userDashboard" name="Dashboard" />}
         {loggedIn && user && user.isAdmin && (
           <NavItem
             href="/adminDashboard"
-            name="admin portal"
+            name="Admin Portal"
             className="bg-admin-gradient rounded-full px-4 py-2"
           />
         )}
         {loggedIn ? (
-          <NavItem href="/auth/logout" name="logout" />
+          <NavItem href="/auth/logout" name="Logout" />
         ) : (
-          <NavItem href="/auth/login" name="login" />
+          <NavItem href="/auth/login" name="Login" />
         )}
       </ul>
     </nav>
