@@ -138,8 +138,27 @@ const UserSessionContent = () => {
 
   const calculateCharsPerLine = () => {
     const containerWidth = window.innerWidth;
-    const fontSize = 32; // Example font size in pixels
-    const charWidth = fontSize * 0.6; // Estimate: 0.6x font size
+    const fontSize = accessibilitySettings.fontSize;
+    const fontFamily = accessibilitySettings.fontFamily;
+  
+    // Adjust charWidth based on font family
+    let charWidthFactor;
+    switch (fontFamily) {
+      case 'monospace':
+        charWidthFactor = 0.8; // Monospace fonts have fixed-width characters
+        break;
+      case 'serif':
+        charWidthFactor = 0.55; // Serif fonts tend to have slightly wider characters
+        break;
+      case 'sans-serif':
+      case 'arial':
+      case 'verdana':
+      default:
+        charWidthFactor = 0.6; // Default factor for sans-serif fonts
+        break;
+    }
+  
+    const charWidth = fontSize * charWidthFactor; // Adjust charWidth based on font
     return Math.floor(containerWidth / charWidth);
   };
 
@@ -662,18 +681,22 @@ const UserSessionContent = () => {
           </button>
         )}
         {/* Accessibility Settings Button */}
-        <button
-          onClick={() => setShowAccessibilityPanel(!showAccessibilityPanel)}
-          className="absolute top-6 left-6 bg-secondary text-white px-4 py-2 rounded hover:bg-blue-600 transition"
-        >
-          Accessibility Settings
-        </button>
-        {showAccessibilityPanel && (
-          <AccessibilitySettingsPanel
-            settings={accessibilitySettings}
-            setSettings={setAccessibilitySettings}
-            onClose={() => setShowAccessibilityPanel(false)}
-          />
+        {!sessionStarted && progressStage === 1 && (
+          <>
+            <button
+              onClick={() => setShowAccessibilityPanel(!showAccessibilityPanel)}
+              className="absolute top-6 left-6 bg-secondary text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+            >
+              Accessibility Settings
+            </button>
+            {showAccessibilityPanel && (
+              <AccessibilitySettingsPanel
+                settings={accessibilitySettings}
+                setSettings={setAccessibilitySettings}
+                onClose={() => setShowAccessibilityPanel(false)}
+              />
+            )}
+          </>
         )}
         {/* Progress Circles */}
         <div className="flex items-center justify-center mb-8">
