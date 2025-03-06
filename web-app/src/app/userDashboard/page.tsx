@@ -51,8 +51,8 @@ const DashboardSummary = ({
 // Goal Setting Modal Component
 interface GoalSettingModalProps {
   isOpen: boolean;
-  newGoal: number;
-  setNewGoal: (goal: number) => void;
+  newGoal: number | null;
+  setNewGoal: (goal: number | null) => void;
   onSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
 }
@@ -76,14 +76,18 @@ const GoalSettingModal = ({
             </label>
             <input
               type="number"
-              value={newGoal}
-              onChange={(e) => setNewGoal(Number(e.target.value))}
+              value={newGoal === null ? "" : newGoal}
+              onChange={(e) => {
+                const value = e.target.value; 
+                setNewGoal(value === "" ? null : Number(e.target.value))
+              }}
               className="w-full p-2 border border-gray-300 rounded"
               placeholder="Enter your reading goal (in minutes)"
               min="1"
+              required
             />
             <p className="text-sm text-gray-500 mt-2">
-              This equals approximately {Math.round(newGoal / 30)} minutes per day
+              This equals approximately {Math.round((newGoal ?? 0) / 30)} minutes per day
             </p>
           </div>
           <div className="flex justify-end">
@@ -112,7 +116,7 @@ const UserDashboardContent = () => {
   const { user } = useAuth();
   const { recentSessions } = useReadingContext();
   const { readingGoal, setReadingGoal } = useUserContext();
-  const [newGoal, setNewGoal] = useState(readingGoal);
+  const [newGoal, setNewGoal] = useState<number | null>(readingGoal);
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 
@@ -156,6 +160,9 @@ const UserDashboardContent = () => {
 
   const handleGoalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (newGoal === null || newGoal < 1) {
+      return;
+    }
     setReadingGoal(newGoal);
     setIsGoalModalOpen(false);
   };
