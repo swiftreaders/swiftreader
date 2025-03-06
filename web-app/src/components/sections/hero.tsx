@@ -1,4 +1,4 @@
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { darkMockup, lightMockup } from "../../../public/assets";
 import Button from "../common/Button";
@@ -7,9 +7,10 @@ import Image from "next/image";
 interface HeroProps {
   loggedIn: boolean;
   user: any; // Replace 'any' with the appropriate type if known
+  onClick: () => void;
 }
 
-function Hero({ loggedIn, user }: HeroProps) {
+function Hero({ loggedIn, user, onClick }: HeroProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [position, setPosition] = useState(0); // State to hold the Y-position of the image
   const [arrowPosition, setArrowPosition] = useState(0); // State for the arrow's Y-position
@@ -104,7 +105,7 @@ function Hero({ loggedIn, user }: HeroProps) {
           transition: "transform 0.1s ease", // Smooth transition for each position update
         }}
       >
-        <ChevronDownIcon className="w-10 h-10 text-white" />
+        <ChevronDown className="w-10 h-10 text-white" onClick={onClick} />
       </div>
     </>
   );
