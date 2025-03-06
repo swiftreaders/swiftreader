@@ -17,7 +17,7 @@ import LeaderboardComponent from "@/components/userDashboard/Leaderboard";
 // Dashboard Summary Component
 interface DashboardSummaryProps {
   totalReadingTime: number;
-  averageWPM: number;
+  averageWPM: number | null;
   sessionsCount: number;
   comprehensionRate: number;
 }
@@ -143,9 +143,7 @@ const UserDashboardContent = () => {
   const wpmValues = recentSessions.map(session => session.getAverageWpm()).filter(wpm => wpm > 0);
 
   // Determine the average WPM dynamically
-  const averageWPM = wpmValues.length > 0
-    ? Math.round(wpmValues.reduce((acc, wpm) => acc + wpm, 0) / wpmValues.length)
-    : user?.wpm || null; // Use user?.wpm if available, otherwise null
+  const averageWPM = user?.wpm ? Math.round(user.wpm) : null;
 
   // Calculate comprehension rate
   const comprehensionRate =
