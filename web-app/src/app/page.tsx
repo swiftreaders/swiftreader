@@ -6,8 +6,12 @@ import LandingPage from "@/components/pages/landingPage";
 import Footer from "@/components/Footer";
 
 const Home: React.FC = () => {
-  const { user, loggedIn } = useAuth();
+  const { user, loggedIn, refreshUser } = useAuth();
   const [checkingUser, setCheckingUser] = useState(true);
+
+  useEffect(() => {
+    refreshUser(); // 🔹 Refresh user ONLY when Home.tsx (Landing Page) mounts
+  }, []);
 
   useEffect(() => {
     if (loggedIn && !user) {
