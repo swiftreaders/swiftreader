@@ -75,7 +75,7 @@ function Hero({ loggedIn, user, onClick }: HeroProps) {
           ) : (
             <Button
               displayText="Get Started"
-              href="/auth/signup"
+              href="/auth/login"
               className="bg-primary"
             />
           )}
