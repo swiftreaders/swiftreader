@@ -630,8 +630,15 @@ const UserSessionContent = () => {
         )}
         {/* Accessibility Settings Button */}
         <button
-          onClick={() => setShowAccessibilityPanel(!showAccessibilityPanel)}
-          className="absolute top-6 left-6 bg-secondary text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+          onClick={() => {
+            if (!sessionStarted) {  // Only allow opening if session isn't active
+              setShowAccessibilityPanel(!showAccessibilityPanel);
+            }
+          }}
+          className={`absolute top-6 left-6 bg-secondary text-white px-4 py-2 rounded transition ${
+            sessionStarted ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
+          }`}
+          disabled={sessionStarted}
         >
           Accessibility Settings
         </button>
