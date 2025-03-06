@@ -17,7 +17,7 @@ import LeaderboardComponent from "@/components/userDashboard/Leaderboard";
 // Dashboard Summary Component
 interface DashboardSummaryProps {
   totalReadingTime: number;
-  averageWPM: number;
+  averageWPM: number | null;
   sessionsCount: number;
   comprehensionRate: number;
 }
@@ -35,7 +35,7 @@ const DashboardSummary = ({
     </div>
     <div className="bg-widget shadow-md rounded-lg p-6">
       <h3 className="text-gray-500 text-sm font-medium">Average Speed</h3>
-      <p className="text-3xl font-bold mt-2">{averageWPM} WPM</p>
+      <p className="text-3xl font-bold mt-2">{averageWPM !== null ? `${averageWPM} WPM` : "Not enough session data"}</p>
     </div>
     <div className="bg-widget shadow-md rounded-lg p-6">
       <h3 className="text-gray-500 text-sm font-medium">Sessions Completed</h3>
@@ -116,17 +116,43 @@ const UserDashboardContent = () => {
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 
+  // Get the current timestamp and 7 days ago timestamp
+  const now = new Date();
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(now.getDate() - 7);
+
+  // Filter sessions that occurred in the last 7 days
+  const weeklySessions = recentSessions.filter((session) => {
+    const sessionDate = new Date(session.startTime.toMillis());
+    return sessionDate >= oneWeekAgo && sessionDate <= now;
+  });
+
+  // Calculate weekly progress (sum durations and convert to minutes)
+  const weeklyProgress = parseFloat(
+    (weeklySessions.reduce((acc, session) => acc + session.duration, 0) / 60).toFixed(2)
+  );
+
+  // Calculate total reading time for all sessions (minutes)
   const totalReadingTime = parseFloat(
     (recentSessions.reduce((acc, session) => acc + session.duration, 0) / 60).toFixed(2)
   );
 
-  const weeklyProgress = 145; // Sample weekly progress in minutes
   const progressPercentage = Math.min((totalReadingTime / readingGoal) * 100, 100);
-  const averageWPM = user?.wpm || 200; // Sample average WPM
-  const comprehensionRate = recentSessions.reduce
-    ((acc, session) => {
-      return acc + (session.getComprehensionScore() ?? 0) 
-    }, 0) / recentSessions.length ;
+
+  // Get all WPM values from recent sessions
+  const wpmValues = recentSessions.map(session => session.getAverageWpm()).filter(wpm => wpm > 0);
+
+  // Determine the average WPM dynamically
+  const averageWPM = user?.wpm ? Math.round(user.wpm) : null;
+
+  // Calculate comprehension rate
+  const comprehensionRate =
+    recentSessions.length > 0
+      ? Math.round(
+          recentSessions.reduce((acc, session) => acc + (session.getComprehensionScore() ?? 0), 0) /
+            recentSessions.length
+        )
+      : 0;
 
   const handleGoalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,27 +165,27 @@ const UserDashboardContent = () => {
       <header className="bg-sr-gradient py-8 shadow-lg">
         <div className="container mx-auto px-4 md:px-8 lg:px-20 text-left">
           <h1 className="text-3xl md:text-4xl font-bold text-white">Reading Dashboard</h1>
-          <p className="mt-2 text-lg text-gray-200">
-            Track your progress and improve your reading skills
-          </p>
+          <p className="mt-2 text-lg text-gray-200">Track your progress and improve your reading skills</p>
         </div>
       </header>
-      
+
       <div className="container mx-auto py-8 px-4 md:px-8 lg:px-20 -mt-6">
         <div className="bg-gray-50 rounded-lg shadow-md p-6 mb-8">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">Overview</h2>
+            <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+              Overview
+            </h2>
             <Button displayText="Start New Session" href="/userSession" />
           </div>
-          
+
           <DashboardSummary
             totalReadingTime={totalReadingTime}
-            averageWPM={Math.round(averageWPM)}
+            averageWPM={averageWPM}
             sessionsCount={recentSessions.length}
-            comprehensionRate={Math.round(comprehensionRate)}
+            comprehensionRate={comprehensionRate}
           />
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           <div className="md:col-span-8">
             <ProgressHeader
@@ -169,18 +195,18 @@ const UserDashboardContent = () => {
               onSetGoalClick={() => setIsGoalModalOpen(true)}
               weeklyProgress={weeklyProgress}
             />
-            
+
             <RecentReadingSessions
               recentSessions={recentSessions}
               onSelectSession={(session) => setSelectedSession(session)}
             />
           </div>
-          
+
           <div className="md:col-span-4">
             <LeaderboardComponent />
           </div>
         </div>
-        
+
         <GoalSettingModal
           isOpen={isGoalModalOpen}
           newGoal={newGoal}
@@ -188,7 +214,7 @@ const UserDashboardContent = () => {
           onSubmit={handleGoalSubmit}
           onClose={() => setIsGoalModalOpen(false)}
         />
-        
+
         {/* Session Details Modal */}
         {selectedSession && (
           <div
