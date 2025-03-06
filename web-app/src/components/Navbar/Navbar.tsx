@@ -66,7 +66,7 @@ const Navbar = () => {
         {loggedIn && user && user.isAdmin && (
           <NavItem
             href="/adminDashboard"
-            name="admin portal"
+            name="Admin Portal"
             className="bg-admin-gradient rounded-full px-4 py-2"
           />
         )}

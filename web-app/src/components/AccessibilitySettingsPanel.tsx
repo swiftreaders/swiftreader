@@ -73,9 +73,33 @@ export const AccessibilitySettingsPanel = ({
 
   const handleNumberChange = (name: keyof AccessibilitySettings) => 
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = parseInt(e.target.value, 10);
+      const value = e.target.value;
+  
+      // Allow empty input or intermediate values (e.g., "1" when typing "16")
+      // But don't update the state yet
+      if (value === "" || /^\d+$/.test(value)) {
+        // Store the raw value in the input without updating the state
+        e.target.value = value;
+      }
+    };
+  
+  const handleNumberBlur = (name: keyof AccessibilitySettings) => 
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      let value = parseInt(e.target.value, 10);
+  
+      // Clamp the value between 10 and 64 only when the input loses focus
+      if (isNaN(value)) {
+        value = 10; // Default to the lower bound if the input is empty or invalid
+      } else {
+        value = Math.max(10, Math.min(64, value));
+      }
+  
+      // Update the state with the clamped value
       setSettings(prev => ({ ...prev, [name]: value }));
-  };
+  
+      // Update the input value to reflect the clamped value
+      e.target.value = value.toString();
+    };
 
   const handleColorChange = (name: keyof AccessibilitySettings) => 
     (e: React.ChangeEvent<HTMLInputElement>) => {

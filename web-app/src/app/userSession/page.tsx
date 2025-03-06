@@ -138,8 +138,27 @@ const UserSessionContent = () => {
 
   const calculateCharsPerLine = () => {
     const containerWidth = window.innerWidth;
-    const fontSize = 32; // Example font size in pixels
-    const charWidth = fontSize * 0.6; // Estimate: 0.6x font size
+    const fontSize = accessibilitySettings.fontSize;
+    const fontFamily = accessibilitySettings.fontFamily;
+  
+    // Adjust charWidth based on font family
+    let charWidthFactor;
+    switch (fontFamily) {
+      case 'monospace':
+        charWidthFactor = 0.8; // Monospace fonts have fixed-width characters
+        break;
+      case 'serif':
+        charWidthFactor = 0.55; // Serif fonts tend to have slightly wider characters
+        break;
+      case 'sans-serif':
+      case 'arial':
+      case 'verdana':
+      default:
+        charWidthFactor = 0.6; // Default factor for sans-serif fonts
+        break;
+    }
+  
+    const charWidth = fontSize * charWidthFactor; // Adjust charWidth based on font
     return Math.floor(containerWidth / charWidth);
   };
 
@@ -408,13 +427,19 @@ const UserSessionContent = () => {
     }
   };
 
-  let previousQuarter = 0;
-
   const startReadingMode2 = async (text: Text) => {
     abortControllerRef.current = new AbortController();
     const signal = abortControllerRef.current.signal;
-    let currBoundaryChange = 2;
-    let prevBoundaryChange = 2;  
+    
+    // Initialize boundary change variables.
+    // currBoundaryChange: current line’s boundary range (max - min).
+    // prevBoundaryChange: previous line’s boundary range.
+    let currBoundaryChange = 0;
+    let prevBoundaryChange = 0;  
+    // Variables to track the minimum and maximum quarter values seen during the current line.
+    let currentLineMinQuarter = Infinity;
+    let currentLineMaxQuarter = -Infinity;
+    
     try {
       const lines = splitTextIntoLines(text.content);
       
@@ -450,6 +475,11 @@ const UserSessionContent = () => {
       for (const line of lines) {
         if (signal.aborted) break;
   
+        // Before starting a new line, reset the current line's min/max and boundary change count.
+        currentLineMinQuarter = Infinity;
+        currentLineMaxQuarter = -Infinity;
+        currBoundaryChange = 0;
+  
         // Handle pauses with cancellation
         while (pausedRef.current && !signal.aborted) {
           await sleep(100, signal); // Pass signal to sleep
@@ -471,7 +501,14 @@ const UserSessionContent = () => {
           throw err;
         }
   
-        // WPM adjustment logic
+        // WPM adjustment logic:
+        // Calculate newWpm based on the difference in boundary changes between the previous line and the current line.
+        //   - If the boundary change is the same as before, keep the WPM consistent.
+        //   - If there are more boundary changes, speed up by 10 per additional unit.
+        //   - If there are fewer boundary changes, slow down by 10 per missing unit.
+        // New rules added:
+        //   - After applying the above diff logic, if the current line has no boundary change (0) subtract an additional 5.
+        //   - If it has 3 boundary changes, add an additional 5.
         const newWpm = calculateNewWpm(prevBoundaryChange, currBoundaryChange);
         if (!signal.aborted) {
           setWpm(newWpm);
@@ -479,6 +516,7 @@ const UserSessionContent = () => {
           wpmRef.current = newWpm;
         }
   
+        // Save the current boundary change count for comparison on the next line.
         prevBoundaryChange = currBoundaryChange;
       }
   
@@ -494,6 +532,7 @@ const UserSessionContent = () => {
       abortControllerRef.current = null;
     }
   
+    // Updated handleGaze function records min and max quarters per line.
     function handleGaze(data: { x: number; y: number } | null) {
       if (!data || signal.aborted) return;
   
@@ -501,29 +540,42 @@ const UserSessionContent = () => {
       const quarterWidth = screenWidth / 4;
       const activeQuarter = Math.floor(data.x / quarterWidth) + 1;
   
-      // Boundary change logic
-      if (activeQuarter === 4 && previousQuarter !== 4) {
-        currBoundaryChange = Math.max(currBoundaryChange, 3);
-      } else if (activeQuarter === 3 && previousQuarter !== 3) {
-        currBoundaryChange = Math.max(currBoundaryChange, 2);
-      } else if (activeQuarter === 2 && previousQuarter !== 2) {
-        currBoundaryChange = 1;
-      }
-  
-      previousQuarter = activeQuarter;
+      // Update current line minimum and maximum active quarters.
+      currentLineMinQuarter = Math.min(currentLineMinQuarter, activeQuarter);
+      currentLineMaxQuarter = Math.max(currentLineMaxQuarter, activeQuarter);
+      // Calculate the current line's boundary change as the range of quarters encountered.
+      // This effectively only counts positive (left-to-right) changes.
+      currBoundaryChange = currentLineMaxQuarter - currentLineMinQuarter;
     }
   };
   
-  // Helper function for WPM calculation
+  // Updated helper function for WPM calculation based on boundary change differences.
+  // The function first applies the diff logic (adjust by 10 per unit difference),
+  // then applies the additional rules: if curr is 0, subtract an extra 5; if curr is 3, add an extra 5.
   const calculateNewWpm = (prev: number, curr: number) => {
-    switch (prev + curr) {
-      case 6: return Math.min(wpmRef.current + 20, 1000);
-      case 5: return Math.min(wpmRef.current + 10, 1000);
-      case 3: return Math.max(wpmRef.current - 20, 50);
-      case 2: return Math.max(wpmRef.current - 30, 50);
-      default: return wpmRef.current;
+    const diff = curr - prev;
+    let newWpm = wpmRef.current;
+    
+    // Apply diff logic.
+    if (diff === 0) {
+      newWpm = wpmRef.current;
+    } else if (diff > 0) {
+      newWpm = Math.min(wpmRef.current + 20 * diff, 1000);
+    } else if (diff < 0) {
+      newWpm = Math.max(wpmRef.current - 20 * Math.abs(diff), 50);
     }
+    
+    // Additional rules: adjust by 5 if current boundary change is 0 or 3.
+    if (curr === 0) {
+      newWpm = Math.max(newWpm - 10, 50);
+    } else if (curr === 3) {
+      newWpm = Math.min(newWpm + 10, 1000);
+    }
+    
+    return newWpm;
   };
+  
+  
 
   const startReadingMode3 = async (text: Text) => {
     cancelledRef.current = false;
@@ -629,25 +681,29 @@ const UserSessionContent = () => {
           </button>
         )}
         {/* Accessibility Settings Button */}
-        <button
-          onClick={() => {
+        {!sessionStarted && progressStage === 1 && (
+          <>
+            <button
+              onClick={() => {
             if (!sessionStarted) {  // Only allow opening if session isn't active
               setShowAccessibilityPanel(!showAccessibilityPanel);
             }
           }}
-          className={`absolute top-6 left-6 bg-secondary text-white px-4 py-2 rounded transition ${
+              className={`absolute top-6 left-6 bg-secondary text-white px-4 py-2 rounded transition ${
             sessionStarted ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
           }`}
           disabled={sessionStarted}
-        >
-          Accessibility Settings
-        </button>
-        {showAccessibilityPanel && (
-          <AccessibilitySettingsPanel
-            settings={accessibilitySettings}
-            setSettings={setAccessibilitySettings}
-            onClose={() => setShowAccessibilityPanel(false)}
-          />
+            >
+              Accessibility Settings
+            </button>
+            {showAccessibilityPanel && (
+              <AccessibilitySettingsPanel
+                settings={accessibilitySettings}
+                setSettings={setAccessibilitySettings}
+                onClose={() => setShowAccessibilityPanel(false)}
+              />
+            )}
+          </>
         )}
         {/* Progress Circles */}
         <div className="flex items-center justify-center mb-8">
