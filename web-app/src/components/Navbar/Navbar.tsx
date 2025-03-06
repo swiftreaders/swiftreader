@@ -59,7 +59,7 @@ const Navbar = () => {
       </div>
 
       {/* Navigation Links */}
-      <ul className="flex space-x-6">
+      <ul className="flex space-x-6 italic">
         <NavItem href="/about" name="about" />
         <NavItem href="/features" name="features" />
         {loggedIn && user && <NavItem href="/userDashboard" name="dashboard" />}
