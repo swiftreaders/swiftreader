@@ -14,7 +14,6 @@ import { Timestamp } from "firebase/firestore";
 import WebGazerClient from "./WebGazerClient"; // We'll keep a separate file
 import Calibration, { CalibrationRef } from "./Calibration"; // Modified import to include ref type
 import { SessionStats } from "@/components/SessionStats";
-// import HelpPopup from "@/components/helpPopup" 
 import { useAuth } from "@/contexts/authContext";
 import { UserProvider } from "@/contexts/userContext";
 import AccessDenied from "@/components/pages/errors/accessDenied";
@@ -100,6 +99,7 @@ const UserSessionContent = () => {
   const [totalLines, setTotalLines] = useState(100);
   const [paused, setPaused] = useState(false);
   const [cancelled, setCancelled] = useState(false);
+  const [webgazerInitialized, setWebgazerInitialized] = useState(false);
   const wpmRef = useRef(wpm);
   const pausedRef = useRef(paused);
   const cancelledRef = useRef(cancelled);
@@ -113,6 +113,18 @@ const UserSessionContent = () => {
     setCurrentLineIndex(0);
     setTotalLines(100);
   }, [text]);
+
+  const stopWebGazer = () => {
+    (window as any).webgazer.clearGazeListener();
+    const videoElem = document.querySelector("video");
+        if (videoElem && videoElem.srcObject) {
+          const stream = videoElem.srcObject as MediaStream;
+          stream.getTracks().forEach((track) => track.stop());
+          videoElem.srcObject = null;
+        }
+    (window as any).webgazer.end();
+    setWebgazerInitialized(false);
+  };
 
   // Added: Create a ref for the Calibration component
   const calibrationRef = useRef<CalibrationRef>(null);
@@ -174,9 +186,8 @@ const UserSessionContent = () => {
   };
 
   const handleCancelSession = () => {
-    // Use a ref to force immediate cancellation
     cancelledRef.current = true;
-    
+  
     // Reset all states
     setSessionStarted(false);
     setReadingDone(false);
@@ -189,14 +200,8 @@ const UserSessionContent = () => {
     setText(null);
     setOutputLine("");
   
-    // Reset WPM to initial value
-    const initialWpm = user?.wpm ? Math.round(user.wpm) : 300;
-    setWpm(initialWpm);
-    setInputValue(initialWpm.toString());
-    wpmRef.current = initialWpm;
-  
-    // WebGazer cleanup
-    if (mode === 2 && typeof window !== "undefined") {
+    // Reset WebGazer if not in mode 2
+    if (mode != 2) {
       const webgazer = (window as any).webgazer;
       if (webgazer) {
         webgazer.clearGazeListener();
@@ -205,13 +210,23 @@ const UserSessionContent = () => {
         if (videoElem?.srcObject) {
           (videoElem.srcObject as MediaStream).getTracks().forEach(track => track.stop());
         }
+        // Remove WebGazer DOM elements
+        const overlay = document.getElementById("webgazerVideoContainer");
+        if (overlay) overlay.remove();
       }
+      setWebgazerInitialized(false);
     }
-
+  
+    // Reset mode 3 state
     if (mode === 3) {
       setGenerating(false);
     }
-
+  
+    // Reset WPM
+    const initialWpm = user?.wpm ? Math.round(user.wpm) : 300;
+    setWpm(initialWpm);
+    setInputValue(initialWpm.toString());
+    wpmRef.current = initialWpm;
   };
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -241,36 +256,38 @@ const UserSessionContent = () => {
 
   useEffect(() => {
     if (mode === 2 && progressStage === 1) {
-      if (typeof window === "undefined") return;
-
-      const webgazer = (window as any).webgazer;
-      if (!webgazer) {
-        console.error("WebGazer is not defined on window.");
-        return;
-      }
-
-      console.log("WebGazer found. Setting up...");
-      webgazer
-        .showVideoPreview(false)
-        .begin()
-        .then(() => console.log("WebGazer started!"))
-        .catch((err: any) => console.error("WebGazer failed to start:", err));
-
-      return () => {
-        const videoElem = document.querySelector("video");
-        if (videoElem && videoElem.srcObject) {
-          const stream = videoElem.srcObject as MediaStream;
-          stream.getTracks().forEach((track) => track.stop());
-          videoElem.srcObject = null;
+      const initializeWebGazer = async () => {
+        if (typeof window === "undefined") return;
+  
+        const webgazer = (window as any).webgazer;
+        if (!webgazer) {
+          console.error("WebGazer is not defined on window.");
+          return;
         }
-        webgazer.end();
-
-        console.log("WebGazer stopped and all video streams released.");
-
+  
+        // Clear existing video elements
+        const existingVideo = document.getElementById("webgazerVideoFeed");
+        if (existingVideo) existingVideo.remove();
+  
+        try {
+          await webgazer
+            .showVideoPreview(false)
+            // .showPredictionPoints(false)
+            .begin();
+          console.log("WebGazer started!");
+          setWebgazerInitialized(true);
+        } catch (err) {
+          console.error("WebGazer failed to start:", err);
+          setWebgazerInitialized(false);
+        }
       };
-    }
-    if (mode === 3) {
-      setFiction(false);
+  
+      initializeWebGazer();
+  
+      return () => {
+        stopWebGazer();
+        console.log("WebGazer stopped!");
+      };
     }
   }, [mode, progressStage]);
 
@@ -286,14 +303,26 @@ const UserSessionContent = () => {
   }
 
   const preRead = async (text: Text) => {
-    setOutputLine("Reading '" + text.title + "'");
-    await sleep(3000);
-    setOutputLine("Ready...");
-    await sleep(1000);
-    setOutputLine("Set...");
-    await sleep(1000);
-    setOutputLine("Go!");
-    await sleep(1000);
+    try {
+      setOutputLine("Reading '" + text.title + "'");
+      await sleep(3000);
+      if (cancelledRef.current) return;
+  
+      setOutputLine("Ready...");
+      await sleep(1000);
+      if (cancelledRef.current) return;
+  
+      setOutputLine("Set...");
+      await sleep(1000);
+      if (cancelledRef.current) return;
+  
+      setOutputLine("Go!");
+      await sleep(1000);
+      if (cancelledRef.current) return;
+    } catch {
+      // Handle cancellation during preRead
+      if (cancelledRef.current) return;
+    }
   };
 
   const startReadingMode1 = async (text: Text) => {
@@ -367,12 +396,14 @@ const UserSessionContent = () => {
     }
   };
 
+  let previousQuarter = 0;
+
   const startReadingMode2 = async (text: Text) => {
     cancelledRef.current = false;
-  
+    let currBoundaryChange = 2;
+    let prevBoundaryChange = 2;
+
     try {
-      const currBoundaryChange = 2;
-      let prevBoundaryChange = 2;
       const lines = splitTextIntoLines(text.content);
       
       // Reset states before starting
@@ -423,9 +454,22 @@ const UserSessionContent = () => {
         if (cancelledRef.current) break;
   
         // WPM adjustment logic
-        const newWpm = wpmRef.current;
+        let newWpm = wpmRef.current;
         switch (prevBoundaryChange + currBoundaryChange) {
-          // ... existing case logic ...
+          case 6:
+            newWpm = Math.min(wpmRef.current + 20, 1000);
+            break;
+          case 5:
+            newWpm = Math.min(wpmRef.current + 10, 1000);
+            break;
+          case 4:
+            break;
+          case 3:
+            newWpm = Math.max(wpmRef.current - 20, 50);
+            break;
+          case 2:
+            newWpm = Math.max(wpmRef.current - 30, 50);
+            break;
         }
         
         if (!cancelledRef.current) {
@@ -450,25 +494,55 @@ const UserSessionContent = () => {
         setOutputLine("");
         setCurrentLineIndex(0);
         setTotalLines(0);
+
+
         
-        const webgazer = (window as any).webgazer;
-        webgazer?.clearGazeListener();
-        webgazer?.end();
+        // const webgazer = (window as any).webgazer;
+        // webgazer?.clearGazeListener();
+        // webgazer?.end();
   
-        const videoElem = document.querySelector("video");
-        if (videoElem?.srcObject) {
-          (videoElem.srcObject as MediaStream).getTracks().forEach(track => track.stop());
-          videoElem.srcObject = null;
-        }
+        // const videoElem = document.querySelector("video");
+        // if (videoElem?.srcObject) {
+        //   (videoElem.srcObject as MediaStream).getTracks().forEach(track => track.stop());
+        //   videoElem.srcObject = null;
+        // }
       }
     }
   
     function handleGaze(data: { x: number; y: number } | null) {
-      // ... existing gaze handling logic ...
+      if (!data) return;
+
+      let activeQuarter = 0;
+
+      // Calculate which quarter the gaze is in
+      const screenWidth = window.innerWidth;
+      const quarterWidth = screenWidth / 4;
+      if (data.x < quarterWidth) {
+        activeQuarter = 1;
+      } else if (data.x < quarterWidth * 2) {
+        activeQuarter = 2;
+      } else if (data.x < quarterWidth * 3) {
+        activeQuarter = 3;
+      } else {
+        activeQuarter = 4;
+      }
+
+      // If the gaze just changed quadrant, record the boundary change
+      if (activeQuarter === 4 && previousQuarter !== 4) {
+        currBoundaryChange = Math.max(currBoundaryChange, 3);
+      } else if (activeQuarter === 3 && previousQuarter !== 3) {
+        currBoundaryChange = Math.max(currBoundaryChange, 2);
+      } else if (activeQuarter === 2 && previousQuarter !== 2) {
+        currBoundaryChange = 1;
+      }
+
+      // Update the previous quarter for the next reading
+      previousQuarter = activeQuarter;
     }
   };
 
   const startReadingMode3 = async (text: Text) => {
+    cancelledRef.current = false;
     try {
       setGenerating(true);
       const summary = await summariseText(text.content, text.title);
@@ -956,12 +1030,26 @@ const UserSessionContent = () => {
             // Session Start Box
             <>
               {!requested ? (
-                <button
-                  className="bg-secondary text-white px-6 py-3 rounded hover:bg-blue-600 transition"
-                  onClick={handleStartSession}
-                >
-                  Start Session
-                </button>
+                <div className="relative">
+                  <button
+                    className={`bg-secondary text-white px-6 py-3 rounded ${
+                      (mode === 2 && !webgazerInitialized) || loading || generating
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'hover:bg-blue-600'
+                    } transition`}
+                    onClick={handleStartSession}
+                    disabled={(mode === 2 && !webgazerInitialized) || loading || generating}
+                  >
+                    {loading ? 'Starting...' : 'Start Session'}
+                  </button>
+                
+                  {/* Tooltip for disabled state */}
+                  {(mode === 2 && !webgazerInitialized) && (
+                    <div className="absolute top-full mt-2 text-sm text-red-500">
+                      Please allow camera access and recalibrate to start.
+                    </div>
+                  )}
+                </div>
               ) : loading ? (
                 <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner flex justify-center items-center">
                   <p className="text-xl text-gray-800">Loading...</p>
@@ -982,12 +1070,12 @@ const UserSessionContent = () => {
                       >
                         Cancel Session
                       </button>
-                      <button
+                        <button
                         onClick={() => setPaused(!paused)}
-                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
-                      >
+                        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition"
+                        >
                         Resume Session
-                      </button>
+                        </button>
                     </div>
                   )}
                   
