@@ -17,7 +17,7 @@ const NavItem: React.FC<NavItemProps> = ({ href, name, className }) => {
     <li>
       <Link
         href={href}
-        className={`italic font-bold text-white hover:text-hovertext transition duration-200 ${className}`}
+        className={`font-bold text-white hover:text-hovertext transition duration-200 ${className}`}
       >
         {name}
       </Link>

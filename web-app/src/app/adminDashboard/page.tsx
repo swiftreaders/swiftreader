@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   useAdminDashboard,
   AdminDashboardProvider,
@@ -91,28 +91,11 @@ const AdminDashboardContent = () => {
     setPeakActivityData(sortedData);
   }, [readingSessions]);
 
-  // Calculate user joining metrics
-  useEffect(() => {
-    const totalUsers = users.length;
-    const newUsers = users.filter(
-      (user) => Date.now() - user.joinDate.toMillis() < 2419200000
-    ).length;
-    
-    // Generate monthly new users statistics
-    const monthlyJoinData = generateMonthlyJoinStats();
-
-    console.log("Monthly join data:", monthlyJoinData);
-    setUserMetrics({ 
-      totalUsers, 
-      newUsers, 
-      userTrendData: monthlyJoinData 
-    } as UserMetrics);
-  }, [users]);
-
-  const generateMonthlyJoinStats = () => {
+  // Wrap generateMonthlyJoinStats in useCallback
+  const generateMonthlyJoinStats = useCallback(() => {
     const monthlyStats: { [key: string]: number } = {};
 
-    users.forEach(user => {
+    users.forEach((user) => {
       const joinDate = user.joinDate.toDate();
       const monthKey = `${joinDate.getFullYear()}-${String(joinDate.getMonth() + 1).padStart(2, '0')}`;
 
@@ -125,13 +108,32 @@ const AdminDashboardContent = () => {
 
     const monthlyData = Object.keys(monthlyStats)
       .sort() // Sort chronologically
-      .map(month => ({
+      .map((month) => ({
         month: `${month.split('-')[0]}-${numberToMonth(parseInt(month.split('-')[1]) - 1)}`,
-        newUsers: monthlyStats[month]
+        newUsers: monthlyStats[month],
       }));
 
     return monthlyData;
-  };
+  }, [users]); // Add users as a dependency since it's used inside the function
+
+  // Update the useEffect to remove generateMonthlyJoinStats from dependencies
+  useEffect(() => {
+    const totalUsers = users.length;
+    const newUsers = users.filter(
+      (user) => Date.now() - user.joinDate.toMillis() < 2419200000
+    ).length;
+
+    // Generate monthly new users statistics
+    const monthlyJoinData = generateMonthlyJoinStats();
+
+    console.log('Monthly join data:', monthlyJoinData);
+    setUserMetrics({
+      totalUsers,
+      newUsers,
+      userTrendData: monthlyJoinData,
+    } as UserMetrics);
+  }, [users]); // Now generateMonthlyJoinStats is stable and won't trigger unnecessary re-renders
+
 
   const handleManageClick = async (user: User) => {
     setSelectedUser(user);

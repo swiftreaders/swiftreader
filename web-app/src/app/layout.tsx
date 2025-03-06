@@ -26,12 +26,12 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth0.getSession(); // 🔹 Fetch latest session on request
+  const session = await auth0.getSession(); // Fetch latest session on request
 
   return (
     <html
       lang="en"
-      className={`${atkinson.variable} italic text-text`}
+      className={`${atkinson.variable} text-text`}
     >
       <body>
         <ThemeProvider attribute="class">
