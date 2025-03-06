@@ -255,7 +255,10 @@ const UserSessionContent = () => {
   }, [requested, loading, text]);
 
   useEffect(() => {
-    if (mode === 2 && progressStage === 1) {
+    if (mode === 3) {
+      setFiction(false);
+    }
+    if ((mode === 2 || mode === 3) && progressStage === 1) {
       const initializeWebGazer = async () => {
         if (typeof window === "undefined") return;
   
@@ -550,7 +553,7 @@ const UserSessionContent = () => {
       if (!cancelledRef.current) {
         setGenerating(false);
         text.content = summary;
-        await startReadingMode1(text);
+        await startReadingMode2(text);
       }
     } catch (error) {
       if (!cancelledRef.current) {
@@ -636,7 +639,7 @@ const UserSessionContent = () => {
       />
       <div className="min-h-screen mt-[7vh] bg-background flex flex-col items-center p-8 relative">
         {/* Recalibrate Button (only for mode 2) */}
-        {mode === 2 && progressStage === 1 && (
+        {(mode === 2 || mode === 3) && progressStage === 1 && (
           <button
             onClick={ handleRecalibrate }
             className="absolute top-6 right-6 bg-secondary text-white px-4 py-2 rounded hover:bg-blue-600 transition"
@@ -896,7 +899,7 @@ const UserSessionContent = () => {
           <></>
         )}
         <div className="w-full flex justify-center flex-col items-center">
-        {!sessionStarted && !generating && (
+        {!sessionStarted && !generating && !loading && (
           <div className="w-full bg-gradient-to-br from-purple-50 to-blue-50 p-8 rounded-2xl shadow-xl border border-purple-100">
             <div className="text-center mb-6">
               <div className="inline-flex items-center justify-center bg-gradient-to-r from-purple-600 to-blue-500 text-white px-6 py-2 rounded-full text-lg font-bold shadow-sm">
@@ -986,7 +989,7 @@ const UserSessionContent = () => {
                   Quick Start
                 </h3>
                 <ul className="space-y-3 text-sm text-gray-600">
-                {mode === 2 ? (
+                {mode === 2 || mode === 3 ? (
                   <>
                     <li className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full" />
@@ -1033,18 +1036,18 @@ const UserSessionContent = () => {
                 <div className="relative">
                   <button
                     className={`bg-secondary text-white px-6 py-3 rounded ${
-                      (mode === 2 && !webgazerInitialized) || loading || generating
+                      ((mode === 2 || mode === 3) && !webgazerInitialized) || loading || generating
                         ? 'opacity-50 cursor-not-allowed'
                         : 'hover:bg-blue-600'
                     } transition`}
                     onClick={handleStartSession}
-                    disabled={(mode === 2 && !webgazerInitialized) || loading || generating}
+                    disabled={((mode === 2 || mode === 3) && !webgazerInitialized) || loading || generating}
                   >
                     {loading ? 'Starting...' : 'Start Session'}
                   </button>
                 
                   {/* Tooltip for disabled state */}
-                  {(mode === 2 && !webgazerInitialized) && (
+                  {((mode === 2 || mode === 3) && !webgazerInitialized) && (
                     <div className="absolute top-full mt-2 text-sm text-red-500">
                       Please allow camera access and recalibrate to start.
                     </div>
