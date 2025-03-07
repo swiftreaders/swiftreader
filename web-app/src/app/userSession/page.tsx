@@ -103,6 +103,7 @@ const UserSessionContent = () => {
   const wpmRef = useRef(wpm);
   const pausedRef = useRef(paused);
   const cancelledRef = useRef(cancelled);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Keep the ref in sync with the state
   useEffect(() => {
@@ -137,8 +138,27 @@ const UserSessionContent = () => {
 
   const calculateCharsPerLine = () => {
     const containerWidth = window.innerWidth;
-    const fontSize = 32; // Example font size in pixels
-    const charWidth = fontSize * 0.6; // Estimate: 0.6x font size
+    const fontSize = accessibilitySettings.fontSize;
+    const fontFamily = accessibilitySettings.fontFamily;
+  
+    // Adjust charWidth based on font family
+    let charWidthFactor;
+    switch (fontFamily) {
+      case 'monospace':
+        charWidthFactor = 0.8; // Monospace fonts have fixed-width characters
+        break;
+      case 'serif':
+        charWidthFactor = 0.55; // Serif fonts tend to have slightly wider characters
+        break;
+      case 'sans-serif':
+      case 'arial':
+      case 'verdana':
+      default:
+        charWidthFactor = 0.6; // Default factor for sans-serif fonts
+        break;
+    }
+  
+    const charWidth = fontSize * charWidthFactor; // Adjust charWidth based on font
     return Math.floor(containerWidth / charWidth);
   };
 
@@ -185,8 +205,10 @@ const UserSessionContent = () => {
     setPaused(false);
   };
 
-  const handleCancelSession = () => {
-    cancelledRef.current = true;
+  const handleCancelSession = () => {    
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort(); // Immediate cancellation
+    }
   
     // Reset all states
     setSessionStarted(false);
@@ -229,7 +251,7 @@ const UserSessionContent = () => {
     wpmRef.current = initialWpm;
   };
 
-  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  // const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
   useEffect(() => {
     if (requested && !loading) {
@@ -305,244 +327,255 @@ const UserSessionContent = () => {
     }
   }
 
-  const preRead = async (text: Text) => {
-    try {
-      setOutputLine("Reading '" + text.title + "'");
-      await sleep(3000);
-      if (cancelledRef.current) return;
+  const sleep = (ms: number, signal?: AbortSignal) => {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(resolve, ms);
+      signal?.addEventListener('abort', () => {
+        clearTimeout(timeout);
+        reject(new DOMException('Aborted', 'AbortError'));
+      });
+    });
+  };
   
-      setOutputLine("Ready...");
-      await sleep(1000);
-      if (cancelledRef.current) return;
+  const preRead = async (text: Text, signal: AbortSignal) => {
+    const steps = [
+      { text: `Reading '${text.title}'`, delay: 3000 },
+      { text: "Ready...", delay: 1000 },
+      { text: "Set...", delay: 1000 },
+      { text: "Go!", delay: 1000 }
+    ];
   
-      setOutputLine("Set...");
-      await sleep(1000);
-      if (cancelledRef.current) return;
-  
-      setOutputLine("Go!");
-      await sleep(1000);
-      if (cancelledRef.current) return;
-    } catch {
-      // Handle cancellation during preRead
-      if (cancelledRef.current) return;
+    for (const step of steps) {
+      if (signal.aborted) return;
+      setOutputLine(step.text);
+      await sleep(step.delay, signal);
     }
   };
 
   const startReadingMode1 = async (text: Text) => {
-    // Use a ref to track cancellation status within the async function
-    cancelledRef.current = false;
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
   
     try {
       const lines = splitTextIntoLines(text.content);
-      await preRead(text);
-      const startTime = Timestamp.fromDate(new Date());
-      const wpmReadings: number[] = [];
       
-      // Reset progress indicators
+      // Reset state
       setTotalLines(lines.length);
       setCurrentLineIndex(0);
       setOutputLine("");
   
+      // Pre-read with cancellation support
+      await preRead(text, signal);
+      if (signal.aborted) return;
+  
+      const startTime = Timestamp.fromDate(new Date());
+      const wpmReadings: number[] = [];
+      let elapsedPausedTime = 0;
+  
+      // Set up interval with cleanup
       const intervalId = setInterval(() => {
-        if (!pausedRef.current && !cancelledRef.current) {
+        if (!signal.aborted && !pausedRef.current) {
           wpmReadings.push(wpmRef.current);
         }
       }, 5000);
   
+      signal.addEventListener('abort', () => clearInterval(intervalId));
+  
+      // Main reading loop
       for (const line of lines) {
-        // Check cancellation before each line
-        if (cancelledRef.current) break;
+        if (signal.aborted) break;
   
-        // Check cancellation during pauses
-        while (pausedRef.current && !cancelledRef.current) {
-          await sleep(100);
-          if (cancelledRef.current) break;
+        // Handle pauses with cancellation
+        while (pausedRef.current && !signal.aborted) {
+          await sleep(100, signal);
+          elapsedPausedTime += 100;
+          await new Promise(resolve => requestAnimationFrame(resolve));
         }
   
-        if (cancelledRef.current) break;
+        if (signal.aborted) break;
   
-        // Update UI
+        // Update display
         setOutputLine(line);
-        setCurrentLineIndex(prev => {
-          // Force fresh state read
-          if (cancelledRef.current) return 0;
-          return prev + 1;
-        });
+        setCurrentLineIndex(prev => prev + 1);
   
-        // Break up sleep into smaller chunks to check cancellation
-        const sleepTime = calculateSleepTime(line);
-        const chunkSize = 100;
-        for (let elapsed = 0; elapsed < sleepTime; elapsed += chunkSize) {
-          if (cancelledRef.current) break;
-          await sleep(Math.min(chunkSize, sleepTime - elapsed));
+        // Process line with cancellation
+        try {
+          const sleepTime = calculateSleepTime(line);
+          await sleep(sleepTime, signal);
+        } catch (err: any) {
+          if (err.name === 'AbortError') break;
+          throw err;
         }
-        
-        if (cancelledRef.current) break;
       }
   
-      // Only complete if not cancelled
-      if (!cancelledRef.current) {
-        clearInterval(intervalId);
+      if (!signal.aborted) {
         const endTime = Timestamp.fromDate(new Date());
         setReadingDone(true);
         setOutputLine("Reading complete!");
         finishReading(text, startTime, endTime, wpmReadings);
       }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') throw err;
     } finally {
       // Cleanup if cancelled
-      if (cancelledRef.current) {
-        // clearInterval(intervalId);
+      if (signal.aborted) {
         setOutputLine("");
         setCurrentLineIndex(0);
         setTotalLines(0);
       }
+      abortControllerRef.current = null;
     }
   };
 
-  let previousQuarter = 0;
-
   const startReadingMode2 = async (text: Text) => {
-    cancelledRef.current = false;
-    let currBoundaryChange = 2;
-    let prevBoundaryChange = 2;
-
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+    
+    // Initialize boundary change variables.
+    // currBoundaryChange: current line’s boundary range (max - min).
+    // prevBoundaryChange: previous line’s boundary range.
+    let currBoundaryChange = 0;
+    let prevBoundaryChange = 0;  
+    // Variables to track the minimum and maximum quarter values seen during the current line.
+    let currentLineMinQuarter = Infinity;
+    let currentLineMaxQuarter = -Infinity;
+    
     try {
       const lines = splitTextIntoLines(text.content);
       
-      // Reset states before starting
-      await preRead(text);
+      // Initialize WebGazer and abort listening
+      const webgazer = (window as any).webgazer;
+      webgazer.setGazeListener(handleGaze);
+      signal.addEventListener('abort', () => {});
+  
+      // Reset state
       setTotalLines(lines.length);
       setCurrentLineIndex(0);
       setOutputLine("");
   
+      // Pre-read with cancellation support - aborts if abort signal is triggered
+      // during the pre read 
+      await preRead(text, signal);
+      if (signal.aborted) return;
+  
       const startTime = Timestamp.fromDate(new Date());
       const wpmReadings: number[] = [];
-      
-      // Initialize WebGazer
-      const webgazer = (window as any).webgazer;
-      webgazer.setGazeListener(handleGaze);
-      
+      let elapsedPausedTime = 0;
+  
+      // Set up interval with cleanup
       const intervalId = setInterval(() => {
-        if (!cancelledRef.current) {
+        if (!signal.aborted) {
           wpmReadings.push(wpmRef.current);
         }
       }, 5000);
   
-      for (const line of lines) {
-        if (cancelledRef.current) break;
+      signal.addEventListener('abort', () => clearInterval(intervalId));
   
-        // Check cancellation during pauses
-        while (pausedRef.current && !cancelledRef.current) {
-          await sleep(100);
-          if (cancelledRef.current) break;
+      // Main reading loop
+      for (const line of lines) {
+        if (signal.aborted) break;
+  
+        // Before starting a new line, reset the current line's min/max and boundary change count.
+        currentLineMinQuarter = Infinity;
+        currentLineMaxQuarter = -Infinity;
+        currBoundaryChange = 0;
+  
+        // Handle pauses with cancellation
+        while (pausedRef.current && !signal.aborted) {
+          await sleep(100, signal); // Pass signal to sleep
+          elapsedPausedTime += 100;
+          await new Promise(resolve => requestAnimationFrame(resolve));
         }
   
-        if (cancelledRef.current) break;
+        if (signal.aborted) break;
   
         // Update display
         setOutputLine(line);
-        setCurrentLineIndex(prev => {
-          if (cancelledRef.current) return 0;
-          return prev + 1;
-        });
+        setCurrentLineIndex(prev => prev + 1);
   
-        // Process line with cancellation checks
-        const sleepTime = calculateSleepTime(line);
-        const chunkSize = 100;
-        for (let elapsed = 0; elapsed < sleepTime; elapsed += chunkSize) {
-          if (cancelledRef.current) break;
-          await sleep(Math.min(chunkSize, sleepTime - elapsed));
+        // Process line with cancellation
+        try {
+          await sleep(calculateSleepTime(line), signal);
+        } catch (err: any) {
+          if (err.name === 'AbortError') break;
+          throw err;
         }
   
-        if (cancelledRef.current) break;
-  
-        // WPM adjustment logic
-        let newWpm = wpmRef.current;
-        switch (prevBoundaryChange + currBoundaryChange) {
-          case 6:
-            newWpm = Math.min(wpmRef.current + 20, 1000);
-            break;
-          case 5:
-            newWpm = Math.min(wpmRef.current + 10, 1000);
-            break;
-          case 4:
-            break;
-          case 3:
-            newWpm = Math.max(wpmRef.current - 20, 50);
-            break;
-          case 2:
-            newWpm = Math.max(wpmRef.current - 30, 50);
-            break;
-        }
-        
-        if (!cancelledRef.current) {
+        // WPM adjustment logic:
+        // Calculate newWpm based on the difference in boundary changes between the previous line and the current line.
+        //   - If the boundary change is the same as before, keep the WPM consistent.
+        //   - If there are more boundary changes, speed up by 10 per additional unit.
+        //   - If there are fewer boundary changes, slow down by 10 per missing unit.
+        // New rules added:
+        //   - After applying the above diff logic, if the current line has no boundary change (0) subtract an additional 5.
+        //   - If it has 3 boundary changes, add an additional 5.
+        const newWpm = calculateNewWpm(prevBoundaryChange, currBoundaryChange);
+        if (!signal.aborted) {
           setWpm(newWpm);
           setInputValue(newWpm.toString());
           wpmRef.current = newWpm;
         }
   
+        // Save the current boundary change count for comparison on the next line.
         prevBoundaryChange = currBoundaryChange;
       }
   
-      if (!cancelledRef.current) {
-        clearInterval(intervalId);
+      if (!signal.aborted) {
         const endTime = Timestamp.fromDate(new Date());
         setReadingDone(true);
         setOutputLine("Reading complete!");
         finishReading(text, startTime, endTime, wpmReadings);
       }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') throw err;
     } finally {
-      // Cleanup WebGazer resources
-      if (cancelledRef.current) {
-        setOutputLine("");
-        setCurrentLineIndex(0);
-        setTotalLines(0);
-
-
-        
-        // const webgazer = (window as any).webgazer;
-        // webgazer?.clearGazeListener();
-        // webgazer?.end();
-  
-        // const videoElem = document.querySelector("video");
-        // if (videoElem?.srcObject) {
-        //   (videoElem.srcObject as MediaStream).getTracks().forEach(track => track.stop());
-        //   videoElem.srcObject = null;
-        // }
-      }
+      abortControllerRef.current = null;
     }
   
+    // Updated handleGaze function records min and max quarters per line.
     function handleGaze(data: { x: number; y: number } | null) {
-      if (!data) return;
-
-      let activeQuarter = 0;
-
-      // Calculate which quarter the gaze is in
+      if (!data || signal.aborted) return;
+  
       const screenWidth = window.innerWidth;
       const quarterWidth = screenWidth / 4;
-      if (data.x < quarterWidth) {
-        activeQuarter = 1;
-      } else if (data.x < quarterWidth * 2) {
-        activeQuarter = 2;
-      } else if (data.x < quarterWidth * 3) {
-        activeQuarter = 3;
-      } else {
-        activeQuarter = 4;
-      }
-
-      // If the gaze just changed quadrant, record the boundary change
-      if (activeQuarter === 4 && previousQuarter !== 4) {
-        currBoundaryChange = Math.max(currBoundaryChange, 3);
-      } else if (activeQuarter === 3 && previousQuarter !== 3) {
-        currBoundaryChange = Math.max(currBoundaryChange, 2);
-      } else if (activeQuarter === 2 && previousQuarter !== 2) {
-        currBoundaryChange = 1;
-      }
-
-      // Update the previous quarter for the next reading
-      previousQuarter = activeQuarter;
+      const activeQuarter = Math.floor(data.x / quarterWidth) + 1;
+  
+      // Update current line minimum and maximum active quarters.
+      currentLineMinQuarter = Math.min(currentLineMinQuarter, activeQuarter);
+      currentLineMaxQuarter = Math.max(currentLineMaxQuarter, activeQuarter);
+      // Calculate the current line's boundary change as the range of quarters encountered.
+      // This effectively only counts positive (left-to-right) changes.
+      currBoundaryChange = currentLineMaxQuarter - currentLineMinQuarter;
     }
   };
+  
+  // Updated helper function for WPM calculation based on boundary change differences.
+  // The function first applies the diff logic (adjust by 10 per unit difference),
+  // then applies the additional rules: if curr is 0, subtract an extra 5; if curr is 3, add an extra 5.
+  const calculateNewWpm = (prev: number, curr: number) => {
+    const diff = curr - prev;
+    let newWpm = wpmRef.current;
+    
+    // Apply diff logic.
+    if (diff === 0) {
+      newWpm = wpmRef.current;
+    } else if (diff > 0) {
+      newWpm = Math.min(wpmRef.current + 20 * diff, 1000);
+    } else if (diff < 0) {
+      newWpm = Math.max(wpmRef.current - 20 * Math.abs(diff), 50);
+    }
+    
+    // Additional rules: adjust by 5 if current boundary change is 0 or 3.
+    if (curr === 0) {
+      newWpm = Math.max(newWpm - 10, 50);
+    } else if (curr === 3) {
+      newWpm = Math.min(newWpm + 10, 1000);
+    }
+    
+    return newWpm;
+  };
+  
+  
 
   const startReadingMode3 = async (text: Text) => {
     cancelledRef.current = false;
@@ -648,18 +681,29 @@ const UserSessionContent = () => {
           </button>
         )}
         {/* Accessibility Settings Button */}
-        <button
-          onClick={() => setShowAccessibilityPanel(!showAccessibilityPanel)}
-          className="absolute top-6 left-6 bg-secondary text-white px-4 py-2 rounded hover:bg-blue-600 transition"
-        >
-          Accessibility Settings
-        </button>
-        {showAccessibilityPanel && (
-          <AccessibilitySettingsPanel
-            settings={accessibilitySettings}
-            setSettings={setAccessibilitySettings}
-            onClose={() => setShowAccessibilityPanel(false)}
-          />
+        {!sessionStarted && progressStage === 1 && (
+          <>
+            <button
+              onClick={() => {
+            if (!sessionStarted) {  // Only allow opening if session isn't active
+              setShowAccessibilityPanel(!showAccessibilityPanel);
+            }
+          }}
+              className={`absolute top-6 left-6 bg-secondary text-white px-4 py-2 rounded transition ${
+            sessionStarted ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
+          }`}
+          disabled={sessionStarted}
+            >
+              Accessibility Settings
+            </button>
+            {showAccessibilityPanel && (
+              <AccessibilitySettingsPanel
+                settings={accessibilitySettings}
+                setSettings={setAccessibilitySettings}
+                onClose={() => setShowAccessibilityPanel(false)}
+              />
+            )}
+          </>
         )}
         {/* Progress Circles */}
         <div className="flex items-center justify-center mb-8">

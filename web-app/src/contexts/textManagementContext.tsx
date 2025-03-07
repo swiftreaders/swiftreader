@@ -366,11 +366,11 @@ const TextManagementProvider: React.FC<{ children: ReactNode }> = ({ children })
     switch (activeTab) {
       case "find":
         setFoundTexts((prev) => prev.filter((_, index) => index !== currentTextIndex));
-        setCurrentTextIndex((ind - 1) % foundTexts.length);
+        setCurrentTextIndex(Math.max((ind - 1) % foundTexts.length, 0));
         break;
       case "generate":
         setGeneratedTexts((prev) => prev.filter((_, index) => index !== currentTextIndex));
-        setCurrentTextIndex((ind - 1) % generatedTexts.length);
+        setCurrentTextIndex(Math.max((ind - 1) % foundTexts.length, 0));
         break;
       case "manual":
         setNewManualText(DEFAULT_NEW_TEXT);

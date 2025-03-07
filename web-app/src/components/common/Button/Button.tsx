@@ -12,7 +12,7 @@ const Button: React.FC<ButtonProps> = ({ href, displayText, className }) => {
   return (
     <div>
       <Link
-        className={`inline-block uppercase px-10 py-5 font-extrabold not-italic text-white bg-secondary hover:text-primary transition duration-200 rounded-xl ${className}`}
+        className={`inline-block uppercase px-10 py-5 font-extrabold not-italic text-white bg-purple-800 hover:text-black transition duration-200 rounded-xl ${className}`}
         href={href}
       >
         {displayText}

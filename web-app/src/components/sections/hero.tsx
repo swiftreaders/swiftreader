@@ -54,17 +54,17 @@ function Hero({ loggedIn, user, onClick }: HeroProps) {
 
   return (
     <>
-      <section className="mt-[7vh] text-white h-sr-screen px-5 md:px-20 italic font-bold flex">
+      <section className="mt-[7vh] text-white h-sr-screen px-5 md:px-20 font-bold flex">
         {/* Left half */}
         <div className="flex flex-col justify-center items-start w-full md:w-1/2">
           <h1 className="text-5xl md:text-6xl lg:text-6xl xl:text-8xl">
-            read faster,
+            Read Faster,
           </h1>
           <h1 className="text-5xl md:text-6xl lg:text-6xl xl:text-8xl text-[#3e0075]">
-            learn more
+            Learn More
           </h1>
           <h3 className="text-l md:text-xl lg:text-2xl xl:text-3xl mt-5 pb-20">
-            unlock the secrets of speed-reading and boost your productivity
+            Unlock the secrets of speed-reading and boost your productivity
           </h3>
           {loggedIn && user ? (
             <Button

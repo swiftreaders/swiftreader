@@ -28,7 +28,7 @@ const Benefits = () => {
 
   return (
     <section className="h-sr-screen py-[5%] px-[5%] flex items-center justify-center">
-      <div className="h-full bg-background rounded-2xl mx-5 md:mx-20 shadow-lg relative flex items-center justify-center">
+      <div className="h-1/2 w-4/5 bg-background rounded-2xl mx-2 md:mx-10 shadow-lg relative flex items-center justify-center">
         {/* Left Chevron */}
         <ChevronLeftIcon
           className="absolute left-4 w-8 h-8 cursor-pointer"

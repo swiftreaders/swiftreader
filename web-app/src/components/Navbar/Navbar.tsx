@@ -59,7 +59,7 @@ const Navbar = () => {
         {loggedIn && user?.isAdmin && (
           <NavItem
             href="/adminDashboard"
-            name="admin portal"
+            name="Admin Portal"
             className="bg-admin-gradient rounded-full px-4 py-2"
           />
         )}
@@ -105,7 +105,7 @@ const Navbar = () => {
             </li>
           </>
         ) : (
-          <NavItem href="/auth/login" name="login" />
+          <NavItem href="/auth/login" name="Login" />
         )}
       </ul>
     </nav>
