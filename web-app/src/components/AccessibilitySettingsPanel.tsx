@@ -8,24 +8,46 @@ interface AccessibilityPreviewProps {
 export const AccessibilityPreview = ({ settings }: AccessibilityPreviewProps) => {
   const sampleText = `Sample Text`;
 
+  // Function to apply bold styling to the first and last letter of each word
+  const formatText = (text: string) => {
+    return text.split(' ').map((word, index) => {
+      if (word.length === 0) return word; // Skip empty words (e.g., multiple spaces)
+
+      const firstChar = settings.boldFirst ? <strong>{word[0]}</strong> : word[0];
+      const lastChar = settings.boldLast ? <strong>{word[word.length - 1]}</strong> : word[word.length - 1];
+      const middle = word.slice(1, -1);
+
+      return (
+        <span key={index}>
+          {firstChar}
+          {middle}
+          {lastChar}
+          {index < text.split(' ').length - 1 ? ' ' : ''} {/* Add space between words */}
+        </span>
+      );
+    });
+  };
+
   return (
     <div
-      className="p-4 rounded-lg"
+      className="flex items-center justify-center p-4 rounded-lg"
       style={{
         padding: `${settings.readingBoxPadding}px`,
         backgroundColor: settings.readingBoxBackground,
         border: settings.readingBoxBorder,
-        fontFamily: settings.fontFamily,
-        fontSize: `${settings.fontSize}px`,
-        lineHeight: settings.lineHeight,
-        color: settings.textColor,
       }}
     >
-      <p>
-        {settings.boldFirst ? <strong>{sampleText[0]}</strong> : sampleText[0]}
-        {sampleText.slice(1, -1)}
-        {settings.boldLast ? <strong>{sampleText[sampleText.length - 1]}</strong> : sampleText[sampleText.length - 1]}
-      </p>
+      <div
+        style={{
+          fontFamily: settings.fontFamily,
+          fontSize: `${settings.fontSize}px`,
+          lineHeight: settings.lineHeight,
+          color: settings.textColor,
+          textAlign: 'center', // Center text horizontally
+        }}
+      >
+        <p>{formatText(sampleText)}</p>
+      </div>
     </div>
   );
 };
@@ -186,9 +208,12 @@ export const AccessibilitySettingsPanel = ({
                 <label className="block text-sm font-medium text-gray-600">Padding (px)</label>
                 <input
                   type="number"
-                  value={settings.readingBoxPadding}
+                  defaultValue={settings.readingBoxPadding}
                   onChange={handleNumberChange('readingBoxPadding')}
+                  onBlur={handleNumberBlur('readingBoxPadding')}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                  min="10"
+                  max="64"
                 />
               </div>
               
@@ -253,9 +278,12 @@ export const AccessibilitySettingsPanel = ({
                 <label className="block text-sm font-medium text-gray-600">Font Size (px)</label>
                 <input
                   type="number"
-                  value={settings.fontSize}
+                  defaultValue={settings.fontSize}
                   onChange={handleNumberChange('fontSize')}
+                  onBlur={handleNumberBlur('fontSize')}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                  min="10"
+                  max="64"
                 />
               </div>
             </div>
