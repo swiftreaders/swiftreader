@@ -9,9 +9,9 @@ const Home: React.FC = () => {
   const { user, loggedIn, refreshUser } = useAuth();
   const [checkingUser, setCheckingUser] = useState(true);
 
-  useEffect(() => {
-    refreshUser(); // 🔹 Refresh user ONLY when Home.tsx (Landing Page) mounts
-  }, []);
+  // useEffect(() => {
+  //   refreshUser(); // 🔹 Refresh user ONLY when Home.tsx (Landing Page) mounts
+  // }, []);
 
   useEffect(() => {
     if (loggedIn && !user) {

@@ -29,13 +29,10 @@ export default async function RootLayout({
   const session = await auth0.getSession(); // Fetch latest session on request
 
   return (
-    <html
-      lang="en"
-      className={`${atkinson.variable} text-text`}
-    >
+    <html lang="en" className={`${atkinson.variable} text-text`}>
       <body>
         <ThemeProvider attribute="class">
-          <AuthProvider initialSession={session}>
+          <AuthProvider>
             <Navbar />
             {children}
           </AuthProvider>

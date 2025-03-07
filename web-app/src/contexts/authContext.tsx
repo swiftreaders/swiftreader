@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User } from "@/types/user";
 import { userService } from "@/services/userService";
-import { auth0 } from "@/lib/auth0";
+import { useRouter } from "next/navigation";
 
 interface AuthContextType {
   loggedIn: boolean;
@@ -22,16 +22,28 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider: React.FC<{
-  children: React.ReactNode;
-  initialSession?: any;
-}> = ({ children, initialSession }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [loggedIn, setLoggedIn] = useState<boolean>(false);
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window !== "undefined") {
+      const storedUser = localStorage.getItem("user");
+      return storedUser ? JSON.parse(storedUser) : null;
+    }
+    return null;
+  });
+
+  const [userId, setUserId] = useState<string | null>(() =>
+    typeof window !== "undefined" ? localStorage.getItem("userId") : null
+  );
+
+  const [loggedIn, setLoggedIn] = useState<boolean>(!!user);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  const router = useRouter();
 
   const refreshUser = async () => {
-    console.log("Refreshing user...");
+    setAuthLoading(true);
     try {
       const res = await fetch("/api/auth/session");
       const data = await res.json();
@@ -42,20 +54,35 @@ export const AuthProvider: React.FC<{
         setUser(currUser);
         setUserId(currUser?.id || null);
         setLoggedIn(true);
+
+        // Store user data in localStorage
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(currUser));
+          localStorage.setItem("userId", currUser?.id || "");
+        }
       } else {
-        console.log("No user found in session. Logging out...");
         setUser(null);
         setUserId(null);
         setLoggedIn(false);
+
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("user");
+          localStorage.removeItem("userId");
+        }
       }
     } catch (error) {
       console.error("Error refreshing user:", error);
     }
+    setAuthLoading(false);
   };
+
+  useEffect(() => {
+    refreshUser();
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, userId, loggedIn, refreshUser }}>
-      {children}
+      {!authLoading && children}
     </AuthContext.Provider>
   );
 };
