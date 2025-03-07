@@ -100,6 +100,7 @@ const UserSessionContent = () => {
   const [paused, setPaused] = useState(false);
   const [cancelled, setCancelled] = useState(false);
   const [webgazerInitialized, setWebgazerInitialized] = useState(false);
+  const [isCalibrating, setIsCalibrating] = useState(false);
   const wpmRef = useRef(wpm);
   const pausedRef = useRef(paused);
   const cancelledRef = useRef(cancelled);
@@ -676,8 +677,11 @@ const UserSessionContent = () => {
         {/* Recalibrate Button (only for mode 2) */}
         {(mode === 2 || mode === 3) && progressStage === 1 && (
           <button
-            onClick={ handleRecalibrate }
-            className="absolute top-6 right-6 bg-secondary text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+            onClick={handleRecalibrate}
+            disabled={sessionStarted && !paused}
+            className={`absolute top-6 right-6 bg-secondary text-white px-4 py-2 rounded transition ${
+              sessionStarted && !paused ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-600"
+            }`}
           >
             Recalibrate
           </button>
@@ -1081,17 +1085,24 @@ const UserSessionContent = () => {
               {!requested ? (
                 <div className="relative">
                   <button
-                    className={`bg-secondary text-white px-6 py-3 rounded ${
-                      ((mode === 2 || mode === 3) && !webgazerInitialized) || loading || generating
-                        ? 'opacity-50 cursor-not-allowed'
-                        : 'hover:bg-blue-600'
-                    } transition`}
+                    className={`bg-secondary text-white px-6 py-3 rounded transition ${
+                      (((mode === 2 || mode === 3) && !webgazerInitialized) ||
+                        loading ||
+                        generating ||
+                        isCalibrating)
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:bg-blue-600"
+                    }`}
                     onClick={handleStartSession}
-                    disabled={((mode === 2 || mode === 3) && !webgazerInitialized) || loading || generating}
+                    disabled={
+                      ((mode === 2 || mode === 3) && !webgazerInitialized) ||
+                      loading ||
+                      generating ||
+                      isCalibrating
+                    }
                   >
-                    {loading ? 'Starting...' : 'Start Session'}
+                    {loading ? "Starting..." : "Start Session"}
                   </button>
-                
                   {/* Tooltip for disabled state */}
                   {((mode === 2 || mode === 3) && !webgazerInitialized) && (
                     <div className="absolute top-full mt-2 text-sm text-red-500">
@@ -1119,12 +1130,15 @@ const UserSessionContent = () => {
                       >
                         Cancel Session
                       </button>
-                        <button
+                      <button
                         onClick={() => setPaused(!paused)}
-                        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition"
-                        >
+                        disabled={isCalibrating}
+                        className={`bg-green-500 text-white px-4 py-2 rounded transition ${
+                          isCalibrating ? "opacity-50 cursor-not-allowed" : "hover:bg-green-600"
+                        }`}
+                      >
                         Resume Session
-                        </button>
+                      </button>
                     </div>
                   )}
                   
@@ -1218,7 +1232,7 @@ const UserSessionContent = () => {
         <div className="z-20">
           <WebGazerClient />
           {/* Pass the ref to the Calibration component */}
-          <Calibration ref={calibrationRef} />
+          <Calibration ref={calibrationRef} onCalibratingChange={setIsCalibrating} />
         </div>
       </div>
     </>
