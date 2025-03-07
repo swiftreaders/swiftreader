@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Genre, Category, Difficulty } from '@/types/text';
 
 import { useTextManagementContext } from '@/contexts/textManagementContext';
@@ -13,6 +13,12 @@ const ManualTextSection: React.FC = () => {
     handleModifyQuestion,
     handleAddText,
   } = useTextManagementContext();
+
+  const [isCopyrightFree, setIsCopyrightFree] = useState(false);
+
+  const handleCopyrightCheckboxChange = (checked: boolean) => {
+    setIsCopyrightFree(checked);
+  };
 
   return (
     <div className="space-y-4">
@@ -94,6 +100,16 @@ const ManualTextSection: React.FC = () => {
         <span className="text-gray-700">Is Fiction?</span>
         </div>
 
+        {/* Copyright Free Checkbox */}
+        <div className="flex items-center">
+            <input
+            type="checkbox"
+            checked={isCopyrightFree}
+            onChange={(e) => handleCopyrightCheckboxChange(e.target.checked)}
+            className="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded"
+            />
+            <span className="text-gray-700">I confirm that this text is copyright-free.</span>
+        </div>
 
         {/* Questions Section */}
         <div className="space-y-4">
@@ -128,10 +144,11 @@ const ManualTextSection: React.FC = () => {
 
         <button
         onClick={handleAddText}
-        className="w-full mt-4 py-3 bg-indigo-600 text-white rounded-md transition-all duration-200 hover:bg-indigo-700"
-        >
+        disabled={!isCopyrightFree}
+        className="w-full mt-4 py-3 bg-indigo-600 text-white rounded-md transition-all duration-200 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+      >
         Add Text
-        </button>
+      </button>
     </div>
     );
 };
