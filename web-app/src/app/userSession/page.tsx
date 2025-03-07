@@ -225,7 +225,7 @@ const UserSessionContent = () => {
     setOutputLine("");
   
     // Reset WebGazer if not in mode 2
-    if (mode != 2) {
+    if (mode === 1) {
       const webgazer = (window as any).webgazer;
       if (webgazer) {
         webgazer.clearGazeListener();
