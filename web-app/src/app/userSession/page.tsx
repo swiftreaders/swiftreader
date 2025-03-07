@@ -150,6 +150,8 @@ const UserSessionContent = () => {
       case 'serif':
         charWidthFactor = 0.55; // Serif fonts tend to have slightly wider characters
         break;
+      case 'open-dyslexic':
+        charWidthFactor = 0.65; // OpenDyslexic has wider characters
       case 'sans-serif':
       case 'arial':
       case 'verdana':
