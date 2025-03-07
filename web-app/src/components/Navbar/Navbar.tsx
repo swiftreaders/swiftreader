@@ -42,7 +42,7 @@ const Navbar = () => {
     <nav
       className={`${
         scrolled ? "navbarScrolled" : "navbar"
-      } px-20 xy-4 flex justify-between items-center text-white`}
+      } px-20 xy-4 flex justify-between items-center text-white italic lowercase`}
     >
       <div>
         {/* Branding */}

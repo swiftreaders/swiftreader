@@ -54,7 +54,7 @@ function Hero({ loggedIn, user, onClick }: HeroProps) {
 
   return (
     <>
-      <section className="mt-[7vh] text-white h-sr-screen px-5 md:px-20 font-bold flex">
+      <section className="mt-[7vh] text-white h-sr-screen px-5 md:px-20 font-bold flex italic lowercase">
         {/* Left half */}
         <div className="flex flex-col justify-center items-start w-full md:w-1/2">
           <h1 className="text-5xl md:text-6xl lg:text-6xl xl:text-8xl">
