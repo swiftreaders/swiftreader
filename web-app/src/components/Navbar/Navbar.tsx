@@ -78,7 +78,7 @@ const Navbar = () => {
                 </button>
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-20 bg-sr-gradient rounded-lg shadow-lg py-2 text-right font-bold">
-                    <Link
+                    {/* <Link
                       href="/profile"
                       className="block pr-2 py-2 hover:bg-gray-200"
                       onClick={() => setDropdownOpen(false)}
@@ -91,7 +91,7 @@ const Navbar = () => {
                       onClick={() => setDropdownOpen(false)}
                     >
                       Settings
-                    </Link>
+                    </Link> */}
                     <Link
                       href="/auth/logout"
                       className="block pr-2 py-2 hover:bg-gray-200"
