@@ -23,6 +23,7 @@ import { summariseText } from "@/services/generateService";
 import { AccessibilitySettings, 
   AccessibilitySettingsPanel,
   defaultAccessibilitySettings } from "@/components/AccessibilitySettingsPanel";
+import WebGazerDisclaimer from "@/components/WebGazerDisclaimer";
 
 const transformText = (
   text: string,
@@ -1089,6 +1090,7 @@ const UserSessionContent = () => {
             <>
               {!requested ? (
                 <div className="relative">
+                  <br></br>
                   <button
                     className={`bg-secondary text-white px-6 py-3 rounded transition ${
                       (((mode === 2 || mode === 3) && !webgazerInitialized) ||
@@ -1110,10 +1112,11 @@ const UserSessionContent = () => {
                   </button>
                   {/* Tooltip for disabled state */}
                   {((mode === 2 || mode === 3) && !webgazerInitialized) && (
-                    <div className="absolute top-full mt-2 text-sm text-red-500">
+                    <div className="absolute top-full mt-2 mb-2 text-sm text-red-500">
                       Please allow camera access and recalibrate to start.
                     </div>
                   )}
+                  <br></br>
                 </div>
               ) : loading ? (
                 <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner flex justify-center items-center">
@@ -1239,6 +1242,12 @@ const UserSessionContent = () => {
           {/* Pass the ref to the Calibration component */}
           <Calibration ref={calibrationRef} onCalibratingChange={setIsCalibrating} />
         </div>
+
+        {(mode === 2 || mode === 3) && (
+          <div className="mt-4 w-full max-w-3xl">
+            <WebGazerDisclaimer />
+          </div>
+        )}
       </div>
     </>
   );
