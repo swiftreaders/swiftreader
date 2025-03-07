@@ -166,7 +166,7 @@ export const AccessibilitySettingsPanel = ({
                   <option value="sans-serif">Sans Serif</option>
                   <option value="serif">Serif</option>
                   <option value="monospace">Monospace</option>
-                  <option value="opendyslexic">OpenDyslexic</option>
+                  <option value="openDyslexic">OpenDyslexic</option>
                 </select>
               </div>
               

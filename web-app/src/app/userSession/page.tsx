@@ -141,6 +141,7 @@ const UserSessionContent = () => {
     const containerWidth = window.innerWidth;
     const fontSize = accessibilitySettings.fontSize;
     const fontFamily = accessibilitySettings.fontFamily;
+    console.log("fontfamily = ", fontFamily);
   
     // Adjust charWidth based on font family
     let charWidthFactor;
@@ -151,18 +152,22 @@ const UserSessionContent = () => {
       case 'serif':
         charWidthFactor = 0.55; // Serif fonts tend to have slightly wider characters
         break;
-      case 'open-dyslexic':
-        charWidthFactor = 0.65; // OpenDyslexic has wider characters
+      case 'openDyslexic':
+        charWidthFactor = 1; // OpenDyslexic has wider characters
+        break;
       case 'sans-serif':
       case 'arial':
       case 'verdana':
       default:
         charWidthFactor = 0.6; // Default factor for sans-serif fonts
         break;
-    }
+    } 
+    console.log("charWidthFactor = ", charWidthFactor);
   
     const charWidth = fontSize * charWidthFactor; // Adjust charWidth based on font
-    return Math.floor(containerWidth / charWidth);
+    const charsperline =  Math.floor(containerWidth / charWidth);
+    console.log(charsperline);
+    return charsperline;
   };
 
   const splitTextIntoLines = (content: string) => {

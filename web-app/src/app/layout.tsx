@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Atkinson_Hyperlegible } from "next/font/google";
 import "../../public/styles/globals.css";
+import "../../public/styles/fonts.css";
 
 import { AuthProvider } from "@/contexts/authContext"; // Import UserProvider
 import { auth0 } from "@/lib/auth0"; // Import Auth0 for session fetching

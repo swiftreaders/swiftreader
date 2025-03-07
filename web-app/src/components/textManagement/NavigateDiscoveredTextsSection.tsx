@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { useTextManagementContext } from '@/contexts/textManagementContext';
 import { QuestionCard } from '../QuestionCard';
@@ -20,6 +20,22 @@ const NavigateFoundTextsSection: React.FC = () => {
     handleModifyQuestion,
     handleRemoveQuestion,
   } = useTextManagementContext();
+
+  const [isCopyrightFree, setIsCopyrightFree] = useState(false);
+  const [isHighlighted, setIsHighlighted] = useState(false); // State to track if the checkbox should be highlighted
+
+  const handleCopyrightCheckboxChange = (checked: boolean) => {
+    setIsCopyrightFree(checked);
+    setIsHighlighted(false); // Remove highlight when the checkbox is checked
+  };
+
+  const handleApproveText = () => {
+    if (!isCopyrightFree) {
+      setIsHighlighted(true); // Highlight the checkbox if it's not checked
+      return; // Stop further execution
+    }
+    handleAddText(); // Proceed with approval
+  };
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-2xl border border-gray-100">
@@ -44,7 +60,8 @@ const NavigateFoundTextsSection: React.FC = () => {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={handleAddText}
+            // disabled={!isCopyrightFree}
+            onClick={handleApproveText}
             className="px-4 py-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
           >
             👍 Approve
@@ -91,6 +108,22 @@ const NavigateFoundTextsSection: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Copyright Free Checkbox */}
+      <div
+        className={`flex items-center p-2 rounded-lg transition-colors ${
+          isHighlighted ? 'bg-red-50 border border-red-300' : ''
+        }`}
+      >
+        <input
+          type="checkbox"
+          checked={isCopyrightFree}
+          onChange={(e) => handleCopyrightCheckboxChange(e.target.checked)}
+          className="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded"
+        />
+        <span className="text-gray-700">I confirm that this text is copyright-free.</span>
+      </div>
+
 
       {/* Questions Section */}
       <div className="space-y-6">

@@ -1,0 +1,8 @@
+/* app/fonts.css */
+@font-face {
+    font-family: 'openDyslexic';
+    src: url('/fonts/OpenDyslexic-Regular.woff') format('woff'); /* Use .woff for modern browsers */
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
