@@ -1,0 +1,32 @@
+Stress Test Results
+
+Starting stress test for fetchBooks with 100 iterations at concurrency 100
+
+--- Results for fetchBooks ---
+Total Iterations: 100
+Successful Responses: 100
+Errors: 0
+Average Response Time: 129510.07 ms
+95th Percentile Response Time: 233230.12 ms
+99th Percentile Response Time: 239864.01 ms
+--------------------------------------
+Starting stress test for fetchBookContent with 100 iterations at concurrency 100
+
+--- Results for fetchBookContent ---
+Total Iterations: 100
+Successful Responses: 100
+Errors: 0
+Average Response Time: 1897.29 ms
+95th Percentile Response Time: 3089.53 ms
+99th Percentile Response Time: 3151.02 ms
+--------------------------------------
+Starting stress test for fetchGeneratedTexts with 100 iterations at concurrency 100
+
+--- Results for fetchGeneratedTexts ---
+Total Iterations: 100
+Successful Responses: 100
+Errors: 0
+Average Response Time: 819.05 ms
+95th Percentile Response Time: 933.14 ms
+99th Percentile Response Time: 942.22 ms
+--------------------------------------
