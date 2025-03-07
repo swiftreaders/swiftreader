@@ -9,17 +9,26 @@ export interface CalibrationRef {
   calibrating: boolean;
 }
 
-const Calibration = forwardRef<CalibrationRef>((props, ref) => {
+// Define props interface including an optional callback to notify parent of calibration state changes.
+interface CalibrationProps {
+  onCalibratingChange?: (calibrating: boolean) => void;
+}
+
+const Calibration = forwardRef<CalibrationRef, CalibrationProps>((props, ref) => {
   const [calibrating, setCalibrating] = useState(false);
 
   const startCalibration = async () => {
-    // Make sure webgazer is loaded
+    // Make sure WebGazer is loaded
     if (typeof window === "undefined" || !(window as any).webgazer) {
       alert("WebGazer not available. Make sure it's initialized first.");
       return;
     }
 
+    // Set calibration state to true and notify parent
     setCalibrating(true);
+    if (props.onCalibratingChange) {
+      props.onCalibratingChange(true);
+    }
     alert("Look at the red dots to calibrate your gaze.");
 
     const webgazer = (window as any).webgazer;
@@ -55,14 +64,23 @@ const Calibration = forwardRef<CalibrationRef>((props, ref) => {
     // Now call our helper to train the regression
     trainWebGazer();
     alert("Calibration complete!");
+
+    // Reset calibration state and notify parent that calibration is done
     setCalibrating(false);
+    if (props.onCalibratingChange) {
+      props.onCalibratingChange(false);
+    }
   };
 
-  // Expose the startCalibration method via ref
-  useImperativeHandle(ref, () => ({
-    startCalibration,
-    calibrating
-  }));
+  // Expose the startCalibration method and calibration state via ref
+  useImperativeHandle(
+    ref,
+    () => ({
+      startCalibration,
+      calibrating,
+    }),
+    [calibrating]
+  );
 
   return (
     <div>
@@ -99,7 +117,7 @@ const Calibration = forwardRef<CalibrationRef>((props, ref) => {
           opacity: 1;
         }
 
-        /* Example positions */
+        /* Example positions for the calibration dots */
         .calibration-dot:nth-child(1) {
           top: 10%;
           left: 10%;
