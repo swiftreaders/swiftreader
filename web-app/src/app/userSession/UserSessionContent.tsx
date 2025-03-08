@@ -26,6 +26,10 @@ import { AccessibilitySettings,
 import WebGazerDisclaimer from "@/components/WebGazerDisclaimer";
 import FeatureItem from "./FeatureItem";
 import transformText from "./TransformText";
+import QuickStartGuide from './QuickStartGuide';
+import ProgressCircles from './ProgressCircles';
+import AccessibilitySettingsButton from './AccessibilitySettingsButton';
+
 
 const UserSessionContent = () => {
     const router = useRouter();
@@ -644,68 +648,11 @@ const UserSessionContent = () => {
               Recalibrate
             </button>
           )}
-          {/* Accessibility Settings Button */}
-          {!sessionStarted && progressStage === 1 && (
-            <>
-              <button
-                onClick={() => {
-              if (!sessionStarted) {  // Only allow opening if session isn't active
-                setShowAccessibilityPanel(!showAccessibilityPanel);
-              }
-            }}
-                className={`absolute top-6 left-6 bg-secondary text-white px-4 py-2 rounded transition ${
-              sessionStarted ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
-            }`}
-            disabled={sessionStarted}
-              >
-                Accessibility Settings
-              </button>
-              {showAccessibilityPanel && (
-                <AccessibilitySettingsPanel
-                  settings={accessibilitySettings}
-                  setSettings={setAccessibilitySettings}
-                  onClose={() => setShowAccessibilityPanel(false)}
-                />
-              )}
-            </>
-          )}
-          {/* Progress Circles */}
-          <div className="flex items-center justify-center mb-8">
-            <div className="flex items-center space-x-4">
-              <div className="flex flex-col items-center">
-                <div
-                  className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                    progressStage >= 1 ? "bg-secondary text-white" : "bg-gray-300"
-                  }`}
-                >
-                  1
-                </div>
-                <span className="text-sm mt-2">Read</span>
-              </div>
-              <div className="h-1 w-12 bg-gray-300"></div>
-              <div className="flex flex-col items-center">
-                <div
-                  className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                    progressStage >= 2 ? "bg-secondary text-white" : "bg-gray-300"
-                  }`}
-                >
-                  2
-                </div>
-                <span className="text-sm mt-2">Quiz</span>
-              </div>
-              <div className="h-1 w-12 bg-gray-300"></div>
-              <div className="flex flex-col items-center">
-                <div
-                  className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                    progressStage >= 3 ? "bg-secondary text-white" : "bg-gray-300"
-                  }`}
-                >
-                  3
-                </div>
-                <span className="text-sm mt-2">Stats</span>
-              </div>
-            </div>
-          </div>
+
+          <AccessibilitySettingsButton sessionStarted={sessionStarted} />
+
+          <ProgressCircles progressStage={progressStage} />
+
           {progressStage === 1 ? (
             <>
               {/* Settings Bar */}
@@ -989,51 +936,8 @@ const UserSessionContent = () => {
                 </div>
   
                 {/* Quick Start Guide */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center text-green-600">
-                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.18 5 4.05 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                    </svg>
-                    Quick Start
-                  </h3>
-                  <ul className="space-y-3 text-sm text-gray-600">
-                  {mode === 2 || mode === 3 ? (
-                    <>
-                      <li className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                        1. Ensure a stable webcam setup and click Recalibrate
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                        2. Configure your chosen text above
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                        3. Click &quot;Start Session&quot;
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                        4. Use keyboard controls during reading
-                      </li>
-                    </>
-                  ) : (
-                    <>
-                      <li className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                        1. Configure your chosen text above
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                        2. Click &quot;Start Session&quot;
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                        3. Use keyboard controls during reading
-                      </li>
-                    </>
-                  )}
-                </ul>
-                </div>
+                <QuickStartGuide mode={mode} />
+
               </div>
             </div>
           )}
