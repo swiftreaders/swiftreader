@@ -1,3 +1,6 @@
+import React from "react";
+import { AccessibilitySettings } from "@/components/AccessibilitySettingsPanel";
+
 const transformText = (
     text: string,
     settings: AccessibilitySettings

@@ -17,7 +17,6 @@ import { SessionStats } from "@/components/SessionStats";
 import { useAuth } from "@/contexts/authContext";
 import { UserProvider } from "@/contexts/userContext";
 import AccessDenied from "@/components/pages/errors/accessDenied";
-import InfoPopup from "@/components/infoPopup"
 import { useRouter } from "next/navigation";
 import { summariseText } from "@/services/generateService";
 import { AccessibilitySettings, 
