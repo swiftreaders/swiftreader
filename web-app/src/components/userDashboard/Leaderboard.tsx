@@ -46,7 +46,7 @@ export const LeaderboardComponent = () => {
               return (
                 <tr 
                   key={user.id} // Use actual user ID as key
-                  className={`${isCurrentUser ? 'bg-blue-50 dark:bg-black' : 'hover:bg-gray-50'} transition-colors`}
+                  className={`${isCurrentUser ? 'bg-blue-50 dark:bg-black' : 'hover:bg-gray-50 dark:hover:bg-gray-800'} transition-colors`}
                 >
                   <td className="py-3 px-4 text-sm w-12">
                     <div className="flex items-center justify-center">

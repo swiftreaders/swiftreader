@@ -35,11 +35,46 @@
 .dark {
   --color-background: #121212;
   --color-primary: #8e1dff;
-  --color-secondary: #3e0075;
+  --color-secondary: #9261bd;
   --color-text: #ffffff;
   --color-hovertext: #8e1dff;
   --color-widget: #2e2e2e;
   --font-atkinson: "Atkinson Hyperlegible", sans-serif;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #1e1e1e; 
+  color: #ffffff;
+  border: 1px solid #8e1dff;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #bbbbbb;
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  outline: none;
+  border-color: #8e1dff;
+  box-shadow: 0 0 5px #8e1dff;
+}
+
+.dark input[type="checkbox"] {
+  accent-color: #8e1dff;
+}
+
+.dark select {
+  appearance: none;
+  padding-right: 20px; 
+}
+
+.dark select option {
+  background: #1e1e1e;
+  color: #ffffff;
 }
 
 /* Apply colors globally */

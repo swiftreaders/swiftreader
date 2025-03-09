@@ -30,7 +30,7 @@ export const RecentReadingSessions = ({
             </thead>
             <tbody className="divide-y divide-gray-200">
                 {recentSessions.map((session) => (
-                <tr key={session.id} className="hover:bg-gray-50">
+                <tr key={session.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                     <td className="py-3 px-4 text-sm">{session.title}</td>
                     <td className="py-3 px-4 text-sm text-gray-500">
                     {session.startTime.toDate().toLocaleDateString()}

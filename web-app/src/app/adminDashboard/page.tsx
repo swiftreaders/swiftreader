@@ -285,7 +285,7 @@ const AdminDashboardContent = () => {
                 </thead>
                 <tbody className="bg-widget divide-y divide-gray-200">
                   {sortedTextGenres.map((item, index) => (
-                    <tr key={item.genre} className="hover:bg-gray-50">
+                    <tr key={item.genre} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                       <td className="px-4 py-2 whitespace-nowrap">
                         {getRankIcon(index + 1)}
                       </td>

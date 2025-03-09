@@ -68,7 +68,7 @@ const UserTable: React.FC<UserTableProps> = ({
           <tbody className="bg-widget divide-y divide-gray-200">
             {filteredUsers.length > 0 ? (
               filteredUsers.map((user: User, index: number) => (
-                <tr key={index} className="hover:bg-gray-50 transition-colors">
+                <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{user.wpm}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
