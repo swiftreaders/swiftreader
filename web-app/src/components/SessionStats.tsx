@@ -1,6 +1,7 @@
 import React from "react";
 import { Session } from "@/types/sessions";
 import { SessionChart } from "./SessionChart"; // Ensure proper import
+import { modeDescriptions } from "@/app/userSession/page";
 
 interface SessionStatsProps {
   session: Session;
@@ -34,16 +35,16 @@ export const SessionStats = ({ session, onClose }: SessionStatsProps) => (
       <div className="space-y-4">
         <div className="bg-gray-50 p-4 rounded-lg">
           <h4 className="text-sm font-medium text-gray-700 mb-3">Session Statistics</h4>
-          <div className="space-y-3">
+            <div className="space-y-3">
             <StatItem label="Average WPM" value={session.average_wpm.toFixed(1)} />
-            <StatItem label="Text Average" value={session.text_average_performance.toFixed(1)} />
             <StatItem label="Duration" value={`${Math.floor(session.duration / 60)}m ${Math.round(session.duration % 60)}s`} />
-            <StatItem label="Difficulty" value={session.difficulty} />
+            <StatItem label="Difficulty" value={session.difficulty.charAt(0).toUpperCase() + session.difficulty.slice(1)} />
+            <StatItem label="Session Type" value={modeDescriptions[session.sessionType]} />
             <StatItem 
               label="Comprehension" 
               value={`${Math.round(session.getComprehensionScore()).toString()}%`} 
             />
-          </div>
+            </div>
         </div>
       </div>
     </div>
