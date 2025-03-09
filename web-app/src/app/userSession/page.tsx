@@ -1242,6 +1242,11 @@ const UserSessionContent = () => {
               </button>
             ) : null}
           </div>
+          {(mode === 2 || mode === 3) && (
+          <div className="mt-12 w-full max-w-3xl">
+            <WebGazerDisclaimer />
+          </div>
+        )}
         </div>
 
         <div className="z-20">
@@ -1249,12 +1254,6 @@ const UserSessionContent = () => {
           {/* Pass the ref to the Calibration component */}
           <Calibration ref={calibrationRef} onCalibratingChange={setIsCalibrating} />
         </div>
-
-        {(mode === 2 || mode === 3) && (
-          <div className="mt-4 w-full max-w-3xl">
-            <WebGazerDisclaimer />
-          </div>
-        )}
       </div>
     </>
   );
