@@ -19,7 +19,7 @@ export const RecentReadingSessions = ({
         {recentSessions.length > 0 ? (
         <div className="overflow-x-auto">
             <table className="min-w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-black">
                 <tr>
                 <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
                 <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>

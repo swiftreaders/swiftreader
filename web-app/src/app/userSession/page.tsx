@@ -65,8 +65,8 @@ const FeatureItem = ({ icon, title, children }: {
   <div className="flex items-start gap-3">
     <span className="text-2xl">{icon}</span>
     <div>
-      <h4 className="font-medium text-gray-800">{title}</h4>
-      <p className="text-sm text-gray-600 mt-1">{children}</p>
+      <h4 className="font-medium">{title}</h4>
+      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{children}</p>
     </div>
   </div>
 );
@@ -757,12 +757,14 @@ const UserSessionContent = () => {
         {progressStage === 1 ? (
           <>
             {/* Settings Bar */}
-            <div className="flex flex-wrap items-center justify-between w-full bg-white shadow-md p-4 rounded-lg space-y-4 md:space-y-0 md:flex-nowrap">
+            <div className="flex flex-wrap items-center justify-between w-full 
+                bg-white shadow-md p-4 rounded-lg space-y-4 md:space-y-0 md:flex-nowrap 
+                dark:bg-black dark:shadow-lg dark:border dark:border-gray-700">
               {/* Select Mode Dropdown */}
               <div className="flex items-center space-x-2">
                 <label
                   htmlFor="modeSelect"
-                  className="text-sm font-medium text-gray-700"
+                  className="text-sm font-medium"
                 >
                   Mode:
                 </label>
@@ -785,14 +787,14 @@ const UserSessionContent = () => {
               <div className="flex items-center space-x-2">
                 <label
                   htmlFor="wpmInput"
-                  className="text-sm font-medium text-gray-700"
+                  className="text-sm font-medium"
                 >
                   WPM:
                 </label>
                 <input
                   id="wpmInput"
                   type="number"
-                  className="border border-gray-300 rounded px-3 py-2 text-center text-gray-700 focus:outline-none focus:ring focus:ring-blue-300 w-24"
+                  className="border border-gray-300 rounded px-3 py-2 text-center focus:outline-none focus:ring focus:ring-blue-300 w-24"
                   value={inputValue}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                     setInputValue(event.target.value); // Allow typing freely
@@ -817,7 +819,7 @@ const UserSessionContent = () => {
               <div className="flex items-center space-x-2">
                 <label
                   htmlFor="fictionCheckbox"
-                  className="text-sm font-medium text-gray-700"
+                  className="text-sm font-medium"
                 >
                   Fiction:
                 </label>
@@ -837,7 +839,7 @@ const UserSessionContent = () => {
               <div className="flex items-center space-x-2">
                 <label
                   htmlFor={fiction ? "genreSelect" : "categorySelect"}
-                  className="text-sm font-medium text-gray-700"
+                  className="text-sm font-medium"
                 >
                   {fiction ? "Genre:" : "Category:"}
                 </label>
@@ -851,7 +853,7 @@ const UserSessionContent = () => {
                       )
                     }
                     disabled={sessionStarted}
-                    className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
+                    className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
                   >
                     <option value="">Any</option> {/* Option for "Any" */}
                     {Object.values(Genre).map((gen) => (
@@ -872,7 +874,7 @@ const UserSessionContent = () => {
                       )
                     }
                     disabled={sessionStarted}
-                    className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
+                    className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
                   >
                     <option value="">Any</option> {/* Option for "Any" */}
                     {Object.values(Category).map((cat) => (
@@ -888,7 +890,7 @@ const UserSessionContent = () => {
               <div className="flex items-center space-x-2">
                 <label
                   htmlFor="difficultySelect"
-                  className="text-sm font-medium text-gray-700"
+                  className="text-sm font-medium"
                 >
                   Difficulty:
                 </label>
@@ -903,7 +905,7 @@ const UserSessionContent = () => {
                     )
                   }
                   disabled={sessionStarted}
-                  className="border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
+                  className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
                 >
                   <option value="">Any</option> {/* Option for "Any" */}
                   {Object.values(Difficulty).map((diff) => (
@@ -918,14 +920,14 @@ const UserSessionContent = () => {
               <div className="flex items-center space-x-2">
                 <label
                   htmlFor="lengthInput"
-                  className="text-sm font-medium text-gray-700"
+                  className="text-sm font-medium"
                 >
                   Text length:
                 </label>
                 <input
                   id="lengthInput"
                   type="number"
-                  className="border border-gray-300 rounded px-3 py-2 text-center text-gray-700 focus:outline-none focus:ring focus:ring-blue-300 w-24"
+                  className="border border-gray-300 rounded px-3 py-2 text-center text-gray-700 zfocus:outline-none focus:ring focus:ring-blue-300 w-24"
                   value={length ?? ""}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                     setLength(
@@ -956,7 +958,8 @@ const UserSessionContent = () => {
         )}
         <div className="w-full flex justify-center flex-col items-center">
         {!sessionStarted && !generating && !loading && (
-          <div className="w-full bg-gradient-to-br from-purple-50 to-blue-50 p-8 rounded-2xl shadow-xl border border-purple-100">
+          <div className="w-full bg-gradient-to-br from-purple-50 to-blue-50 p-8 rounded-2xl shadow-xl border border-purple-100
+                dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800 dark:border-gray-700">
             <div className="text-center mb-6">
               <div className="inline-flex items-center justify-center bg-gradient-to-r from-purple-600 to-blue-500 text-white px-6 py-2 rounded-full text-lg font-bold shadow-sm">
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -968,8 +971,9 @@ const UserSessionContent = () => {
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
               {/* Keyboard Controls Card */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4 flex items-center text-purple-600">
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100
+                              dark:bg-gray-800 dark:border-gray-700 dark:shadow-md">
+                <h3 className="text-lg font-semibold mb-4 flex items-center text-purple-600 dark:text-purple-400">
                   <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M6 18H18V20H6zM12 16.04L8.04 20L6 17.96L12 12L18 17.96L15.96 20L12 16.04zM12 4L15.96 8.04L18 6L12 0L6 6L8.04 8.04L12 4z"/>
                   </svg>
@@ -981,25 +985,26 @@ const UserSessionContent = () => {
                       <kbd className="key">W</kbd>
                       <kbd className="key">S</kbd>
                     </div>
-                    <span className="text-sm text-gray-600">Adjust WPM ±1</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Adjust WPM ±1</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="flex gap-1">
                       <kbd className="key">A</kbd>
                       <kbd className="key">D</kbd>
                     </div>
-                    <span className="text-sm text-gray-600">Adjust WPM ±10</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Adjust WPM ±10</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <kbd className="key">SPACE</kbd>
-                    <span className="text-sm text-gray-600">Play/Pause</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Play/Pause</span>
                   </div>
                 </div>
               </div>
 
               {/* Mode-specific Features */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4 flex items-center text-blue-600">
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100
+                              dark:bg-gray-800 dark:border-gray-700 dark:shadow-md">
+                <h3 className="text-lg font-semibold mb-4 flex items-center text-blue-600 dark:text-blue-400">
                   {mode === 1 ? "📖 Fixed Speed" : mode === 2 ? "👁 Eye Tracking" : "📚 Summary Mode"}
                 </h3>
                 <div className="space-y-4">
@@ -1037,14 +1042,15 @@ const UserSessionContent = () => {
               </div>
 
               {/* Quick Start Guide */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4 flex items-center text-green-600">
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100
+                              dark:bg-gray-800 dark:border-gray-700 dark:shadow-md">
+                <h3 className="text-lg font-semibold mb-4 flex items-center text-green-600 dark:text-green-400">
                   <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.18 5 4.05 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
                   </svg>
                   Quick Start
                 </h3>
-                <ul className="space-y-3 text-sm text-gray-600">
+                <ul className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
                 {mode === 2 || mode === 3 ? (
                   <>
                     <li className="flex items-center gap-2">
@@ -1084,6 +1090,7 @@ const UserSessionContent = () => {
               </div>
             </div>
           </div>
+
         )}
           {progressStage === 1 ? (
             // Session Start Box
@@ -1127,7 +1134,7 @@ const UserSessionContent = () => {
                   <p className="text-xl text-gray-800">Generating summary...</p>
                 </div>
               ) : sessionStarted ? (
-                <div className="w-full bg-gray-200 p-8 rounded-lg shadow-inner relative">
+                <div className="w-full bg-gray-200 dark:bg-gray-900 p-8 rounded-lg shadow-inner relative">
                   {/* Pause overlay */}
                   {paused && (
                     <div className="absolute inset-0 bg-white bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-10 flex-col gap-4">

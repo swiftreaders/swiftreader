@@ -31,7 +31,7 @@ export const LeaderboardComponent = () => {
       {/* Scrollable Table Container */}
       <div className="overflow-y-auto max-h-96"> {/* Added max height and vertical scroll */}
         <table className="min-w-full">
-          <thead className="bg-gray-50 sticky top-0"> {/* Sticky header */}
+          <thead className="bg-gray-50 dark:bg-black sticky top-0"> {/* Sticky header */}
             <tr>
               <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
               <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reader</th>
@@ -46,7 +46,7 @@ export const LeaderboardComponent = () => {
               return (
                 <tr 
                   key={user.id} // Use actual user ID as key
-                  className={`${isCurrentUser ? 'bg-blue-50' : 'hover:bg-gray-50'} transition-colors`}
+                  className={`${isCurrentUser ? 'bg-blue-50 dark:bg-black' : 'hover:bg-gray-50'} transition-colors`}
                 >
                   <td className="py-3 px-4 text-sm w-12">
                     <div className="flex items-center justify-center">
@@ -64,7 +64,7 @@ export const LeaderboardComponent = () => {
                     </div>
                   </td>
                   <td className="py-3 px-4 text-sm text-gray-500 text-right">
-                    <span className="font-bold text-gray-800">
+                    <span className="font-bold">
                       {Math.round(user.wpm ?? 0)}
                     </span>
                     <span className="text-xs text-gray-500 ml-1">WPM</span>
@@ -78,9 +78,9 @@ export const LeaderboardComponent = () => {
 
       {/* Current User Ranking */}
       <div className="mt-6 pt-4 border-t border-gray-200">
-        <div className="flex justify-between items-center bg-blue-50 p-3 rounded-md"> {/* Matching highlight */}
+        <div className="flex justify-between items-center bg-blue-50 dark:bg-black p-3 rounded-md"> {/* Matching highlight */}
           <div className="flex items-center">
-            <span className="bg-sr-gradient text-white font-bold w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3">
+            <span className="bg-sr-gradient font-bold w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3">
               {userRank}
             </span>
             <div className="flex items-center">
@@ -88,7 +88,7 @@ export const LeaderboardComponent = () => {
             </div>
           </div>
           <div className="flex items-center">
-            <span className="font-bold text-gray-800">
+            <span className="font-bold">
               {Math.round(currentUser?.wpm ?? 0)}
             </span>
             <span className="text-xs text-gray-500 ml-1">WPM</span>
