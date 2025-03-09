@@ -13,7 +13,7 @@ import { Session } from "@/types/sessions";
 import { Timestamp } from "firebase/firestore";
 import WebGazerClient from "./WebGazerClient"; // We'll keep a separate file
 import Calibration, { CalibrationRef } from "./Calibration"; // Modified import to include ref type
-import { SessionStats } from "@/components/SessionStats";
+import { modeDescriptions, SessionStats } from "@/components/SessionStats";
 import { useAuth } from "@/contexts/authContext";
 import { UserProvider } from "@/contexts/userContext";
 import AccessDenied from "@/components/pages/errors/accessDenied";
@@ -24,12 +24,6 @@ import { AccessibilitySettings,
   AccessibilitySettingsPanel,
   defaultAccessibilitySettings } from "@/components/AccessibilitySettingsPanel";
 import WebGazerDisclaimer from "@/components/WebGazerDisclaimer";
-
-export const modeDescriptions: { [key: number]: string } = {
-  1: "Standard",
-  2: "Adaptive",
-  3: "Summary",
-};
 
 const transformText = (
   text: string,

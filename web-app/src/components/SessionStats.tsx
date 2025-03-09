@@ -1,7 +1,12 @@
 import React from "react";
 import { Session } from "@/types/sessions";
 import { SessionChart } from "./SessionChart"; // Ensure proper import
-import { modeDescriptions } from "@/app/userSession/page";
+
+export const modeDescriptions: { [key: number]: string } = {
+  1: "Standard",
+  2: "Adaptive",
+  3: "Summary",
+};
 
 interface SessionStatsProps {
   session: Session;
