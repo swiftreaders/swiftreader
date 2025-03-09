@@ -65,16 +65,20 @@ export interface AccessibilitySettings {
   textColor: string;
 }
 
+function isDarkMode(): boolean {
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
 export const defaultAccessibilitySettings: AccessibilitySettings = {
   boldFirst: false,
   boldLast: false,
   fontSize: 32,
   readingBoxPadding: 32,
-  readingBoxBackground: '#f3f4f6', // Default gray-200
-  readingBoxBorder: '1px solid #e5e7eb', // Default gray-200 border
+  readingBoxBackground: isDarkMode() ? '#1f2937' : '#f3f4f6', // gray-800 for dark, gray-200 for light
+  readingBoxBorder: `1px solid ${isDarkMode() ? '#374151' : '#e5e7eb'}`, // gray-700 for dark, gray-200 for light
   fontFamily: 'sans-serif',
   lineHeight: 1.5,
-  textColor: '#1f2937', // Default gray-800
+  textColor: isDarkMode() ? '#f5f5f5' : '#1f2937',
 };
 
 interface AccessibilitySettingsPanelProps {
@@ -134,9 +138,9 @@ export const AccessibilitySettingsPanel = ({
     };
 
     return (
-      <div className="absolute top-24 right-6 bg-white shadow-xl p-6 rounded-2xl z-50 min-w-[340px] border border-gray-100">
+      <div className="absolute top-24 right-6 bg-white dark:bg-black shadow-xl p-6 rounded-2xl z-50 min-w-[340px] border border-gray-100 dark:border-gray-800">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-gray-800">Accessibility Settings</h3>
+          <h3 className="text-xl font-bold">Accessibility Settings</h3>
           <button
             onClick={onClose}
             className="p-1 hover:bg-gray-100 rounded-full transition-colors"
@@ -154,10 +158,10 @@ export const AccessibilitySettingsPanel = ({
         <div className="space-y-6">
           {/* Text Settings */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-gray-700 border-b pb-2">Text Settings</h4>
+            <h4 className="font-semibold border-b pb-2">Text Settings</h4>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-600">Font Family</label>
+                <label className="block text-sm font-medium">Font Family</label>
                 <select
                   value={settings.fontFamily}
                   onChange={handleSelectChange('fontFamily')}
@@ -171,7 +175,7 @@ export const AccessibilitySettingsPanel = ({
               </div>
               
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-600">Text Color</label>
+                <label className="block text-sm font-medium">Text Color</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
@@ -179,12 +183,12 @@ export const AccessibilitySettingsPanel = ({
                     onChange={handleColorChange('textColor')}
                     className="w-10 h-10 rounded-md border border-gray-300 cursor-pointer"
                   />
-                  <span className="text-sm text-gray-500">{settings.textColor}</span>
+                  <span className="text-sm">{settings.textColor}</span>
                 </div>
               </div>
   
               <div className="space-y-2 col-span-2">
-                <label className="block text-sm font-medium text-gray-600">
+                <label className="block text-sm font-medium">
                   Line Height: {settings.lineHeight}x
                 </label>
                 <input
@@ -202,10 +206,10 @@ export const AccessibilitySettingsPanel = ({
   
           {/* Reading Box Settings */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-gray-700 border-b pb-2">Reading Box</h4>
+            <h4 className="font-semibold border-b pb-2">Reading Box</h4>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-600">Padding (px)</label>
+                <label className="block text-sm font-medium">Padding (px)</label>
                 <input
                   type="number"
                   defaultValue={settings.readingBoxPadding}
@@ -218,7 +222,7 @@ export const AccessibilitySettingsPanel = ({
               </div>
               
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-600">Background</label>
+                <label className="block text-sm font-medium">Background</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
@@ -226,12 +230,12 @@ export const AccessibilitySettingsPanel = ({
                     onChange={handleColorChange('readingBoxBackground')}
                     className="w-10 h-10 rounded-md border border-gray-300 cursor-pointer"
                   />
-                  <span className="text-sm text-gray-500">{settings.readingBoxBackground}</span>
+                  <span className="text-sm">{settings.readingBoxBackground}</span>
                 </div>
               </div>
   
               <div className="space-y-2 col-span-2">
-                <label className="block text-sm font-medium text-gray-600">Border Color</label>
+                <label className="block text-sm font-medium">Border Color</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
@@ -242,7 +246,7 @@ export const AccessibilitySettingsPanel = ({
                     }))}
                     className="w-10 h-10 rounded-md border border-gray-300 cursor-pointer"
                   />
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm">
                     {settings.readingBoxBorder.split(' ')[2]}
                   </span>
                 </div>
@@ -252,7 +256,7 @@ export const AccessibilitySettingsPanel = ({
   
           {/* Original Settings */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-gray-700 border-b pb-2">Text Formatting</h4>
+            <h4 className="font-semibold border-b pb-2">Text Formatting</h4>
             <div className="space-y-3">
               <label className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg">
                 <input
@@ -262,7 +266,7 @@ export const AccessibilitySettingsPanel = ({
                   onChange={handleCheckboxChange}
                   className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
                 />
-                <span className="text-sm text-gray-700">Bold First Letter</span>
+                <span className="text-sm">Bold First Letter</span>
               </label>
               <label className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg">
                 <input
@@ -272,10 +276,10 @@ export const AccessibilitySettingsPanel = ({
                   onChange={handleCheckboxChange}
                   className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
                 />
-                <span className="text-sm text-gray-700">Bold Last Letter</span>
+                <span className="text-sm">Bold Last Letter</span>
               </label>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-600">Font Size (px)</label>
+                <label className="block text-sm font-medium">Font Size (px)</label>
                 <input
                   type="number"
                   defaultValue={settings.fontSize}

@@ -168,7 +168,7 @@ const UserDashboardContent = () => {
   };
 
   return (
-    <div className="min-h-screen mt-[7vh] bg-gray-50">
+    <div className="min-h-screen mt-[7vh]">
       <header className="bg-sr-gradient py-8 shadow-lg">
         <div className="container mx-auto px-4 md:px-8 lg:px-20 text-left">
           <h1 className="text-3xl md:text-4xl font-bold text-white">Reading Dashboard</h1>
@@ -177,7 +177,7 @@ const UserDashboardContent = () => {
       </header>
 
       <div className="container mx-auto py-8 px-4 md:px-8 lg:px-20 -mt-6">
-        <div className="bg-gray-50 rounded-lg shadow-md p-6 mb-8">
+        <div className="rounded-lg shadow-md p-6 mb-8">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
               Overview
