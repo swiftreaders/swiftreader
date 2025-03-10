@@ -3,32 +3,31 @@ import { Atkinson_Hyperlegible } from "next/font/google";
 import "../../public/styles/globals.css";
 import "../../public/styles/fonts.css";
 
-import { AuthProvider } from "@/contexts/authContext"; // Import UserProvider
-import { auth0 } from "@/lib/auth0"; // Import Auth0 for session fetching
-
+import { AuthProvider } from "@/contexts/authContext";
 import { ThemeProvider } from "next-themes";
 import Navbar from "@/components/Navbar";
-import { useEffect, useState } from "react";
 
 const atkinson = Atkinson_Hyperlegible({
   subsets: ["latin"],
-  weight: ["400", "700"], // Regular and Bold
-  variable: "--font-atkinson", // Define a CSS variable
+  weight: ["400", "700"],
+  variable: "--font-atkinson",
   display: "swap",
 });
 
+// Define metadata correctly
 export const metadata: Metadata = {
   title: "Swiftreaders",
-  description: "Accelarate your reading speed with Swiftreaders",
+  description: "Accelerate your reading speed with Swiftreaders",
+  icons: {
+    icon: "/assets/icons/favicon.ico", // Use static path, no import needed
+  },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth0.getSession(); // Fetch latest session on request
-
   return (
     <html lang="en" className={`${atkinson.variable} text-text`}>
       <body>
