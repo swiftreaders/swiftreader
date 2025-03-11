@@ -16,8 +16,8 @@ const atkinson = Atkinson_Hyperlegible({
 
 // Define metadata correctly
 export const metadata: Metadata = {
-  title: "Swiftreaders",
-  description: "Accelerate your reading speed with Swiftreaders",
+  title: "Swiftreader",
+  description: "Accelerate your reading speed with Swiftreader",
   icons: {
     icon: "/assets/icons/favicon.ico", // Use static path, no import needed
   },
