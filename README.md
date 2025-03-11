@@ -3,7 +3,7 @@
 ## Overview
 Swiftreaders provides a fun and intuitive platform to improve your reading speed, comprehension rate and learning throughput. We leverage generative AI and eye-tracking technology to personalise training to your individual needs. By integrating [WebGazer](https://webgazer.cs.brown.edu/) for real-time eye-tracking, this web-based platform dynamically adjusts reading speeds based on user engagement. It offers multiple reading modes, comprehension assessments, and a repository of public domain texts to enhance reading efficiency and retention.
 
-We welcome you to try the platform out for yourselves here: [Swiftreader](swiftreader.vercel.app)
+We welcome you to try the platform out for yourselves here: [Swiftreader](https://swiftreader.vercel.app)
 > Note: In order to use our our eye-tracking software, please use Google Chrome on a Laptop or Desktop equipped with a webcam.  
 
 ## Features
